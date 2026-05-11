@@ -494,17 +494,18 @@ namespace Training.Services
             }
         }
 
-        public async Task<List<Actions>> GetActionsAsync(string workflow, int id)
+        public async Task<List<Actions>> GetActionsAsync(string workflow, string strategy, int id)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
                 var query = @"  SELECT a.Action as ActionName,
                                      a.ActionCode,
-                                    dbo.fc_CanAction(@workflow,@id) AS ActionAllowed 
-                                FROM dbo.fc_Action(@workflow, @id) a;";
+                                    dbo.fc_CanAction(@workflow,@strategy, @id) AS ActionAllowed 
+                                FROM dbo.fc_Action(@workflow, @strategy, @id) a;";
                 var parameters = new DynamicParameters();
                 parameters.Add("@workflow", workflow);
+                parameters.Add("@strategy", strategy);
                 parameters.Add("@id", id);
                 var result = await connection.QueryAsync<Actions>(
                     query,

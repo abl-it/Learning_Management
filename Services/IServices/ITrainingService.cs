@@ -33,7 +33,7 @@ namespace Training.Services.IServices
         Task<List<FiscalYears>> GetFiscalYearsAsync();
 
         //Access
-        Task<List<Actions>> GetActionsAsync(string workflow, int id);
+        Task<List<Actions>> GetActionsAsync(string workflow, string strategy, int id);
         Task<List<Department>> GetDepartmentsByAccessAsync(string workflow, string employeeCode);
         Task<List<Company>> GetCompaniesByAccessAsync(string workflow, string employeeCode);
 

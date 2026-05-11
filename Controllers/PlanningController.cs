@@ -370,7 +370,7 @@ namespace Training.Controllers
             }
 
             var planDet = await _planningService.GetPlansDetailAsync(_plans.PlanId);  // ✅ Returns List<PlanDetailView>
-            var _actions = await _trainingService.GetActionsAsync("PLAN", _plans.PlanId);
+            var _actions = await _trainingService.GetActionsAsync("PLAN",_plans.Strategy, _plans.PlanId);
 
             return View(new PlanDetailVM
             {
@@ -410,7 +410,7 @@ namespace Training.Controllers
             }
 
             //var planDet = await _planningService.GetPlansDetailAsync(_plans.PlanId);  // ✅ Returns List<PlanDetailView>
-            var _actions = await _trainingService.GetActionsAsync("PLAN", _plans.PlanId);
+            var _actions = await _trainingService.GetActionsAsync("PLAN", _plans.Strategy, _plans.PlanId);
             PlanDetailVM model = new PlanDetailVM() 
             {
                 //PlanDetail = planDet,  // ✅ Use the first plan detail or empty if none

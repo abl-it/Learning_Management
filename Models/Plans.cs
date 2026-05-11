@@ -20,6 +20,7 @@ namespace Training.Models
         public int PlansNbr { get; set; }
         public int DocStatus { get; set; }
         public string Workflow { get; set; }
+        public string Strategy { get; set; }
 
     }
 }
