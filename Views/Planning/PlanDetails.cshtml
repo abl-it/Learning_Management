@@ -1,0 +1,900 @@
+﻿@model PlanDetailVM
+@{
+    var status = (Model.Plans.DocStatus != 2 ) ? "enabled" : "disabled"; 
+}
+@{
+    var action = (Model.Plans.DocStatus == 1 || Model.Plans.DocStatus == 1) ? "enabled" : "disabled";
+}
+@functions {
+    private string GetMonthName(int month)
+    {
+        var _mth = new[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+        return _mth[month - 1];
+    }
+
+}
+<style>
+    #plan-table thead th {
+        cursor: default !important; /* ✅ Hilangkan cursor pointer */
+        user-select: none;
+        pointer-events: none; /* ✅ Nonaktifkan semua klik */
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+</style>
+<div class="container-fluid">
+    <!-- Compact Header -->
+    <div class="row justify-content-between align-items-center mb-5">
+
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-auto">
+                <h4 class="mb-0 fw-medium">
+                    <i class="fa-solid fa-people-line me-2"></i>Department Yearly Training Plans
+                </h4>
+            </div>
+
+            <div class="col-12 col-md-auto ms-md-auto d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                
+                @if (Model.Plans.DocStatus != 2)
+                {
+                    <button class="btn btn-primary dropdown-toggle"
+                            style="min-width:150px;"
+                            type="button" id="dropdownMenuButton"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        Action
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        @foreach (var item in Model.ActionList)
+                        {
+                            <li>
+
+                                @if (item.ActionAllowed == 0)
+                                {
+                                    <a class="dropdown-item btn btn-outline-info disabled" href="#" onclick="return false;">
+                                        @item.ActionName
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a class="dropdown-item btn btn-outline-info" onclick='Action("@item.ActionName")' href="#">
+                                        @item.ActionName
+                                    </a>
+                                }
+                            </li>
+                        }
+                    
+                    </ul>
+                }
+                <a class="btn btn-secondary" href="javascript:void(0);" onclick="Back()">Back</a>
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- Compact Filter Panel -->
+    <div class="card card-compact mb-3">
+        <div class="card-body">
+            <div class="row spacing-sm align-items-end">
+                <!-- Company Code Filter -->
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="company" class="form-label text-xs fw-medium mb-1">Company</label>
+                    <input type="text" class="form-control form-control-xs" id="company" placeholder="Company" value="@Model.Plans.CoCode" />
+                </div>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="year" class="form-label text-xs fw-medium mb-1">Year</label>
+                    <input type="text" class="form-control form-control-xs" id="year" placeholder="Year" value="@Model.Plans.Year" />
+                </div>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="department" class="form-label text-xs fw-medium mb-1">Department</label>
+                    <input type="text" class="form-control form-control-xs" id="department" placeholder="Department" value="@Model.Plans.ABRV - @Model.Plans.DeptName" />
+                </div>
+                <!-- Status Filter -->
+                <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="status" class="form-label text-xs fw-medium mb-1">Status</label>
+                    <input type="text" class="form-control form-control-xs" id="status" placeholder="Status" value="@Model.Plans.PlanStatus" />
+                </div>
+              
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact DataTable -->
+    <div class="card card-compact">
+        <div class="card-header p-2">
+            @* <h5 class="mb-0 fw-medium">Training Plans</h5> *@
+            <button type="button" class="btn btn-sm btn-outline-primary add-course" @status
+                    data-bs-toggle="modal" data-bs-target="#modalAddCourse">
+                <i class="fas fa-book-medical me-1"></i>Add Course
+            </button>
+        </div>
+        <div class="card-body p-2" style="overflow-x: auto;">
+            <table id="plan-table"
+                   class="table table-striped table-compact table-bordered"
+                   style="width: 100%; min-width: 800px;">
+                <colgroup>
+                    <col style="width: 40px;" />  <!-- MONTH -->
+                    <col style="width: 40px;" />  <!-- isNew -->
+                    <col style="width: auto;" />   <!-- COURSE -->
+                    <col style="width: 50px;" />  <!-- CATEGORY -->
+                    <col style="width: 50px;" />   <!-- #SESSION -->
+                    <col style="width: 50px;" />  <!-- #PARTICIPANT -->
+                    <col style="width: 50px;" />  <!-- DURATION -->
+                    <col style="width: 120px;" />  <!-- PROVIDER -->
+                    <col style="width: 150px;" />  <!-- TARGET -->
+                    <col style="width: 50px;" />   <!-- ACTION -->
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>MONTH</th>
+                        <th>CODE</th>
+                        <th>COURSE</th>
+                        <th>CATEGORY</th>
+                        <th>#SESSION</th>
+                        <th>#PARTICIPANT</th>
+                        <th>DURATION</th>
+                        <th>PROVIDER</th>
+                        <th>TARGET</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="plan-detail-tbody">
+                    @if (Model.PlanDetail != null && Model.PlanDetail.Any())
+                    {
+                        @foreach (var item in Model.PlanDetail)
+                        {
+                            <tr data-detail-id="@item.PlanDetailId">
+                                <td class="text-nowrap">@GetMonthName(item.PlannedMonth)</td>
+                                <td>
+                                    @item.CourseCode
+                                    @if (item.IsNewCourse == 1)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">
+                                            <i class="fas fa-plus-circle me-1"></i>New
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-nowrap">@item.CourseName</td>
+                                <td class="text-nowrap">@item.CategoryCode</td>
+                                <td class="text-center">@item.TotalSessions</td>
+                                <td class="text-center">@item.TotalParticipants</td>
+                                <td class="text-nowrap">@item.PlannedDuration</td>
+                                <td class="text-nowrap">@item.TrainingProvider</td>
+                                <td>@item.TargetParticipant</td>
+                                <td class="text-center">
+                                    @if (Model.Plans.DocStatus == 0)
+                                    {
+                                        <button class="btn btn-xs btn-danger btn-delete-row"
+                                                data-detail-id="@item.PlanDetailId"
+                                                title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr id="empty-row">
+                            <td class="text-danger text-center" colspan="9">--Data Not Found--</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <input type="hidden" id="co" value="@Model.Parameters.Co" />
+        <input type="hidden" id="yr" value="@Model.Parameters.Yr" />
+        <input type="hidden" id="dp" value="@Model.Parameters.Dp" />
+        <input type="hidden" id="st" value="@Model.Parameters.St" />
+        <input type="hidden" id="id" value="@Model.Parameters.Id" />
+    </div>
+</div>
+
+<!-- Modal Add Course -->
+<div class="modal fade" id="modalAddCourse" tabindex="-1" aria-labelledby="modalAddCourseLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="modalAddCourseLabel">
+                    <i class="fas fa-book-medical me-2"></i>Add Course
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="modal-year-h" value="@Model.Plans.Year" />
+                <input type="hidden" id="modal-plan-id-h" value="@Model.Plans.PlanId" />
+                <input type="hidden" id="modal-abrv-h" value="@Model.Plans.ABRV" />
+                <input type="hidden" id="modal-co-h" value="@Model.Plans.CoCode" />
+                <input type="hidden" id="modal-plan-status-h" value="@Model.Plans.PlanStatus" />
+
+                <div class="row g-3">
+
+                    <!-- Month -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Month <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select form-select-sm" id="modal-month">
+                            <option value="">-- Select Month --</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <div class="invalid-feedback">Month is required.</div>
+                    </div>
+                    <!-- Blank -->
+                    <div class="col-md-8 col-sm-6 col-12">
+                        
+                    </div>
+                    <!-- Category -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Category <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select form-select-sm" id="modal-category">
+                            <option value="">-- Select Category --</option>
+                            @foreach (var item in Model.Categories)
+                            {
+                                <option value="@item.CategoryId">@item.CategoryName</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Category is required.</div>
+                    </div>
+
+                    <!-- Course Name (Typeahead) -->
+                    <div class="col-md-8 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Course Name <span class="text-danger">*</span>
+                        </label>
+                        <div class="position-relative">
+                            <input type="text"
+                                   class="form-control form-control-sm"
+                                   id="modal-course"
+                                   placeholder="Type to search or enter new course..."
+                                   autocomplete="off" />
+                            <!-- Badge: New Course -->
+                            <span class="badge bg-warning text-dark ms-1 d-none" id="badge-new-course">
+                                <i class="fas fa-plus-circle me-1"></i>New Course
+                            </span>
+                            <!-- Typeahead Dropdown -->
+                            <ul class="list-group shadow-sm position-absolute w-100 z-3 d-none"
+                                id="course-suggestions"
+                                style="max-height:200px; overflow-y:auto; top:100%; left:0;">
+                            </ul>
+                        </div>
+                        <!-- Hidden fields -->
+                        <input type="hidden" id="modal-course-id" value="" />
+                        <input type="hidden" id="modal-is-new-course" value="0" />
+                        <div class="invalid-feedback d-block d-none" id="course-error">Course name is required.</div>
+                    </div>
+
+                    
+                    <!-- Number of Sessions -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1"># Session</label>
+                        <input type="number" class="form-control form-control-sm" id="modal-session" placeholder="0" min="0" />
+                        <div class="invalid-feedback">Session is required.</div>
+                    </div>
+
+                    <!-- Participant -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1"># Participant</label>
+                        <input type="number" class="form-control form-control-sm" id="modal-participant" placeholder="0" min="0" />
+                        <div class="invalid-feedback">Participant is required.</div>
+                    </div>
+
+                    <!-- Duration -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Plan Duration (Hours)</label>
+                        <input type="text" class="form-control form-control-sm" id="modal-duration" placeholder="e.g. 2 Hours" />
+                        <div class="invalid-feedback">Duration is required.</div>
+                    </div>
+
+                    
+                    <!-- Provider -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Provider</label>
+                        <input type="text" class="form-control form-control-sm" id="modal-provider" placeholder="Provider name" />
+                        <div class="invalid-feedback">Provider is required.</div>
+                    </div>
+
+                    <!-- Estimated Cost -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Est. Cost</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="modal-cost" placeholder="0.00" min="0" step="0.01" />
+                        </div>
+                    </div>
+
+                    <!-- Target Participant (Multi-select with tags) -->
+                    <div class="col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Target Participant</label>
+
+                        <!-- Dropdown Pilihan -->
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            @foreach (var role in new[] { "Operator", "SPV", "Planner", "Manager", "All" })
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-target-option"
+                                        data-value="@role">
+                                    <i class="fas fa-plus me-1"></i>@role
+                                </button>
+                            }
+                        </div>
+
+                        <!-- Tag Container -->
+                        <div id="target-tags-container"
+                             class="d-flex flex-wrap gap-2 p-2 border rounded bg-light"
+                             style="min-height: 38px;">
+                            <span class="text-muted text-xs fst-italic" id="target-placeholder">
+                                No target selected
+                            </span>
+                        </div>
+                        <div class="invalid-feedback">Target Participant is required.</div>
+
+                        <!-- Hidden input simpan value -->
+                        <input type="hidden" id="modal-target-participant" value="" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-modal-save">
+                    <i class="fas fa-save me-1"></i>Save Course
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- Course data untuk typeahead -->
+<script id="course-data" type="application/json">
+    [
+        @for (int i = 0; i < Model.Courses.Count; i++)
+        {
+                <text>
+                    {
+                        "id":         "@Model.Courses[i].CourseId",
+                        "name":       "@Model.Courses[i].CourseName",
+                        "categoryId": "@Model.Courses[i].CategoryId"
+                    }@(i < Model.Courses.Count - 1 ? "," : "")
+                </text>
+        }
+    ]
+</script>
+@section Scripts {
+    <script>
+
+        // ============================================================
+        // GLOBAL
+        // ============================================================
+        var allCourses      = [];
+        var selectedTargets = [];
+        var monthNames = 
+        {
+            '1':'January','2':'February','3':'March','4':'April',
+            '5':'May','6':'June','7':'July','8':'August',
+            '9':'September','10':'October','11':'November','12':'December'
+        };
+
+        try {
+            allCourses = JSON.parse($('#course-data').text());
+        } catch (e) {
+            console.warn('Failed to parse course data', e);
+        }
+
+        $(document).ready(function () {
+            //Toast Message =====================================================================
+            let toastMessage = '@TempData["ToastMessage"]';
+            let toastMode = '@TempData["ToastMode"]';
+            let errorMessage = '@TempData["ErrorMessage"]';
+            console.log(toastMessage, toastMode, errorMessage);
+            if (toastMessage) {
+                showToast(toastMode, toastMessage);
+            }
+            //if (errorMessage) {
+            //    ShowError(errorMessage);
+            //}
+            //-----------------------------------------------------------------------------------
+
+
+            // ============================================================
+            // Filter Change → Redirect
+            // ============================================================
+            $('#yearFilter, #departmentFilter, #companyFilter').on('change', function () {
+                window.location.href = getPlansDetailUrl();
+            });
+
+            // ============================================================
+            // Reset Modal saat dibuka
+            // ============================================================
+            $('#modalAddCourse').on('show.bs.modal', function () {
+                resetModalForm();
+            });
+
+            // ============================================================
+            // Category change → reset course
+            // ============================================================
+            $('#modal-category').on('change', function () {
+                $('#modal-course').val('');
+                $('#modal-course-id').val('');
+                $('#modal-is-new-course').val('0');
+                $('#badge-new-course').addClass('d-none');
+                $('#course-suggestions').addClass('d-none').empty();
+            });
+
+            // ============================================================
+            // Typeahead — Course Name
+            // ============================================================
+            $('#modal-course').on('input', function () {
+                var keyword    = $.trim($(this).val()).toLowerCase();
+                var categoryId = $('#modal-category').val();
+                var $list      = $('#course-suggestions');
+
+                $('#modal-course-id').val('');
+                $('#modal-is-new-course').val('0');
+                $('#badge-new-course').addClass('d-none');
+                            if (keyword.length < 1) {
+                    $list.addClass('d-none').empty();
+                    return;
+                }
+
+                var filtered = allCourses.filter(function (c) {
+                    var matchName = c.name.toLowerCase().includes(keyword);
+                    var matchCat  = categoryId ? c.categoryId == categoryId : true;
+                    return matchName && matchCat;
+                });
+
+                $list.empty();
+
+                filtered.forEach(function (c) {
+                    $list.append(
+                        $('<li>')
+                            .addClass('list-group-item list-group-item-action py-1 px-2 text-sm cursor-pointer')
+                            .attr('data-id', c.id)
+                            .attr('data-name', c.name)
+                            .text(c.name)
+                    );
+                });
+
+                // Selalu tampilkan opsi new course
+                $list.append(
+                    $('<li>')
+                        .addClass('list-group-item list-group-item-action py-1 px-2 text-sm text-warning fw-semibold cursor-pointer')
+                        .attr('data-new', '1')
+                        .html('<i class="fas fa-plus-circle me-1"></i>Add as new: "<strong>'
+                            + $.trim($('#modal-course').val()) + '</strong>"')
+                );
+
+                $list.removeClass('d-none');
+            });
+
+            // Pilih dari suggestions
+            $(document).on('click', '#course-suggestions li', function () {
+                var id    = $(this).attr('data-id');
+                var isNew = $(this).attr('data-new');
+
+                if (isNew === '1') {
+                    $('#modal-course-id').val('');
+                    $('#modal-is-new-course').val('1');
+                    $('#badge-new-course').removeClass('d-none');
+                } else {
+                    $('#modal-course').val($(this).attr('data-name'));
+                    $('#modal-course-id').val(id);
+                    $('#modal-is-new-course').val('0');
+                    $('#badge-new-course').addClass('d-none');
+                }
+
+                $('#course-suggestions').addClass('d-none').empty();
+                $('#course-error').addClass('d-none');
+                $('#modal-course').removeClass('is-invalid').addClass('is-valid');
+            });
+
+            // Tutup suggestions klik di luar
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#modal-course, #course-suggestions').length) {
+                    $('#course-suggestions').addClass('d-none').empty();
+                }
+            });
+
+            // ============================================================
+            // Target Participant — Multi Select Tags
+            // ============================================================
+            $(document).on('click', '.btn-target-option', function () {
+                var value = $(this).data('value');
+                if (selectedTargets.includes(value)) return;
+
+                selectedTargets.push(value);
+
+                $(this).prop('disabled', true)
+                       .removeClass('btn-outline-secondary')
+                       .addClass('btn-secondary');
+
+                $('#target-placeholder').remove();
+
+                var $tag = $('<span>')
+                    .addClass('badge d-inline-flex align-items-center gap-1 px-2 py-1')
+                    .css({
+                        'background-color': getTargetColor(value),
+                        'font-size': '0.78rem',
+                        'cursor': 'default'
+                    })
+                    .attr('data-target', value)
+                    .html(`${value}
+                        <button type="button"
+                                class="btn-remove-target btn-close btn-close-white"
+                                style="font-size:0.55rem;"
+                                data-target="${value}"
+                                aria-label="Remove">
+                        </button>`);
+
+                $('#target-tags-container').append($tag);
+                updateTargetHidden();
+            });
+
+            // Hapus tag target
+            $(document).on('click', '.btn-remove-target', function () {
+                var value = $(this).data('target');
+                selectedTargets = selectedTargets.filter(function (v) { return v !== value; });
+
+                $(`#target-tags-container span[data-target="${value}"]`).remove();
+
+                $(`.btn-target-option[data-value="${value}"]`)
+                    .prop('disabled', false)
+                    .removeClass('btn-secondary')
+                    .addClass('btn-outline-secondary');
+
+                if (selectedTargets.length === 0) {
+                    $('#target-tags-container').html(
+                        '<span class="text-muted text-xs fst-italic" id="target-placeholder">No target selected</span>'
+                    );
+                }
+
+                updateTargetHidden();
+            });
+
+            // ============================================================
+            // AJAX — Save Course ke Controller
+            // ============================================================
+            $('#btn-modal-save').on('click', function () {
+                if (!validateModalForm()) return;
+                    var courseId    = parseInt($('#modal-course-id').val()) || 0;
+                    var isNewCourse = (courseId === 0 || $('#modal-is-new-course').val() === '1') ? 1 : 0;
+
+                var payload = {
+                    PlanId:            parseInt($('#modal-plan-id-h').val())              || 0,
+                    CourseId:          courseId,
+                    CourseName:        $.trim($('#modal-course').val()),
+                    CategoryId:        parseInt($('#modal-category').val())  || 0,
+                    CategoryName:      $('#modal-category option:selected').text(),
+                    Month:             parseInt($('#modal-month').val()),
+                    Session:           parseInt($('#modal-session').val())     || 0,
+                    Participant:       parseInt($('#modal-participant').val()) || 0,
+                    Duration:          $.trim($('#modal-duration').val()),
+                    Provider:          $.trim($('#modal-provider').val()),
+                    EstCost:           parseFloat($('#modal-cost').val())      || 0,
+                    TargetParticipant: $('#modal-target-participant').val(),
+                    IsNewCourse:       isNewCourse,  // ✅ kirim int 0/1
+                    Year:               parseInt($('#modal-year-h').val()) || 0,
+                    
+                };
+
+                // Disable tombol save & tampilkan spinner
+                $('#btn-modal-save')
+                    .prop('disabled', true)
+                    .html('<span class="spinner-border spinner-border-sm me-1"></span>Saving...');
+
+                        // ✅ Debug log
+        console.log('Payload:', payload);
+        console.log('JSON:', JSON.stringify(payload));
+
+
+
+                $.ajax({
+                    url:         '@Url.Action("AddPlanDetail", "Planning")',
+                    type:        'POST',
+                    contentType: 'application/json',
+                    data:        JSON.stringify(payload),
+                    success: function (res) {
+                        if (res.success) {
+                            // ✅ Langsung reload page
+                            window.location.reload();
+                        } else {
+                            // Re-enable tombol save
+                            $('#btn-modal-save')
+                                .prop('disabled', false)
+                                .html('<i class="fas fa-save me-1"></i>Save Course');
+
+                            showToast('danger', res.message || 'Failed to save course.');
+                        }
+                    },
+                    error: function (xhr) {
+                        //showToast('danger', 'Server error: ' + (xhr.responseText || 'Unknown error'));
+                        alert((xhr.responseText || 'Unknown error'));
+                    },
+                    complete: function () {
+                        //Re-enable tombol save
+                        $('#btn-modal-save')
+                            .prop('disabled', false)
+                            .html('<i class="fas fa-save me-1"></i>Save Course');
+                    }
+                });
+            });
+
+            // ============================================================
+            // AJAX — Delete Row
+            // ============================================================
+            $(document).on('click', '.btn-delete-row', function () {
+                var detailId = $(this).data('detail-id');
+                console.log(detailId);
+               // if (!confirm('Are you sure you want to delete this course?')) return;
+                Swal.fire({
+                     title: "Are You Sure ?",
+                     html: `
+                         <p>Delete this Item </p>
+                     `,
+                     icon: "warning",
+                     showCancelButton: true,
+                     confirmButtonColor: "#3085d6",
+                     cancelButtonColor: "#d33",
+                     confirmButtonText: "Yes, delete!",
+                     cancelButtonText: "Cancel",
+                     focusConfirm: true
+                 }).then((result) => {
+                     if (result.isConfirmed) {
+                        //Start to Delete
+                        // Disable tombol delete sementara
+                        $(this).prop('disabled', true)
+                            .html('<span class="spinner-border spinner-border-sm"></span>');
+
+                        var payload = {
+                           detailId: detailId
+                        };
+                        $.ajax({
+                            url:         '@Url.Action("DeletePlanDetail", "Planning")',
+                            type:        'POST',
+                            data:        { detailId: detailId },
+                            success: function (res) {
+                                if (res.success) {
+                                    // ✅ Langsung reload page
+                                    window.location.reload();
+                                } else {
+                                    // Re-enable tombol save
+                                    $('#btn-modal-save')
+                                        .prop('disabled', false)
+                                        .html('<i class="fas fa-save me-1"></i>Save Course');
+
+                                    showToast('danger', res.message || 'Failed to save course.');
+                                }
+                            },
+                            error: function (xhr) {
+                                showToast('danger', 'Server error: ' + (xhr.responseText || 'Unknown error'));
+                            }
+                        });
+                     }
+                 });
+            //end confirm
+                 return false;   
+
+            });
+
+        }); // end document.ready
+
+        // ============================================================
+        // Helper Functions
+        // ============================================================
+        function validateModalForm() {
+            var isValid = true;
+
+            // Month
+            if (!$('#modal-month').val()) {
+                $('#modal-month').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#modal-month').removeClass('is-invalid').addClass('is-valid');
+            }
+
+            // Category
+            if (!$('#modal-category').val()) {
+                $('#modal-category').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#modal-category').removeClass('is-invalid').addClass('is-valid');
+            }
+
+            // Course Name
+            var courseName = $.trim($('#modal-course').val());
+            if (!courseName) {
+                $('#modal-course').addClass('is-invalid');
+                $('#course-error').text('Course name is required.').removeClass('d-none');
+                isValid = false;
+            } else {
+                $('#modal-course').removeClass('is-invalid').addClass('is-valid');
+                $('#course-error').addClass('d-none');
+            }
+            // Duration
+            var duration = $.trim($('#modal-duration').val());
+            if (!duration) {
+                $('#modal-duration').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#modal-duration').removeClass('is-invalid').addClass('is-valid');
+            }
+            // Session
+            var session = $.trim($('#modal-session').val());
+            if (!session) {
+                $('#modal-session').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#modal-session').removeClass('is-invalid').addClass('is-valid');
+            }
+            // Participant
+            var participant = $.trim($('#modal-participant').val());
+            if (!participant) {
+                $('#modal-participant').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#modal-participant').removeClass('is-invalid').addClass('is-valid');
+            }
+            // Provider
+            var provider = $.trim($('#modal-provider').val());
+            if (!provider) {
+                $('#modal-provider').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#modal-provider').removeClass('is-invalid').addClass('is-valid');
+            }
+            // Target
+            var target = $.trim($('#modal-target-participant').val());
+            if (!target) {
+                $('#target-tags-container').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#target-tags-container').removeClass('is-invalid').addClass('is-valid');
+            }
+            return isValid;
+        }
+
+        function resetModalForm() {
+            $('#modal-month').val('');
+            $('#modal-category').val('');
+            $('#modal-course').val('');
+            $('#modal-course-id').val('');
+            $('#modal-is-new-course').val('0');
+            $('#modal-session').val('');
+            $('#modal-participant').val('');
+            $('#modal-duration').val('');
+            $('#modal-provider').val('');
+            $('#modal-cost').val('');
+            $('#modal-target-participant').val('');
+
+            selectedTargets = [];
+
+            $('#badge-new-course').addClass('d-none');
+            $('#course-suggestions').addClass('d-none').empty();
+            $('#course-error').addClass('d-none');
+
+            $('#target-tags-container').html(
+                '<span class="text-muted text-xs fst-italic" id="target-placeholder">No target selected</span>'
+            );
+
+            $('#modalAddCourse .form-control, #modalAddCourse .form-select')
+                .removeClass('is-valid is-invalid');
+
+            $('.btn-target-option')
+                .prop('disabled', false)
+                .removeClass('btn-secondary')
+                .addClass('btn-outline-secondary');
+        }
+
+        function updateTargetHidden() {
+            $('#modal-target-participant').val(selectedTargets.join(','));
+        }
+
+        function getTargetColor(value) {
+            var colors = {
+                'Operator': '#0d6efd',
+                'SPV':      '#198754',
+                'Planner':  '#fd7e14',
+                'Manager':  '#6f42c1',
+                'All' : '#000000'
+            };
+            return colors[value] || '#6c757d';
+        }
+
+        // ============================================================
+        // Toast Notification
+        // ============================================================
+        function showToast(type, message) {
+            // Buat container jika belum ada
+            if ($('#toast-container').length === 0) {
+                $('body').append(`
+                    <div id="toast-container"
+                         class="position-fixed top-0 end-0 p-3"
+                         style="z-index: 9999;">
+                    </div>`
+                );
+            }
+
+            var id    = 'toast-' + Date.now();
+            var icon  = type === 'success'
+                            ? '<i class="fas fa-check-circle me-2"></i>'
+                            : '<i class="fas fa-times-circle me-2"></i>';
+            var $toast = $(`
+                <div id="${id}"
+                     class="toast align-items-center text-white bg-${type} border-0 mb-2"
+                     role="alert"
+                     aria-live="assertive"
+                     aria-atomic="true"
+                     data-bs-delay="3500">
+                    <div class="d-flex">
+                        <div class="toast-body fw-medium">
+                            ${icon}${message}
+                        </div>
+                        <button type="button"
+                                class="btn-close btn-close-white me-2 m-auto"
+                                data-bs-dismiss="toast"
+                                aria-label="Close">
+                        </button>
+                    </div>
+                </div>`
+            );
+
+            $('#toast-container').append($toast);
+            var bsToast = new bootstrap.Toast($toast[0]);
+            bsToast.show();
+
+            // Auto-remove dari DOM setelah hidden
+            $toast[0].addEventListener('hidden.bs.toast', function () {
+                $toast.remove();
+            });
+        }
+
+        // ============================================================
+        // URL Helpers
+        // ============================================================
+        function Back() {
+            window.location.href = getPlansUrl();
+        }
+
+        function getPlansDetailUrl() {
+            return '@Url.Action("PlanDetails", "Planning")?' + $.param({
+                co:    $('#co').val(),
+                dp:    $('#dp').val(),
+                yr:    $('#yr').val(),
+                st:    $('#st').val(),
+                pCo:   $('#companyFilter').val(),
+                pDept: $('#departmentFilter').val(),
+                pYear: $('#yearFilter').val()
+            });
+        }
+
+        function getPlansUrl() {
+            return '@Url.Action("Plans", "Planning")?' + $.param({
+                co: $('#co').val(),
+                dp: $('#dp').val(),
+                yr: $('#yr').val(),
+                st: $('#st').val()
+            });
+        }
+
+    </script>
+}

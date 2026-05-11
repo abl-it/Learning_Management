@@ -1,0 +1,608 @@
+﻿@model CourseIndexVM
+@{
+    ViewData["Title"] = "Courses";
+}
+<style>
+    #courseTable th:nth-child(3),
+    #courseTable td:nth-child(3) {
+        width: 200px !important;
+        max-width: 200px !important;
+        min-width: 150px !important;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    #courseTable {
+        table-layout: auto !important;
+    }
+</style>
+<div class="container-fluid">
+    <!-- Compact Header -->
+    <div class="row justify-content-between align-items-center mb-5">
+
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-auto">
+                <h4 class="mb-0 fw-medium">
+                    <i class="fas fa-book me-2 text-primary"></i>Courses
+                </h4>
+            </div>
+
+            <div class="col-12 col-md-auto ms-md-auto d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                <a class="btn btn-sm btn-success" href="javascript:void(0);"
+                   onclick="Add()">Add Course</a>
+                @* <button class="btn btn-secondary btn-sm px-4 w-100 w-md-auto">Cancel</button> *@
+                @* <button class="btn btn-success btn-sm px-4 w-100 w-md-auto" style="min-width: 175px;">Update Period</button> *@
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Filter Panel -->
+    <div class="card card-compact mb-3">
+        <div class="card-header">
+            <h6 class="mb-0 fw-medium">
+                <i class="fas fa-filter me-2"></i>Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row spacing-sm align-items-end">
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="categoryFilter" class="form-label text-xs fw-medium mb-1">Category</label>
+                    @Html.DropDownListFor(m => m.SelectedCategory, Model.Categories,
+                    new { @class = "form-select form-select-xs", @id = "categoryFilter" })
+                </div>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="statusFilter" class="form-label text-xs fw-medium mb-1">Status</label>
+                    <select class="form-select form-select-xs" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-xl-1 col-lg-1 col-md-6 col-sm-6 col-12">
+                    <button type="button" class="btn btn-outline-secondary btn-xs w-100" id="clearFilters">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact DataTable -->
+    <div class="card card-compact">
+        <div class="card-body p-2">
+            <!-- Remove padding to maximize space -->
+            <table id="courseTable" class="table table-striped table-compact" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Duration</th>
+                        <th>T.Provider</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title mb-0" id="title">
+                    <i class="fas fa-plus-circle me-1"></i>Modal Title
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+                <form id="formModal">
+                    <div id="validation-error" class="alert alert-danger d-none text-xs py-2"></div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-hashtag me-1"></i>ID
+                            </label>
+                            <input type="text" id="id-a" class="form-control form-control-xs" readonly>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-tags me-1"></i>CATEGORY
+                            </label>
+                            <select class="form-control form-control-xs" id="category-a" name="category-a">
+                                @foreach (var item in Model.Categories)
+                                {
+                                   if (item.Value != "All")
+                                    {
+                                        <option value="@item.Value">@item.Text</option>        
+                                    }
+                                }                                
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-tag me-1"></i>NAME *
+                            </label>
+                            <input type="text" id="name-a" class="form-control form-control-xs" required placeholder="Enter name">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-info-circle me-1"></i>DESCRIPTION *
+                            </label>
+                            <textarea id="description-a" class="form-control form-control-xs" rows="2" required placeholder="Enter description..."></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-clock me-1"></i>DURATION *
+                            </label>
+                            <input type="text" id="duration-a" class="form-control form-control-xs" required placeholder="Enter duration" value="0">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fa-solid fa-person-chalkboard me-1"></i>PROVIDER
+                            </label>
+                            <select class="form-control form-control-xs" id="provider-a" name="provider-a">
+                                <option value="">N/A</option>
+                                <option value="EXTERNAL">External</option>
+                                <option value="INTERNAL">Internal</option>
+                            </select>
+                        </div>
+
+                        <!-- Enhanced Active Toggle Switch -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center py-2 px-3 bg-light rounded border">
+                                <label class="form-label text-xs fw-medium mb-0">
+                                    <i class="fas fa-power-off me-1 text-success"></i>STATUS
+                                </label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="isActive-a" checked>
+                                    <label class="form-check-label text-xs fw-bold" for="isActive-a" id="activeLabel">
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button type="button" id="btn-add" class="btn btn-success btn-xs">
+                    <i class="fas fa-plus me-1"></i>Add
+                </button>
+                <button type="button" id="btn-edit" class="btn btn-primary btn-xs">
+                    <i class="fas fa-save me-1"></i>Update
+                </button>
+                <button type="button" class="btn btn-secondary btn-xs" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts 
+{
+    <script>
+        const antiForgeryToken = '@(ViewBag.AntiForgeryToken ?? "")';
+
+        let courseTable;
+
+    $(document).ready(function() {
+        // Initialize compact DataTable
+            courseTable = $('#courseTable').DataTable({
+            processing: true,
+            serverSide: true,
+            responsive: true,
+                autoWidth: false,
+            pageLength: 5, // Show more rows since they're smaller
+            lengthMenu: [[5, 25, 50, 100, 200], [5, 25, 50, 100, 200]],
+                // ✅ Use columnDefs for better width control
+                    columnDefs: [
+                            {
+                                targets: 1, // Name column (0-indexed)
+                                width: "25px",
+                                className: "text-left"
+                            },
+                        {
+                            targets: 2, // Name column (0-indexed)
+                            width: "200px",
+                            className: "text-left"
+                        },
+                        {
+                            targets: 3, // Description column
+                            width: "200px"
+                        }
+                    ],
+            ajax: {
+                url: '@Url.Action("GetCourses", "Master")',
+                type: 'POST',
+                data: function(d) {
+                    d.categoryFilter = $('#categoryFilter').val();
+                    d.statusFilter = $('#statusFilter').val();
+                }
+                    
+            },
+            columns: [
+                {
+                    data: 'courseId',
+                    name: 'Id',
+                    responsivePriority: 1000,
+                    className: 'text-center fw-medium',
+                    width: '10px'
+                },
+                {
+                    data: 'courseCode',
+                    name: 'Code',
+                    responsivePriority: 1,
+                    
+                },
+                {
+                    data: 'courseName',
+                    name: 'Name',
+                    responsivePriority: 2,
+                },
+                {
+                        data: 'description',
+                        name: 'Description',
+                        responsivePriority: 4,
+                        className: 'text-left',
+                        width: '90px',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                // ✅ Truncate long descriptions and add tooltip
+                                var maxLength = 90; // Adjust as needed
+                                var truncated = data && data.length > maxLength ?
+                                    data.substring(0, maxLength) + '...' : data;
+
+                                return `<span title="${data || ''}" class="description-cell">${truncated || ''}</span>`;
+                            }
+                            return data;
+                        }
+
+                },
+                {
+                    data: 'categoryCode',
+                    name: 'Category',
+                    responsivePriority: 4,
+                    className: 'text-center',
+                    width: '10px',
+
+                },
+                {
+                    data: 'durationHours',
+                    name: 'Duration',
+                    responsivePriority: 4,
+                    className: 'text-center',
+                    width: '10px',
+
+                },
+                {
+                    data: 'trainingProvider',
+                    name: 'Provider',
+                    responsivePriority: 4,
+                    className: 'text-center',
+                    width: '25px',
+
+                },
+                {
+                    data: 'isActive',
+                    name: 'IsActive',
+                    responsivePriority: 1,
+                    className: 'text-center text-sm',
+                    width: '25px',
+                    render: function(data, type, row) {
+                        if (data == 1) {
+                            return '<span class="badge bg-success">Active</span>';
+                        } else {
+                            return '<span class="badge bg-secondary">Inactive</span>';
+                        }
+                    }
+                },
+                {
+                    data: null, // No data binding needed
+                    name: 'Actions',
+                    orderable: false, // Disable sorting
+                    searchable: false, // Disable searching
+                    responsivePriority: 1, // Always visible
+                    className: 'text-center action-buttons',
+                    width: '50px', // Smaller width for single button
+                    render: function(data, type, row) {
+                        return `
+                            <button type="button" class="btn btn-outline-primary btn-xs edit-btn" data-id="${row.courseId}" title="Edit Course">
+                                <i class="fas fa-edit me-1"></i>Edit
+                            </button>
+                        `;
+                    }
+                }
+
+            ],
+            order: [[0, 'desc']],
+            language: {
+                processing: '<i class="fas fa-spinner fa-spin me-2"></i>Loading...',
+                search: 'Search:',
+                lengthMenu: 'Show _MENU_',
+                info: '_START_-_END_ of _TOTAL_',
+                infoEmpty: 'No courses found',
+                infoFiltered: '(filtered from _MAX_)',
+                zeroRecords: 'No matching courses found',
+                paginate: {
+                    first: '<i class="fas fa-angle-double-left"></i>',
+                    previous: '<i class="fas fa-angle-left"></i>',
+                    next: '<i class="fas fa-angle-right"></i>',
+                    last: '<i class="fas fa-angle-double-right"></i>'
+                }
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                    '<"row"<"col-sm-12"tr>>' +
+                    '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            drawCallback: function() {
+                // Add hover effects and animations
+                $(this).find('tbody tr').hover(
+                    function() { $(this).addClass('table-hover-row'); },
+                    function() { $(this).removeClass('table-hover-row'); }
+                );
+            }
+        });
+
+            
+        // Event handlers with improved UX
+            $('#clearFilters').on('click', function() {
+                $('#categoryFilter').val('All');
+                $('#statusFilter').val('');
+
+                const btn = $(this);
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Clearing...');
+                btn.prop('disabled', true);
+
+                courseTable.ajax.reload(function() {
+                    btn.html('<i class="fas fa-times me-1"></i>Clear');
+                    btn.prop('disabled', false);
+                }); 
+            });
+
+        // Auto-apply filters with debouncing
+        let filterTimeout;
+        $('#categoryFilter, #statusFilter').on('change', function() {
+            clearTimeout(filterTimeout);
+            // Show loading indicator
+            const filterBtn = $(this);
+            filterBtn.prop('disabled', true);
+
+            filterTimeout = setTimeout(() => {
+                courseTable.ajax.reload(function() {
+                    filterBtn.prop('disabled', false);
+                });
+            }, 300);
+        });
+
+        // Handle Edit button clicks========================================================================
+        $('#courseTable').on('click', '.edit-btn', function(e) {
+            e.preventDefault();
+            clearError();
+            propSetting('edit');
+
+            const courseId = $(this).data('id');
+
+
+            // Get the row data
+            var table = $('#courseTable').DataTable();
+            var row = $(this).closest('tr');
+            var data = table.row(row).data();
+
+            // Populate the form with existing data
+            $('#id-a').val(courseId);
+            $('#category-a').val(data.categoryId);
+            $('#name-a').val(data.courseName);
+            $('#code-a').val(data.courseCode);
+            $('#description-a').val(data.description);
+            $('#provider-a').val(data.trainingProvider);
+            $('#duration-a').val(data.durationHours);
+            $('#isActive-a').prop('checked', data.isActive == 1);
+
+            // Set modal title
+            $('#title').text('Edit Course');
+
+            // Show Edit button and hide Add button
+            $('#btn-edit').show();
+            $('#btn-add').hide();
+
+            // Show modal
+            let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
+            modal.show();
+        });
+        //------------------------------------------------------------------------------
+         // Handle Add button click========================================================================
+        $('#btn-add').on('click', function() {
+            if (!validateForm()) return;
+
+            clearError();
+
+            const btn = $(this);
+            const originalText = btn.html();
+            btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...').prop('disabled', true);
+
+            // Use form data instead of JSON
+            var formData = {
+                CourseName: $('#name-a').val().trim(),
+                Description: $('#description-a').val().trim(),
+                CategoryId: $('#category-a').val().trim(),
+                DurationHours: $('#duration-a').val().trim(),
+                TrainingProvider: $('#provider-a').val().trim(),
+                IsActive: $('#isActive-a').is(':checked') ? 1 : 0,
+                // ✅ Include antiforgery token
+                __RequestVerificationToken: antiForgeryToken
+            };
+
+            console.log('Adding course:', formData);
+
+            $.ajax({
+                url: '@Url.Action("CreateCourse", "Master")',
+                type: 'POST',
+                     headers: {
+                            'X-CSRF-TOKEN': antiForgeryToken // ✅ Updated header name
+                        },
+                     
+                data: formData, // Send as form data instead of JSON
+                // Remove contentType to let jQuery set it automatically
+                success: function(response) {
+                    if (response.success) {
+                        $('#myModal').modal('hide');
+                        courseTable.ajax.reload();
+                        showNotification('Course added successfully!', 'success');
+                    } else {
+                        showError(response.message || 'Error adding course');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr.responseText);
+                    showError('Error adding category: ' + error);
+                },
+                complete: function() {
+                    btn.html(originalText).prop('disabled', false);
+                }
+            });
+        });
+        //-----------------------------------------------------------------------------
+        // Handle Edit button click
+        $('#btn-edit').on('click', function() {
+            if (!validateForm()) return;
+
+            clearError();
+
+            const btn = $(this);
+            const originalText = btn.html();
+            btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Saving...').prop('disabled', true);
+
+            // Use form data instead of JSON
+            var formData = {
+                    CourseId: $('#id-a').val(),
+                CourseName: $('#name-a').val().trim(),
+                Description: $('#description-a').val().trim(),
+                CategoryId: $('#category-a').val().trim(),
+                DurationHours: $('#duration-a').val().trim(),
+                TrainingProvider: $('#provider-a').val().trim(),
+                IsActive: $('#isActive-a').is(':checked') ? 1 : 0,
+                    __RequestVerificationToken: antiForgeryToken
+            };
+
+            console.log('Updating category:', formData);
+
+            $.ajax({
+                url: '@Url.Action("UpdateCourse", "Master")',
+                type: 'POST',
+                    headers: {
+                                'X-CSRF-TOKEN': antiForgeryToken // ✅ Updated header name
+                            },
+                data: formData, // Send as form data instead of JSON
+                // Remove contentType to let jQuery set it automatically
+                success: function(response) {
+                    if (response.success) {
+                        $('#myModal').modal('hide');
+                        courseTable.ajax.reload();
+                        showNotification('Course updated successfully!', 'success');
+                    } else {
+                        showError(response.message || 'Error updating course');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr.responseText);
+                    showError('Error updating course: ' + error);
+                },
+                complete: function() {
+                    btn.html(originalText).prop('disabled', false);
+                }
+            });
+        });
+        //----------------------------------------------------------------------------------------
+        
+    });
+    //end-ready
+
+        //ADD Data ===================================================================================
+            function Add(){
+                // Reset form fields
+                document.getElementById('formModal').reset();
+                propSetting('add');
+                clearError();
+                // Set modal title
+                document.getElementById('title').textContent = "Add Course";
+
+                // Show the Add button and hide the Edit button
+                document.getElementById('btn-add').style.display = "inline-block";
+                document.getElementById('btn-edit').style.display = "none";
+
+                // Open the modal
+                let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
+                modal.show();
+            }
+        //--------------------------------------------------------------------------------------------
+
+        //Validate=======================================================================================
+        function validateForm() {
+            var name = $('#name-a').val().trim();
+            var description = $('#description-a').val().trim();
+            var duration = $('#duration-a').val().trim();
+            
+            $('#validation-error').addClass('d-none').text('');
+
+            if (!name) {
+                $('#validation-error').removeClass('d-none').text('Course Name is required');
+                $('#name-a').focus();
+                return false;
+            }
+
+            if (!description) {
+                $('#validation-error').removeClass('d-none').text('Course Description is required');
+                $('#description-a').focus();
+                return false;
+            }
+
+            if (!duration || duration <= 0) {
+                $('#validation-error').removeClass('d-none').text('Course Duration is required');
+                $('#duration-a').focus();
+                return false;
+            }
+
+            // if (name.length < 3) {
+            //     $('#validation-error').removeClass('d-none').text('Category Name must be at least 3 characters..!');
+            //     $('#name-a').focus();
+            //     return false;
+            // }
+
+            return true;
+            
+        }
+        //-----------------------------------------------------------------------------------------------------------------------
+                
+        //Properties Setting============================================================================
+        function propSetting(mode)
+        {
+            if (mode === 'add') {
+                $('#id-a').prop('readonly', true);
+                $('#category-a').prop('disabled', false);
+                $('#name-a').prop('disabled', false);
+            } else if (mode === 'edit') {
+                $('#id-a').prop('readonly', true);
+                $('#category-a').prop('disabled', true);
+                $('#name-a').prop('disabled', true);
+            }
+        }
+        //----------------------------------------------------------------------------------------------
+    </script>
+    <!-- Hidden form for anti-forgery token -->
+    <form method="post" asp-controller="Master" asp-action="GetCourses" style="display:none">
+        @Html.AntiForgeryToken()
+    </form>
+}

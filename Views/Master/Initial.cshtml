@@ -1,0 +1,356 @@
+﻿@{
+    ViewData["Title"] = "Fungsi Inisialisasi Sistem";
+}
+
+@* CSS Kustom Khusus untuk Halaman Ini *@
+@* Ini akan ditempatkan di <head> melalui RenderBody, setelah CSS global Anda. *@
+<style>
+    .hero-section {
+        background-color: #2c3e50; /* Warna yang lebih gelap untuk kesan modern */
+        color: white;
+        padding: 60px 0;
+        margin-bottom: 40px;
+        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        animation: fadeInDown 0.8s ease-out; /* Animasi muncul dari atas */
+    }
+    .hero-section h1 {
+        font-size: 3.5em;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .hero-section p {
+        font-size: 1.2em;
+        opacity: 0.9;
+    }
+    .function-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%; /* Memastikan semua kartu dalam satu baris memiliki tinggi yang sama */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        animation: fadeInUp 0.8s ease-out forwards; /* Animasi muncul dari bawah */
+        opacity: 0; /* Mulai tersembunyi */
+    }
+    /* Animasi delay untuk setiap kartu */
+    .function-card:nth-child(1) { animation-delay: 0.1s; }
+    .function-card:nth-child(2) { animation-delay: 0.2s; }
+    .function-card:nth-child(3) { animation-delay: 0.3s; }
+    .function-card:nth-child(4) { animation-delay: 0.4s; }
+    .function-card:nth-child(5) { animation-delay: 0.5s; }
+    .function-card:nth-child(6) { animation-delay: 0.6s; }
+
+    .function-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    .function-card h2 {
+        color: #34495e;
+        font-size: 1.8em;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+    .function-card p {
+        color: #7f8c8d;
+        font-size: 1em;
+        line-height: 1.6;
+        flex-grow: 1; /* Memungkinkan paragraf untuk mengambil ruang yang tersedia */
+        margin-bottom: 20px;
+    }
+    .function-card .btn {
+        margin-top: auto; /* Mendorong tombol ke bagian bawah kartu */
+        font-weight: 500;
+    }
+    .modal-backdrop.show {
+        opacity: 0.7; /* Membuat backdrop modal sedikit lebih gelap */
+    }
+
+    /* Keyframe Animations */
+    @@keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+@* HTML Content Halaman Inisialisasi *@
+<header class="hero-section text-center">
+    <div class="container">
+        <h1>Panel Inisialisasi Sistem</h1>
+        <p class="lead">Pilih fungsi di bawah ini untuk memulai proses inisialisasi atau pembaruan sistem.</p>
+    </div>
+</header>
+
+<main class="container my-5">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <!-- Fungsi 1: Initial Yearly Training Plans -->
+        <div class="col">
+            <div class="function-card">
+                <h2>1. Initial Yearly Training Plans</h2>
+                <p>Fungsi ini akan menginisialisasi rencana pelatihan tahunan untuk semua departemen berdasarkan tahun yang ditentukan. Proses ini akan memeriksa duplikasi sebelum penyisipan.</p>
+                <button type="button" class="btn btn-primary mt-auto" data-bs-toggle="modal" data-bs-target="#yearlyPlanModal">
+                    <i class="fa-solid fa-calendar-check me-2"></i>Inisialisasi
+                </button>
+            </div>
+        </div>
+
+        <!-- Fungsi 2: Update Master Data -->
+        <div class="col">
+            <div class="function-card">
+                <h2>2. Update Master Data</h2>
+                <p>Perbarui data master dari sumber eksternal untuk memastikan informasi terbaru tersedia di sistem. Ini bisa mencakup data karyawan, struktur organisasi, dll.</p>
+                <button type="button" class="btn btn-info mt-auto" onclick="showProcessAlert('Update Master Data')">
+                    <i class="fas fa-sync-alt me-2"></i>Proses
+                </button>
+            </div>
+        </div>
+
+        <!-- Fungsi 3: Generate Monthly Reports -->
+        <div class="col">
+            <div class="function-card">
+                <h2>3. Generate Monthly Reports</h2>
+                <p>Hasilkan laporan bulanan secara otomatis berdasarkan parameter yang telah dikonfigurasi. Laporan ini dapat diunduh atau dikirim melalui email.</p>
+                <button type="button" class="btn btn-success mt-auto" onclick="showProcessAlert('Generate Monthly Reports')">
+                    <i class="fas fa-file-invoice me-2"></i>Proses
+                </button>
+            </div>
+        </div>
+
+        <!-- Fungsi 4: Archive Old Data -->
+        <div class="col">
+            <div class="function-card">
+                <h2>4. Archive Old Data</h2>
+                <p>Pindahkan data lama ke arsip untuk menjaga kinerja sistem dan mematuhi kebijakan retensi data.</p>
+                <button type="button" class="btn btn-secondary mt-auto" onclick="showProcessAlert('Archive Old Data')">
+                    <i class="fas fa-archive me-2"></i>Proses
+                </button>
+            </div>
+        </div>
+
+        <!-- Fungsi 5: Sync User Accounts -->
+        <div class="col">
+            <div class="function-card">
+                <h2>5. Sync User Accounts</h2>
+                <p>Sinkronisasi akun pengguna dengan sistem autentikasi eksternal (misalnya, LDAP atau Active Directory).</p>
+                <button type="button" class="btn btn-warning mt-auto" onclick="showProcessAlert('Sync User Accounts')">
+                    <i class="fas fa-users-cog me-2"></i>Proses
+                </button>
+            </div>
+        </div>
+
+        <!-- Fungsi 6: Clear Cache and Logs -->
+        <div class="col">
+            <div class="function-card">
+                <h2>6. Clear Cache and Logs</h2>
+                <p>Bersihkan cache aplikasi dan file log untuk mengosongkan ruang disk dan memastikan sistem berjalan optimal.</p>
+                <button type="button" class="btn btn-danger mt-auto" onclick="showProcessAlert('Clear Cache and Logs')">
+                    <i class="fas fa-broom me-2"></i>Proses
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- The Modal for Yearly Training Plans -->
+<div class="modal fade" id="yearlyPlanModal" tabindex="-1" aria-labelledby="yearlyPlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="yearlyPlanModalLabel">Initial Yearly Training Plans</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="yearInput" class="form-label">Masukkan Tahun:</label>
+                    <input type="number" class="form-control" id="yearInput" placeholder="Contoh: 2026" min="1900" max="2100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="processYearlyPlan">Proses Inisialisasi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Fungsi pembantu untuk menampilkan konfirmasi dengan SweetAlert2 dan memanggil API
+        function showProcessAlert(functionName) {
+            Swal.fire({
+                title: 'Konfirmasi Proses',
+                text: `Anda yakin ingin menjalankan fungsi "${functionName}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Proses!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Memproses...',
+                        text: `Mohon tunggu, fungsi "${functionName}" sedang berjalan.`,
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    let apiUrl = '';
+                    let requestBody = {}; // Untuk fungsi ini, requestBody bisa menjadi objek kosong jika tidak ada payload
+
+                    if (functionName === 'Update Master Data') {
+                        apiUrl = '@Url.Action("update_master_data", "Initial")';
+                        requestBody = {}; // Kirim objek kosong jika API tidak mengharapkan body
+                    }
+                    // Tambahkan kondisi untuk fungsi lain di sini jika ada API-nya
+                    // else if (functionName === 'Generate Monthly Reports') {
+                    //    apiUrl = '@Url.Action("generate_monthly_reports", "Initial")';
+                    //    requestBody = { month: new Date().getMonth() + 1, year: new Date().getFullYear() };
+                    // }
+                    else {
+                        Swal.close();
+                        toastr.info(`Fungsi "${functionName}" belum memiliki implementasi API.`, 'Informasi');
+                        return;
+                    }
+
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // 'Authorization': 'Bearer ' + someToken,
+                        },
+                        body: JSON.stringify(requestBody) // Kirim objek kosong jika tidak ada data yang relevan
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().catch(() => {
+                                return response.text().then(text => ({ success: false, message: text || `Error HTTP ${response.status}: ${response.statusText}` }));
+                            }).then(errorData => {
+                                throw new Error(errorData.message || `Error HTTP ${response.status}: ${response.statusText}`);
+                            });
+                        }
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            return response.json();
+                        } else {
+                            return response.text().then(text => ({ success: false, message: text || 'Respons server bukan JSON yang diharapkan.' }));
+                        }
+                    })
+                    .then(data => {
+                        Swal.close();
+
+                        if (data.success) {
+                            toastr.success(data.message || `Fungsi "${functionName}" berhasil dijalankan.`, 'Berhasil');
+                        } else {
+                            toastr.error(data.message || `Fungsi "${functionName}" gagal dijalankan.`, 'Gagal');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.close();
+                        console.error('Error calling API for ' + functionName + ':', error);
+                        toastr.error(`Terjadi kesalahan saat memproses "${functionName}": ${error.message}`, 'Kesalahan API');
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            var currentYear = new Date().getFullYear();
+            $('#yearInput').val(currentYear + 1);
+
+            $('#processYearlyPlan').on('click', async function() { // Menggunakan async di sini
+                var year = $('#yearInput').val();
+                if (year && !isNaN(year) && year >= 1900 && year <= 2100) {
+                    Swal.fire({
+                        title: 'Konfirmasi Inisialisasi',
+                        text: `Anda yakin ingin menginisialisasi rencana pelatihan tahunan untuk tahun ${year}?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, Inisialisasi!',
+                        cancelButtonText: 'Batal'
+                    }).then(async (result) => { // Menggunakan async di sini
+                        if (result.isConfirmed) {
+                            Swal.fire({
+                                title: 'Memproses...',
+                                text: 'Mohon tunggu, proses inisialisasi sedang berjalan.',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            //const apiUrl = '@Url.Action("InitialYearlyPlan", "Initial")';
+                            const apiUrl = '@Url.Content("~/api/Initial/init_yearly_plan")';
+                            console.log("Calling API:", apiUrl);
+
+                            try {
+                                const response = await fetch(apiUrl, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        // 'Authorization': 'Bearer ' + someToken,
+                                    },
+                                    body: JSON.stringify(parseInt(year)) // Mengirim integer mentah di body
+                                });
+
+                                const contentType = response.headers.get("content-type");
+                                const isJson = contentType && contentType.indexOf("application/json") !== -1;
+                                let data;
+
+                                // Baca body respons hanya sekali
+                                if (isJson) {
+                                    data = await response.json();
+                                } else {
+                                    data = await response.text();
+                                    // Jika bukan JSON, bungkus dalam format ApiResponse palsu agar konsisten
+                                    data = { success: false, message: data || 'Respons server bukan JSON yang diharapkan.' };
+                                }
+
+                                Swal.close(); // Tutup SweetAlert "Memproses..."
+
+                                if (response.ok && data.success) { // Cek HTTP status OK dan Success dari ApiResponse
+                                    toastr.success(data.message || `Rencana pelatihan tahun ${year} berhasil diinisialisasi.`, 'Berhasil');
+                                } else {
+                                    // Jika HTTP status bukan OK, atau data.success false
+                                    toastr.error(data.message || `Rencana pelatihan tahun ${year} gagal diinisialisasi. ${response.status}: ${response.statusText}`, 'Gagal');
+                                }
+                                var modalElement = document.getElementById('yearlyPlanModal');
+                                var bootstrapModal = bootstrap.Modal.getInstance(modalElement);
+                                if (bootstrapModal) {
+                                    bootstrapModal.hide();
+                                }
+                            } catch (error) {
+                                Swal.close(); // Tutup SweetAlert "Memproses..." jika ada error
+                                console.error('Error during Yearly Plan Initialization:', error);
+                                toastr.error(`Terjadi kesalahan saat memproses inisialisasi: ${error.message}`, 'Kesalahan API');
+                                var modalElement = document.getElementById('yearlyPlanModal');
+                                var bootstrapModal = bootstrap.Modal.getInstance(modalElement);
+                                if (bootstrapModal) {
+                                    bootstrapModal.hide();
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    Swal.fire(
+                        'Input Tidak Valid',
+                        'Mohon masukkan tahun yang valid (antara 1900 dan 2100).',
+                        'error'
+                    );
+                }
+            });
+        });
+    </script>
+}

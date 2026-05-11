@@ -1,0 +1,376 @@
+﻿@model EmployeeIndexViewModel
+@{
+    ViewData["Title"] = "Employees";
+}
+<style>
+    /* Action buttons styling */
+    .action-buttons {
+        white-space: nowrap;
+    }
+
+        .action-buttons .btn-group {
+            display: flex;
+            gap: 2px;
+        }
+
+        .action-buttons .btn-xs {
+            padding: 0.25rem 0.4rem;
+            font-size: 0.7rem;
+            border-radius: 0.2rem;
+            line-height: 1;
+            min-width: 28px;
+            height: 26px;
+        }
+
+        .action-buttons .btn-outline-primary {
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+
+            .action-buttons .btn-outline-primary:hover {
+                background-color: #0d6efd;
+                border-color: #0d6efd;
+                color: white;
+            }
+
+        .action-buttons .btn-outline-danger {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+            .action-buttons .btn-outline-danger:hover {
+                background-color: #dc3545;
+                border-color: #dc3545;
+                color: white;
+            }
+
+    /* Compact button group */
+    .btn-group .btn-xs:not(:first-child) {
+        border-left: none;
+        margin-left: -1px;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .action-buttons .btn-xs
+
+    {
+        padding: 0.2rem 0.3rem;
+        font-size: 0.65rem;
+        min-width: 24px;
+        height: 24px;
+    }
+
+    }
+</style>
+<div class="container-fluid">
+    <!-- Compact Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0 fw-medium">
+            <i class="fas fa-users me-2 text-primary"></i>Employee Management
+        </h4>
+        <small class="text-muted">Manage your team efficiently</small>
+    </div>
+
+    <!-- Compact Filter Panel -->
+    <div class="card card-compact mb-3">
+        <div class="card-header">
+            <h6 class="mb-0 fw-medium">
+                <i class="fas fa-filter me-2"></i>Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row spacing-sm align-items-end">
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="departmentFilter" class="form-label text-xs fw-medium mb-1">Department</label>
+                    @Html.DropDownListFor(m => m.SelectedDepartment, Model.Departments,
+                    new { @class = "form-select form-select-xs", @id = "departmentFilter" })
+                </div>
+                <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="hireDateFrom" class="form-label text-xs fw-medium mb-1">From Date</label>
+                    <input type="date" class="form-control form-control-xs" id="hireDateFrom" name="hireDateFrom" />
+                </div>
+                <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="hireDateTo" class="form-label text-xs fw-medium mb-1">To Date</label>
+                    <input type="date" class="form-control form-control-xs" id="hireDateTo" name="hireDateTo" />
+                </div>
+                <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="minSalary" class="form-label text-xs fw-medium mb-1">Min Salary</label>
+                    <input type="number" step="1000" class="form-control form-control-xs" id="minSalary" name="minSalary" placeholder="50000" />
+                </div>
+                <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="maxSalary" class="form-label text-xs fw-medium mb-1">Max Salary</label>
+                    <input type="number" step="1000" class="form-control form-control-xs" id="maxSalary" name="maxSalary" placeholder="100000" />
+                </div>
+                <div class="col-xl-1 col-lg-1 col-md-6 col-sm-6 col-12">
+                    <button type="button" class="btn btn-primary btn-xs w-100" id="applyFilters">
+                        <i class="fas fa-search me-1"></i>Apply
+                    </button>
+                </div>
+                <div class="col-xl-1 col-lg-1 col-md-6 col-sm-6 col-12">
+                    <button type="button" class="btn btn-outline-secondary btn-xs w-100" id="clearFilters">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact DataTable -->
+    <div class="card card-compact">
+        <div class="card-body p-2">
+            <!-- Remove padding to maximize space -->
+            <table id="employeeTable" class="table table-striped table-compact" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First</th>
+                        <th>Last</th>
+                        <th>email</th>
+                        <th>Dept</th>
+                        <th>HireDate</th>
+                        <th>Salary</th>
+                        <th>Actions</th>
+
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const antiForgeryToken = '@(ViewBag.AntiForgeryToken ?? "")';
+
+        let employeeTable;
+
+        $(document).ready(function() {
+            // Initialize compact DataTable
+            employeeTable = $('#employeeTable').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                pageLength: 50, // Show more rows since they're smaller
+                lengthMenu: [[5, 25, 50, 100, 200], [5, 25, 50, 100, 200]],
+                ajax: {
+                    url: '@Url.Action("GetEmployees", "Employee")',
+                    type: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-CSRF-TOKEN', antiForgeryToken);
+                    },
+                    data: function(d) {
+                        d.departmentFilter = $('#departmentFilter').val();
+                        d.hireDateFrom = $('#hireDateFrom').val();
+                        d.hireDateTo = $('#hireDateTo').val();
+                        d.minSalary = $('#minSalary').val();
+                        d.maxSalary = $('#maxSalary').val();
+                    }
+                },
+                columns: [
+                    {
+                        data: 'id',
+                        name: 'Id',
+                        responsivePriority: 1,
+                        className: 'text-center fw-medium',
+                        width: '50px'
+                    },
+                    {
+                        data: 'firstName',
+                        name: 'FirstName',
+                        responsivePriority: 2,
+                        width: '100px'
+                    },
+                    {
+                        data: 'lastName',
+                        name: 'LastName',
+                        responsivePriority: 3,
+                        width: '100px'
+                    },
+                    {
+                        data: 'email',
+                        name: 'Email',
+                        responsivePriority: 10000,
+                        className: 'text-sm',
+                        width: '160px',
+                        render: function(data) {
+                            if (!data) return '';
+                            // Truncate long emails
+                            return data.length > 18 ?
+                                '<span title="' + data + '">' + data.substring(0, 15) + '...</span>' :
+                                data;
+                        }
+                    },
+                    {
+                        data: 'department',
+                        name: 'Department',
+                        responsivePriority: 4,
+                        className: 'text-center',
+                        width: '90px',
+                        render: function(data) {
+                            if (!data) return '';
+                            const colors = {
+                                'IT': 'primary',
+                                'HR': 'success',
+                                'Finance': 'warning',
+                                'Marketing': 'info'
+                            };
+                            const color = colors[data] || 'secondary';
+                            return `<span class="badge bg-${color} badge-department">${data}</span>`;
+                        }
+                    },
+                    {
+                        data: 'hireDate',
+                        name: 'HireDate',
+                        responsivePriority: 5,
+                        className: 'text-center text-sm',
+                        width: '90px',
+                        render: function(data) {
+                            if (!data) return '';
+                            const date = new Date(data);
+                            return date.toLocaleDateString('en-US', {
+                                year: '2-digit',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                        }
+                    },
+                    {
+                        data: 'salary',
+                        name: 'Salary',
+                        responsivePriority: 6,
+                        className: 'text-end salary-compact',
+                        width: '80px',
+                        render: function(data) {
+                            if (data == null) return '';
+                            // Format as compact currency (e.g., $85k)
+                            const amount = parseFloat(data);
+                            if (amount >= 1000) {
+                                return '$' + Math.round(amount / 1000) + 'k';
+                            }
+                            return '$' + amount.toLocaleString();
+                        }
+                    },
+                    {
+                        data: null, // No data binding needed
+                        name: 'Actions',
+                        orderable: false, // Disable sorting
+                        searchable: false, // Disable searching
+                        responsivePriority: 1, // Always visible
+                        className: 'text-center action-buttons',
+                        width: '100px',
+                        render: function(data, type, row) {
+                            return `
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-xs edit-btn" data-id="${row.id}" title="Edit Employee">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-xs delete-btn" data-id="${row.id}" title="Delete Employee">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+                language: {
+                    processing: '<i class="fas fa-spinner fa-spin me-2"></i>Loading...',
+                    search: 'Search:',
+                    lengthMenu: 'Show _MENU_',
+                    info: '_START_-_END_ of _TOTAL_',
+                    infoEmpty: 'No employees found',
+                    infoFiltered: '(filtered from _MAX_)',
+                    zeroRecords: 'No matching employees found',
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',
+                        previous: '<i class="fas fa-angle-left"></i>',
+                        next: '<i class="fas fa-angle-right"></i>',
+                        last: '<i class="fas fa-angle-double-right"></i>'
+                    }
+                },
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                     '<"row"<"col-sm-12"tr>>' +
+                     '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                drawCallback: function() {
+                    // Add hover effects and animations
+                    $(this).find('tbody tr').hover(
+                        function() { $(this).addClass('table-hover-row'); },
+                        function() { $(this).removeClass('table-hover-row'); }
+                    );
+                }
+            });
+
+            // Event handlers with improved UX
+            $('#applyFilters').on('click', function() {
+                const btn = $(this);
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Applying...');
+                btn.prop('disabled', true);
+
+                employeeTable.ajax.reload(function() {
+                    btn.html('<i class="fas fa-search me-1"></i>Apply');
+                    btn.prop('disabled', false);
+                });
+            });
+
+            $('#clearFilters').on('click', function() {
+                $('#departmentFilter').val('All');
+                $('#hireDateFrom').val('');
+                $('#hireDateTo').val('');
+                $('#minSalary').val('');
+                $('#maxSalary').val('');
+
+                const btn = $(this);
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Clearing...');
+                btn.prop('disabled', true);
+
+                employeeTable.ajax.reload(function() {
+                    btn.html('<i class="fas fa-times me-1"></i>Clear');
+                    btn.prop('disabled', false);
+                });
+            });
+
+            // Auto-apply filters with debouncing
+            let filterTimeout;
+
+            $('#departmentFilter').on('change', function() {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(() => {
+                    employeeTable.ajax.reload();
+                }, 300);
+            });
+
+            $('#hireDateFrom, #hireDateTo').on('change', function() {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(() => {
+                    employeeTable.ajax.reload();
+                }, 500);
+            });
+
+            $('#minSalary, #maxSalary').on('keyup', function(e) {
+                clearTimeout(filterTimeout);
+                if (e.which === 13) { // Enter key
+                    employeeTable.ajax.reload();
+                } else {
+                    filterTimeout = setTimeout(() => {
+                        employeeTable.ajax.reload();
+                    }, 1000); // Longer delay for typing
+                }
+            });
+
+            // Add tooltips to truncated content
+            $('#employeeTable').on('draw.dt', function() {
+                $('[title]').tooltip({
+                    placement: 'top',
+                    trigger: 'hover',
+                    delay: { show: 500, hide: 100 }
+                });
+            });
+        });
+    </script>
+
+    <!-- Hidden form for anti-forgery token -->
+    <form method="post" asp-controller="Employee" asp-action="GetEmployees" style="display:none">
+        @Html.AntiForgeryToken()
+    </form>
+}

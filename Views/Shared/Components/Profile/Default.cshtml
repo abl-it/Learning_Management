@@ -1,0 +1,43 @@
+﻿@model Employees
+
+<ul class="navbar-nav ms-auto">
+    <!-- User Profile Dropdown -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle me-2"></i>
+            <span class="d-none d-sm-inline">@Model.FullName</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+            <li>
+                <div class="dropdown-header">
+                    <i class="fas fa-user me-2"></i>@Model.FullName
+                    <br>
+                    <small class="text-muted">@Model.DepartmentName</small>
+                </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            @* <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
+                                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-key me-2"></i>Change Password
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cog me-2"></i>Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li> *@
+            <li>
+                <a class="dropdown-item text-danger" href="#" onclick="confirmLogout()" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </li>
+        </ul>
+    </li>
+
+</ul>

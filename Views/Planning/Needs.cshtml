@@ -1,0 +1,1322 @@
+﻿@model NeedVM
+
+
+@{
+    ViewData["Title"] = "Needs";
+}
+<style>
+    /* Compact Modal Table Styles */
+    .table-compact-modal {
+        font-size: 0.75rem; /* Smaller font */
+        margin-bottom: 0;
+    }
+
+        .table-compact-modal th,
+        .table-compact-modal td {
+            padding: 0.25rem 0.4rem; /* Much smaller padding */
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+            line-height: 1.2;
+        }
+
+        .table-compact-modal th {
+            font-size: 0.7rem;
+            font-weight: 600;
+            background-color: #495057 !important;
+            color: white !important;
+            border-bottom: 1px solid #343a40 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            padding: 0.3rem 0.4rem;
+        }
+
+        .table-compact-modal tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+    /* Compact badges */
+    .badge-sm {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    /* Compact category badges */
+    .table-compact-modal .badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.3rem;
+    }
+
+    /* Compact action buttons in modal table */
+    .table-compact-modal .btn-xs {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.65rem;
+        border-radius: 0.2rem;
+        line-height: 1.2;
+    }
+
+    /* Course code styling */
+    .course-code-cell {
+        font-weight: 600;
+        color: #0d6efd;
+        font-size: 0.7rem;
+    }
+
+    /* Course name truncation */
+    .course-name-cell {
+        font-size: 0.72rem;
+        line-height: 1.1;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Responsive adjustments for modal table */
+    @@media (max-width: 768px) {
+        .table-compact-modal
+
+    {
+        font-size: 0.7rem;
+    }
+
+    .table-compact-modal th,
+    .table-compact-modal td {
+        padding: 0.2rem 0.3rem;
+    }
+
+    .course-name-cell {
+        max-width: 150px;
+    }
+
+    }
+
+    /* Custom scrollbar for table container */
+    .table-responsive::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+</style>
+
+<div class="container-fluid">
+    <!-- Compact Header -->
+    <div class="row justify-content-between align-items-center mb-5">
+
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-auto">
+                <h4 class="mb-0 fw-medium">
+                    <i class="fa-solid fa-people-line me-2"></i>Training Needs
+                </h4>
+            </div>
+
+            <div class="col-12 col-md-auto ms-md-auto d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                <a class="btn btn-sm btn-success" href="javascript:void(0);"
+                   onclick="Add()">Add Training Need</a>
+                @* <button class="btn btn-secondary btn-sm px-4 w-100 w-md-auto">Cancel</button> *@
+                @* <button class="btn btn-success btn-sm px-4 w-100 w-md-auto" style="min-width: 175px;">Update Period</button> *@
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Filter Panel -->
+    <div class="card card-compact mb-3">
+        <div class="card-header">
+            <h6 class="mb-0 fw-medium">
+                <i class="fas fa-filter me-2"></i>Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row spacing-sm align-items-end">
+                <!-- Company Code Filter -->
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="companyFilter" class="form-label text-xs fw-medium mb-1">Company</label>
+                    <select class="form-select form-select-xs" id="companyFilter">
+                        @foreach (var item in Model.Companies)
+                        {
+                            <option value="@item.CoCode">@item.CompanyName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="groupFilter" class="form-label text-xs fw-medium mb-1">Group</label>
+                    <select class="form-select form-select-xs" id="groupFilter">
+                        <option value="All">All Group</option>
+                        @foreach (var item in Model.Groups)
+                        {
+                            <option value="@item.GroupId">@item.GroupCode</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="unitFilter" class="form-label text-xs fw-medium mb-1">Unit</label>
+                    <select class="form-select form-select-xs" id="unitFilter">
+                        <option value="All">All Unit</option>
+                        @foreach (var item in Model.Units)
+                        {
+                            <option value="@item.UnitId">@item.UnitName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="categoryFilter" class="form-label text-xs fw-medium mb-1">Category</label>
+                    <select class="form-select form-select-xs" id="categoryFilter">
+                        <option value="All">All Category</option>
+                        @foreach (var item in Model.Categories)
+                        {
+                            <option value="@item.CategoryId">@item.CategoryName</option>
+                        }
+                    </select>
+                </div>
+                <!-- Status Filter -->
+                <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="statusFilter" class="form-label text-xs fw-medium mb-1">Status</label>
+                    <select class="form-select form-select-xs" id="statusFilter">
+                        <option value="All">All Status</option>
+                        <option value="1" selected>Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-xl-1 col-lg-1 col-md-6 col-sm-6 col-12">
+                    <button type="button" class="btn btn-outline-secondary btn-xs w-100" id="clearFilters">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact DataTable -->
+    <div class="card card-compact">
+        <div class="card-body p-2">
+            <!-- Remove padding to maximize space -->
+            <table id="dTable" class="table table-striped table-compact" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>NEED ID</th>
+                        <th>GROUP</th>
+                        <th>UNIT</th>
+                        <th>COURSE</th>
+                        <th>CATEGORY</th>
+                        <th>STATUS</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white py-2">
+                <h6 class="modal-title mb-0" id="title">
+                    <i class="fas fa-plus-circle me-1"></i>Modal Title
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+                <form id="formModal">
+                    <div id="validation-error" class="alert alert-danger d-none text-xs py-2"></div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-hashtag me-1"></i>ID
+                            </label>
+                            <input type="text" id="id-a" class="form-control form-control-xs" readonly>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-tags me-1"></i>GROUP *
+                            </label>
+                            <select class="form-control form-control-xs" id="group-a" name="group-a">
+                                @foreach (var item in Model.Groups)
+                                {
+                                    if (item.GroupId != 0)
+                                    {
+                                        <option value="@item.GroupId">@item.GroupCode</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-tag me-1"></i>CODE *
+                            </label>
+                            <input type="text" id="code-a" class="form-control form-control-xs" required placeholder="Enter code">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-info-circle me-1"></i>NAME *
+                            </label>
+                            <input type="text" id="name-a" class="form-control form-control-xs" required placeholder="Enter name">
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button type="button" id="btn-add" class="btn btn-success btn-xs">
+                    <i class="fas fa-plus me-1"></i>Add
+                </button>
+                <button type="button" id="btn-edit" class="btn btn-primary btn-xs">
+                    <i class="fas fa-save me-1"></i>Update
+                </button>
+                <button type="button" class="btn btn-secondary btn-xs" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Training Needs Modal -->
+<div class="modal fade" id="addNeedModal" tabindex="-1" role="dialog" aria-labelledby="addNeedModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white py-2">
+                <h5 class="modal-title mb-0" id="addNeedModalTitle">
+                    <i class="fas fa-plus-circle me-2"></i>Add Training Needs
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+                <form id="needForm">
+                    <div id="need-validation-error" class="alert alert-danger d-none text-xs py-2"></div>
+                  
+                    <!-- Company, Group and Unit Selection -->
+                    <div class="row g-3 mb-4 ">
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-building me-1"></i>COMPANY *
+                            </label>
+                            <input type="text" id="coname-a" class="form-control form-control-sm" readonly>
+                            <input type="hidden" id="cocode-a" value="">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-users me-1"></i>GROUP *
+                            </label>
+                            <select id="modal-group" class="form-select form-select-sm" required>
+                                <option value="">Select Group</option>
+                                @foreach (var item in Model.Groups)
+                                {
+                                    <option value="@item.GroupId">@item.GroupCode</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-building me-1"></i>UNIT *
+                            </label>
+                            <select id="modal-unit" class="form-select form-select-sm" required disabled>
+                                <option value="">Select Unit</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Course Typeahead Selection -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label text-xs fw-medium mb-1">
+                                <i class="fas fa-book me-1"></i>COURSE *
+                                <small class="text-muted">(Type 3+ characters to search)</small>
+                            </label>
+                            <input type="text" id="modal-course" class="form-control form-control-sm"
+                                   placeholder="Type course name or code..." autocomplete="off" disabled>
+                            <input type="hidden" id="selected-course-id" value="">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="button" id="btn-add-course" class="btn btn-primary btn-sm w-100" disabled>
+                                <i class="fas fa-plus me-1"></i>Add Course
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selected Courses Table - COMPACT VERSION -->
+                    <div class="card border">
+                        <div class="card-header bg-light py-1 px-2">
+                            <h6 class="mb-0 text-sm">
+                                <i class="fas fa-list me-1"></i>Selected Courses
+                                <span id="course-count" class="badge bg-secondary ms-2 badge-sm">0</span>
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                <table id="selectedCoursesTable" class="table table-compact-modal mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 80px;">Code</th>
+                                            <th>Course Name</th>
+                                            <th style="width: 70px;">Category</th>
+                                            <th style="width: 50px;" class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Selected courses will be added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="no-courses-message" class="text-center py-3 text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <small>No courses selected yet</small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer py-2">
+                <button type="button" id="btn-save-needs" class="btn btn-success btn-sm" disabled>
+                    <i class="fas fa-save me-1"></i>Save All Needs
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+<script>
+            const antiForgeryToken = '@(ViewBag.AntiForgeryToken ?? "")';
+
+            let dTable;
+            let selectedCourses = [];
+
+        $(document).ready(function() 
+        {
+            // Initialize compact DataTable
+            dTable = $('#dTable').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                    autoWidth: false,
+                pageLength: 10, // Show more rows since they're smaller
+                lengthMenu: [[10, 25, 50, 100, 200], [10, 25, 50, 100, 200]],
+                    // ✅ Use columnDefs for better width control
+                columnDefs: [
+                    {
+                        targets: 0, // Need Id
+                        width: "60px",
+                        className: "text-center"
+                        
+                    },
+                    {
+                        targets: 1, // Group
+                        width: "80px",
+                        className: "text-left"
+                    },
+                    {
+                        targets: 2, // Unit
+                        width: "150px",
+                        className: "text-left"
+                    },
+                    {
+                        targets: 3, // Course
+                        width: "250px",
+                        className: "text-left"
+                    },
+                    {
+                        targets: 4, // Category
+                        width: "50px",
+                        className: "text-left"
+                    },
+                    {
+                        targets: 5, // IsActive
+                        width: "20px",
+                        className: "text-left"
+                    },
+                    {
+                        targets: 6, // Actions
+                        width: "120px",
+                        className: "text-center"
+                    }
+                ],
+                ajax: {
+                    url: '@Url.Action("GetNeeds", "Planning")',
+                    type: 'POST',
+                    data: function(d) {
+                        d.groupFilter = $('#groupFilter').val();
+                        d.unitFilter = $('#unitFilter').val();
+                        d.categoryFilter = $('#categoryFilter').val();
+                        d.statusFilter = $('#statusFilter').val();
+                        d.companyFilter = $('#companyFilter').val();
+                    }
+
+                },
+                columns: [
+                    {
+                        data: 'needId',
+                        name: 'Id',
+                        responsivePriority: 1,
+                    },
+                    {
+                        data: 'groupCode', // Changed from groupId to groupCode for display
+                        name: 'Group',
+                        responsivePriority: 1000,
+                        render: function(data, type, row) {
+                            return data || '';
+                        }
+                    },
+
+                    {
+                        data: 'unitCode',
+                        name: 'Unit',
+                        responsivePriority: 2,
+                        className: 'text-left',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                // ✅ Fixed string concatenation
+                                var unitDisplay = '';
+                                if (data && row.unitName) {
+                                    unitDisplay = data + ' - ' + row.unitName;
+                                } else if (data) {
+                                    unitDisplay = data;
+                                } else if (row.unitName) {
+                                    unitDisplay = row.unitName;
+                                }
+
+                                // Truncate long text
+                                var maxLength = 50;
+                                var truncated = unitDisplay.length > maxLength ?
+                                    unitDisplay.substring(0, maxLength) + '...' : unitDisplay;
+
+                                return `<span title="${unitDisplay}" class="description-cell">${truncated}</span>`;
+                            }
+                            return data || '';
+                        }
+                    },
+                    {
+                        data: 'courseCode',
+                        name: 'Course',
+                        responsivePriority: 2,
+                        className: 'text-left',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                // ✅ Fixed string concatenation
+                                var courseDisplay = '';
+                                if (data && row.courseName) {
+                                    courseDisplay = data + ' - ' + row.courseName;
+                                } else if (data) {
+                                    courseDisplay = data;
+                                } else if (row.courseName) {
+                                    courseDisplay = row.courseName;
+                                }
+
+                                // Truncate long text
+                                var maxLength = 50;
+                                var truncated = courseDisplay.length > maxLength ?
+                                    courseDisplay.substring(0, maxLength) + '...' : courseDisplay;
+
+                                return `<span title="${courseDisplay}" class="description-cell">${truncated}</span>`;
+                            }
+                            return data || '';
+                        }
+                    },
+                    {
+                        data: 'categoryName',
+                        name: 'Category',
+                        orderable: true,
+                        searchable: true,
+                        responsivePriority: 3,
+                        render: function(data, type, row) {
+                            return data || '';
+                        }
+                    },
+                   {
+                        data: 'isActive',
+                        name: 'IsActive',
+                        responsivePriority: 1,
+                        className: 'text-center text-sm',
+                        //width: '25px',
+                        render: function(data, type, row) {
+                            if (data == 1) {
+                                return '<span class="badge bg-success">Active</span>';
+                            } else {
+                                return '<span class="badge bg-secondary">Inactive</span>';
+                            }
+                        }
+                    },
+                    {
+                        data: 'isActive', // No data binding needed
+                        name: 'Actions',
+                        orderable: false, // Disable sorting
+                        searchable: false, // Disable searching
+                        responsivePriority: 1, // Always visible
+                        className: 'text-center action-buttons',
+                        width: '150px', // Smaller width for single button
+                        render: function(data, type, row) {
+                            if (data == 1){
+                                return `
+                                <button type="button" class="btn btn-outline-danger btn-xs del-btn" data-id="${row.needId}" data-course="${row.courseName}" data-active="${data}" title="DeActivate Need">
+                                    <i class="fas fa-delete-left me-1"></i>DeActivate
+                                </button>
+                            `;
+                            }else{
+                                return `
+                                <button type="button" class="btn btn-outline-secondary btn-xs del-btn" data-id="${row.needId}" data-course="${row.courseName}" data-active="${data}" title="Activate Need">
+                                    <i class="fas fa-delete-left me-1"></i>Activate
+                                </button>
+                            `;
+                            }
+                            
+                        }
+                    }
+
+                ],
+                order: [[0, 'asc']],
+                language: {
+                    processing: '<i class="fas fa-spinner fa-spin me-2"></i>Loading...',
+                    search: 'Search:',
+                    lengthMenu: 'Show _MENU_',
+                    info: '_START_-_END_ of _TOTAL_',
+                    infoEmpty: 'No courses found',
+                    infoFiltered: '(filtered from _MAX_)',
+                    zeroRecords: 'No matching courses found',
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',
+                        previous: '<i class="fas fa-angle-left"></i>',
+                        next: '<i class="fas fa-angle-right"></i>',
+                        last: '<i class="fas fa-angle-double-right"></i>'
+                    }
+                },
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                        '<"row"<"col-sm-12"tr>>' +
+                        '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                drawCallback: function() {
+                    // Add hover effects and animations
+                    $(this).find('tbody tr').hover(
+                        function() { $(this).addClass('table-hover-row'); },
+                        function() { $(this).removeClass('table-hover-row'); }
+                    );
+                }
+            });
+
+
+            // Event handlers with improved UX
+            $('#clearFilters').on('click', function() {
+
+                const btn = $(this);
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Clearing...');
+                btn.prop('disabled', true);
+
+                $('#groupFilter').val('All');
+                $('#unitFilter').val('All');
+                $('#categoryFilter').val('All');
+                $('#statusFilter').val('1');
+
+                // Set companyFilter and trigger change (this will reload groups/units AND the table)
+                const firstCompanyOption = $('#companyFilter option:first').val();
+                $('#companyFilter').val(firstCompanyOption).trigger('change');
+
+                // Re-enable button after a short delay
+                setTimeout(function() {
+                    btn.html('<i class="fas fa-times me-1"></i>Clear');
+                    btn.prop('disabled', false);
+                }, 800); // Adjust timing based on your server response time
+
+                // Set companyFilter to the first option from the list
+                //const firstCompanyOption = $('#companyFilter option:first').val();
+                //$('#companyFilter').val(firstCompanyOption);
+
+                //const btn = $(this);
+                //btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Clearing...');
+                //btn.prop('disabled', true);
+
+                //dTable.ajax.reload(function() {
+                //    btn.html('<i class="fas fa-times me-1"></i>Clear');
+                //    btn.prop('disabled', false);
+                //});
+            });
+
+            // Auto-apply filters with debouncing
+            let filterTimeout;
+            $('#groupFilter, #unitFilter, #categoryFilter, #statusFilter').on('change', function() {
+                clearTimeout(filterTimeout);
+
+                const filterElement = $(this);
+                const originalHtml = filterElement.find('option:selected').text();
+
+                filterTimeout = setTimeout(() => {
+                    dTable.ajax.reload(function() {
+                        toastr.success('Filters applied');
+                    });
+                }, 300);
+            });
+            // Handle Company change - Load Group
+           $('#companyFilter').on('change', function() {
+                const companyCode = $(this).val();
+
+                // Clear and disable group filter while loading
+                $('#groupFilter').prop('disabled', true)
+                                 .html('<option value="0">Loading groups...</option>');
+                 // Clear and disable group filter while loading
+                $('#unitFilter').prop('disabled', true)
+                                    .html('<option value="0">Loading units...</option>');
+                clearTimeout(filterTimeout);
+
+                if (companyCode) {
+                    loadGroupsByCompany(companyCode, false); // true = reload table after loading
+                    loadUnitsByCompany(companyCode, true); // true = reload table after loading
+                }
+            });
+            // === MODAL FUNCTIONALITY ===
+
+            // Handle Group change - Load Units
+            $('#modal-group').change(function() {
+                const groupId = $(this).val();
+                $('#modal-unit').prop('disabled', true).html('<option value="">Loading...</option>');
+                disableCourseTypeahead();
+
+                if (groupId) {
+                    loadUnits(groupId);
+                } else {
+                    $('#modal-unit').html('<option value="">Select Unit</option>');
+                }
+            });
+
+            // Handle Unit change - Enable Course typeahead
+            $('#modal-unit').change(function() {
+                const unitId = $(this).val();
+                console.log('Unit selected:', unitId);
+
+                if (unitId) {
+                    enableCourseTypeahead();
+                } else {
+                    disableCourseTypeahead();
+                }
+            });
+
+            // Handle Add Course button
+            $('#btn-add-course').click(function() {
+                addCourseToTable();
+            });
+
+            // Handle Save All Needs button
+            $('#btn-save-needs').click(function() {
+                if (validateNeedForm()) {
+                    saveAllTrainingNeeds();
+                }
+            });
+
+            // Handle Remove Course from table
+            $(document).on('click', '.remove-course-btn', function() {
+                const index = $(this).data('index');
+                removeCourseFromTable(index);
+            });
+
+            // Handle Delete button clicks========================================================================
+            $('#dTable').on('click', '.del-btn', function(e) {
+                e.preventDefault();
+
+                const needId = $(this).data('id');
+                // Get the row data
+                let course = $(this).data('course');
+                let isActive = $(this).data('active');
+                let actionText = isActive == 1 ? 'Deactivate' : 'Activate';
+                Swal.fire({
+                     title: "Are You Sure ?",
+                     html: `
+                         <p>${actionText} This Needs ?</p>
+                         <p class="text-danger"><strong>${needId}</strong> - <strong>${course}</strong> </p>
+                     `,
+                     icon: "warning",
+                     showCancelButton: true,
+                     confirmButtonColor: "#3085d6",
+                     cancelButtonColor: "#d33",
+                     confirmButtonText: actionText,
+                     cancelButtonText: "Cancel",
+                     focusConfirm: true
+                 }).then((result) => {
+                     if (result.isConfirmed) {
+                         updateNeed(needId, isActive);
+                     }
+                 });
+
+            });
+        //------------------------------------------------------------------------------
+        }); //END READY================================================================
+
+        // === TYPEAHEAD FUNCTIONS ===
+
+        // Initialize Course Typeahead
+        function initializeCourseTypeahead() {
+            $('#modal-course').typeahead('destroy'); // Destroy existing instance if any
+
+            $('#modal-course').typeahead({
+                source: function (query, process) {
+                    console.log('Typeahead query:', query);
+
+                    // Only search if query is 3+ characters
+                    if (query.length < 3) {
+                        return process([]);
+                    }
+
+                    return $.ajax({
+                        url: '@Url.Action("SearchCourses", "Master")',
+                        type: 'POST',
+                        data: { query: query },
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('Typeahead response:', response);
+                            if (response.success && response.data) {
+                                // Store course data for later use
+                                window.courseData = response.data;
+
+                                // Return display names for typeahead
+                                var displayItems = response.data.map(function(course) {
+                                    return course.courseCode + ' - ' + course.courseName;
+                                });
+
+                                process(displayItems);
+                            } else {
+                                process([]);
+                            }
+                        },
+                        error: function() {
+                            console.error('Error in typeahead search');
+                            process([]);
+                        }
+                    });
+                },
+                items: 10, // Max items to show
+                minLength: 3, // Minimum characters to trigger search
+                delay: 300, // Delay in milliseconds
+                displayText: function (item) {
+                    return item; // Display the formatted string
+                },
+                afterSelect: function (item) {
+                    console.log('Selected item:', item);
+
+                    // Find the selected course data
+                    if (window.courseData) {
+                        var selectedCourse = window.courseData.find(function(course) {
+                            return (course.courseCode + ' - ' + course.courseName) === item;
+                        });
+
+                        if (selectedCourse) {
+                            $('#selected-course-id').val(selectedCourse.courseId);
+                            $('#btn-add-course').prop('disabled', false);
+
+                            // Store selected course data for adding to table
+                            window.selectedCourseData = selectedCourse;
+                        }
+                    }
+                },
+                highlighter: function (item) {
+                    // Custom highlighting for better UX
+                    var query = this.query;
+                    if (!query) return item;
+
+                    return item.replace(new RegExp('(' + query + ')', 'ig'), function ($1, match) {
+                        return '<strong>' + match + '</strong>';
+                    });
+                },
+                matcher: function (item) {
+                    // Always return true since we handle matching on server side
+                    return true;
+                }
+            });
+        }
+
+        // Enable Course Typeahead
+        function enableCourseTypeahead() {
+            console.log('Enabling course typeahead');
+            $('#modal-course').prop('disabled', false);
+            clearCourseSelection();
+            initializeCourseTypeahead();
+        }
+
+        // Disable Course Typeahead
+        function disableCourseTypeahead() {
+            console.log('Disabling course typeahead');
+            $('#modal-course').typeahead('destroy');
+            $('#modal-course').prop('disabled', true);
+            clearCourseSelection();
+        }
+
+        // Clear Course Selection
+        function clearCourseSelection() {
+            $('#modal-course').val('');
+            $('#selected-course-id').val('');
+            $('#btn-add-course').prop('disabled', true);
+            window.selectedCourseData = null;
+            window.courseData = null;
+        }
+
+        // Delete Need Function ========================================================================
+        function updateNeed(needId, isActive) {
+            //const id = parseInt(groupId);
+            let _active = isActive == 1 ? 0 : 1;
+            const formData = {
+                NeedId: needId,
+                IsActive: _active
+            };
+            $.ajax({
+                    url: '@Url.Action("UpdateNeed", "Planning")',
+                    type: 'POST',
+                    data: JSON.stringify(formData), // Send as number
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    beforeSend: function() {
+                        console.log('Sending delete request for ID:', needId);
+                    },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Needs deleted successfully!');
+                        dTable.ajax.reload();
+                    } else {
+                        toastr.error(response.message || 'Failed to delete needs');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    toastr.error('An error occurred while deleting the needs');
+                }
+            });
+        }
+        //--------------------------------------------------------------------------------------------
+
+        // === EXISTING FUNCTIONS (Updated) ===
+
+        // Open Add Training Needs Modal
+        function Add() {
+            
+            resetNeedModal();
+            // Get company from filter
+            const companyCode = $('#companyFilter').val();
+            const companyName = $('#companyFilter option:selected').text();
+            console.log(companyCode, companyName);
+            // Set company in modal
+            $('#cocode-a').val(companyCode);
+            $('#coname-a').val(companyName);
+        
+            // Load groups for selected company
+            loadGroupsForModal(companyCode);
+
+            
+            selectedCourses = [];
+            updateCoursesTable();
+
+            let modal = new bootstrap.Modal(document.getElementById('addNeedModal'));
+            modal.show();
+        }
+
+        // Load Units based on Group
+        function loadUnits(groupId) {
+            $.ajax({
+                url: '@Url.Action("GetUnitsByGroup", "Planning")',
+                type: 'POST',
+                data: { groupId: groupId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        let options = '<option value="">Select Unit</option>';
+                        response.data.forEach(function(unit) {
+                            options += `<option value="${unit.unitId}">${unit.unitCode} - ${unit.unitName}</option>`;
+                        });
+                        $('#modal-unit').html(options).prop('disabled', false);
+                    } else {
+                        toastr.error('Failed to load units');
+                        $('#modal-unit').html('<option value="">Select Unit</option>').prop('disabled', true);
+                    }
+                },
+                error: function() {
+                    toastr.error('Error loading units');
+                    $('#modal-unit').html('<option value="">Select Unit</option>').prop('disabled', true);
+                }
+            });
+        }
+
+        // Load Groups based on Company
+                // ✅ NEW: Load Groups for Modal (based on company)
+        function loadGroupsForModal(companyCode) {
+            $('#modal-group').prop('disabled', true).html('<option value="">Loading groups...</option>');
+
+            $.ajax({
+                url: '@Url.Action("GetGroupsByCompany", "Master")',
+                type: 'POST',
+                data: { companyCode: companyCode },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        let options = '<option value="">Select Group</option>';
+                        response.data.forEach(function(group) {
+                            options += `<option value="${group.groupId}">${group.groupCode}</option>`;
+                        });
+                        $('#modal-group').html(options).prop('disabled', false);
+                    } else {
+                        toastr.error('Failed to load groups for selected company');
+                        $('#modal-group').html('<option value="">Select Group</option>').prop('disabled', true);
+                    }
+                },
+                error: function() {
+                    toastr.error('Error loading groups');
+                    $('#modal-group').html('<option value="">Select Group</option>').prop('disabled', true);
+                }
+            });
+        }
+
+        function loadGroupsByCompany(companyCode, reloadTable = true) {
+            $.ajax({
+                url: '@Url.Action("GetGroupsByCompany", "Master")',
+                type: 'POST',
+                data: { companyCode: companyCode },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        updateGroupFilter(response.data);
+
+                        // Auto-reload DataTable if requested
+                        if (reloadTable) {
+                            setTimeout(() => {
+                                dTable.ajax.reload(function() {
+                                    toastr.success('Filters applied');
+                                });
+                            }, 100);
+                        }
+                    } else {
+                        toastr.error('Failed to load groups for selected company');
+                        updateGroupFilter([]);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading groups:', error);
+                    toastr.error('Error loading groups');
+                    updateGroupFilter([]);
+                }
+            });
+        }
+        // Update Group Filter Dropdown
+        function updateGroupFilter(groups) {
+            let options = '<option value="All">All Groups</option>';
+
+            if (groups && groups.length > 0) {
+                groups.forEach(function(group) {
+                    options += `<option value="${group.groupId}">${group.groupCode}</option>`;
+                });
+            }
+
+            $('#groupFilter').html(options)
+                            .prop('disabled', false)
+                            .val('All'); // Reset to "All Groups"
+        }
+                // Load Groups based on Company
+        function loadUnitsByCompany(companyCode, reloadTable = true) {
+            $.ajax({
+                url: '@Url.Action("GetUnitsByCompany", "Master")',
+                type: 'POST',
+                data: { companyCode: companyCode },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        updateUnitFilter(response.data);
+
+                        // Auto-reload DataTable if requested
+                        if (reloadTable) {
+                            setTimeout(() => {
+                                dTable.ajax.reload(function() {
+                                    toastr.success('Filters applied');
+                                });
+                            }, 100);
+                        }
+                    } else {
+                        toastr.error('Failed to load units for selected company');
+                        updateUnitFilter([]);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading units:', error);
+                    toastr.error('Error loading units');
+                    updateGroupFilter([]);
+                }
+            });
+        }
+        // Update Group Filter Dropdown
+        function updateUnitFilter(units) {
+            let options = '<option value="All">All Units</option>';
+
+            if (units && units.length > 0) {
+                units.forEach(function(unit) {
+                    options += `<option value="${unit.unitId}">${unit.unitCode}</option>`;
+                });
+            }
+
+            $('#unitFilter').html(options)
+                            .prop('disabled', false)
+                            .val('All'); // Reset to "All Units"
+        }
+        // Add Course to Table (Updated)
+        function addCourseToTable() {
+            const courseId = $('#selected-course-id').val();
+
+            if (!courseId || !window.selectedCourseData) {
+                showNeedError('Please select a course from the search results');
+                return;
+            }
+
+            const courseData = {
+                courseId: courseId,
+                courseCode: window.selectedCourseData.courseCode,
+                courseName: window.selectedCourseData.courseName,
+                categoryCode: window.selectedCourseData.categoryCode,
+                color: window.selectedCourseData.color,
+            };
+
+            // Check if course already exists
+            const exists = selectedCourses.some(course => course.courseId === courseId);
+            if (exists) {
+                toastr.warning('This course is already added');
+                return;
+            }
+
+            // Add to array
+            selectedCourses.push(courseData);
+
+            // Update table
+            updateCoursesTable();
+
+            // Clear selection but keep typeahead enabled
+            clearCourseSelection();
+            $('#modal-course').focus(); // Focus back to input for next selection
+
+            toastr.success('Course added successfully');
+        }
+
+        // Update Courses Table
+        function updateCoursesTable() {
+            const tbody = $('#selectedCoursesTable tbody');
+            const noMessage = $('#no-courses-message');
+            const countBadge = $('#course-count');
+
+            tbody.empty();
+
+            if (selectedCourses.length === 0) {
+                noMessage.show();
+                $('#btn-save-needs').prop('disabled', true);
+            } else {
+                noMessage.hide();
+                $('#btn-save-needs').prop('disabled', false);
+
+                selectedCourses.forEach(function(course, index) {
+                    const row = `
+                        <tr>
+                            <td class="fw-medium">${course.courseCode}</td>
+                            <td>${course.courseName}</td>
+                            <td>
+                                <span class="badge" style="background-color: ${course.color}">${course.categoryCode}</span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-danger btn-xs remove-course-btn"
+                                        data-index="${index}" title="Remove Course">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+
+            countBadge.text(selectedCourses.length);
+        }
+
+        // Remove Course from Table
+        function removeCourseFromTable(index) {
+            selectedCourses.splice(index, 1);
+            updateCoursesTable();
+            toastr.success('Course removed');
+        }
+
+        // Save All Training Needs
+        function saveAllTrainingNeeds1() {
+            const groupId = $('#modal-group').val();
+            const unitId = $('#modal-unit').val();
+
+            const trainingNeeds = selectedCourses.map(course => ({
+                GroupId: groupId,
+                UnitId: unitId,
+                CourseId: course.courseId
+            }));
+
+            const saveData = {
+                TrainingNeeds: trainingNeeds
+            };
+
+            console.log('Saving training needs:', saveData);
+
+            $('#btn-save-needs').prop('disabled', true).html(
+                '<i class="fas fa-spinner fa-spin me-1"></i>Saving...'
+            );
+
+            $.ajax({
+                url: '@Url.Action("SaveTrainingNeeds", "Planning")',
+                type: 'POST',
+                data: JSON.stringify(saveData),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Training needs saved successfully!');
+                        $('#addNeedModal').modal('hide');
+                        dTable.ajax.reload(); // Refresh main table
+                    } else {
+                        toastr.error(response.message || 'Failed to save training needs');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Save error:', error);
+                    toastr.error('An error occurred while saving training needs');
+                },
+                complete: function() {
+                    $('#btn-save-needs').prop('disabled', false).html(
+                        '<i class="fas fa-save me-1"></i>Save All Needs'
+                    );
+                }
+            });
+        }
+        // ✅ UPDATE: Save All Training Needs (include company)
+        function saveAllTrainingNeeds() {
+            const companyCode = $('#cocode-a').val();
+            const groupId = $('#modal-group').val();
+            const unitId = $('#modal-unit').val();
+
+            const trainingNeeds = selectedCourses.map(course => ({
+                CoCode: companyCode,  // ✅ Added company
+                GroupId: groupId,
+                UnitId: unitId,
+                CourseId: course.courseId
+            }));
+
+            const saveData = {
+                TrainingNeeds: trainingNeeds
+            };
+
+            console.log('Saving training needs:', saveData);
+
+            $('#btn-save-needs').prop('disabled', true).html(
+                '<i class="fas fa-spinner fa-spin me-1"></i>Saving...'
+            );
+
+            $.ajax({
+                url: '@Url.Action("SaveTrainingNeeds", "Planning")',
+                type: 'POST',
+                data: JSON.stringify(saveData),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                headers: {
+                    'RequestVerificationToken': antiForgeryToken  // ✅ Add CSRF token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message || 'Training needs saved successfully!');
+                        $('#addNeedModal').modal('hide');
+                        dTable.ajax.reload(); // Refresh main table
+                    } else {
+                        toastr.error(response.message || 'Failed to save training needs');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Save error:', error);
+
+                    // Better error handling
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        toastr.error(xhr.responseJSON.message);
+                    } else if (xhr.status === 400) {
+                        toastr.error('Invalid data submitted');
+                    } else if (xhr.status === 500) {
+                        toastr.error('Server error occurred');
+                    } else {
+                        toastr.error('An error occurred while saving training needs');
+                    }
+                },
+                complete: function() {
+                    $('#btn-save-needs').prop('disabled', false).html(
+                        '<i class="fas fa-save me-1"></i>Save All Needs'
+                    );
+                }
+            });
+        }
+
+        // Validate Need Form
+        function validateNeedForm() {
+            const groupId = $('#modal-group').val();
+            const unitId = $('#modal-unit').val();
+
+            clearNeedError();
+
+            if (!groupId) {
+                showNeedError('Please select a group');
+                $('#modal-group').focus();
+                return false;
+            }
+
+            if (!unitId) {
+                showNeedError('Please select a unit');
+                $('#modal-unit').focus();
+                return false;
+            }
+
+            if (selectedCourses.length === 0) {
+                showNeedError('Please add at least one course');
+                return false;
+            }
+
+            return true;
+        }
+
+        
+        // Reset Modal
+        function resetNeedModal() 
+        {
+            document.getElementById('needForm').reset();
+            $('#modal-unit').prop('disabled', true).html('<option value="">Select Unit</option>');
+            disableCourseTypeahead();
+            $('#btn-save-needs').prop('disabled', true);
+            clearNeedError();
+        }
+
+        // Error Handling for Modal
+        function showNeedError(message){
+            $('#need-validation-error').removeClass('d-none').text(message);
+        }
+
+        function clearNeedError(){
+            $('#need-validation-error').addClass('d-none').text('');
+        }   
+
+
+
+       
+        
+
+        
+</script>
+    <!-- Hidden form for anti-forgery token -->
+    <form method="post" asp-controller="Master" asp-action="GetCourses" style="display:none">
+        @Html.AntiForgeryToken()
+    </form>
+}

@@ -1,0 +1,128 @@
+/* Gradient header
+        .table-compact thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            border-bottom: 2px solid #5a6fd8 !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        */
+.table-compact thead th {
+    background-color: #343a40 !important; /* Dark gray */
+    color: white !important;
+    border-bottom: 2px solid #495057 !important;
+}
+
+/*Modal-------------------------------------------*/
+/* Extra small form controls - even smaller than form-control-xs */
+.form-control-xs {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+    height: auto;
+    min-height: 28px;
+}
+
+/* Extra small textarea */
+textarea.form-control-xs {
+    min-height: 50px;
+    resize: vertical;
+}
+
+/* Compact form check */
+.form-check-sm {
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+    min-height: auto;
+}
+
+.form-check-input-sm {
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-top: 0.1rem;
+}
+
+/* Compact modal */
+.modal-sm {
+    max-width: 400px; /* Smaller modal width */
+}
+
+/* Compact labels */
+.form-label.text-xs {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+/* Compact alert */
+.alert.text-xs {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Modal header/footer compact */
+.modal-header.py-2 {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer.py-2 {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Compact modal title */
+.modal-title h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Button spacing in modal footer */
+.modal-footer .btn {
+    margin-left: 0.25rem;
+}
+
+    .modal-footer .btn:first-child {
+        margin-left: 0;
+    }
+
+/* Focus states for small inputs */
+.form-control-xs:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+}
+
+/* Placeholder text for small inputs */
+.form-control-xs::placeholder {
+    color: #9ca3af;
+    font-size: 0.7rem;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 576px) {
+    .modal-sm {
+        max-width: 95%;
+        margin: 1rem auto;
+    }
+
+    .form-control-xs {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.3rem;
+    }
+
+    .form-label.text-xs {
+        font-size: 0.65rem;
+    }
+}
+
+/*Pagination*/
+/*Pagination*/
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    cursor: pointer !important;
+}
