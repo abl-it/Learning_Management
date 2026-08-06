@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Data;
 using System.Text;
 using Training.Models;
 using Training.Models.DataTables;
@@ -49,39 +50,55 @@ namespace Training.Services
 
         public async Task<ApiResponse> CreateCourseAsync(CourseDto courseDto, CancellationToken ct = default)
         {
-            using(var connection = new SqlConnection(_connectionString)) 
-            {   
-                await connection.OpenAsync();
+            ct.ThrowIfCancellationRequested();                         
 
-                var parameters = new
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(ct);                            
+
+            // ✅ DynamicParameters to support OUTPUT param
+            var parameters = new DynamicParameters();
+            parameters.Add("@courseName", courseDto.CourseName);
+            parameters.Add("@description", courseDto.Description);
+            parameters.Add("@categoryId", courseDto.CategoryId);
+            parameters.Add("@duration", courseDto.DurationHours);
+            parameters.Add("@provider", courseDto.TrainingProvider);
+            parameters.Add("@createdBy", courseDto.CreatedBy);
+            parameters.Add("@isActive", courseDto.IsActive);
+            parameters.Add("@newCourseId",
+                           dbType: DbType.Int32,
+                           direction: ParameterDirection.Output);      
+
+            try
+            {
+                
+                // ✅ ExecuteAsync since result comes from OUTPUT param
+                await connection.ExecuteAsync(
+                    new CommandDefinition(
+                        "USP_Master_CreateCourse",
+                        parameters,
+                        commandType: CommandType.StoredProcedure,
+                        cancellationToken: ct)
+                );
+
+                var newId = parameters.Get<int>("@newCourseId");       
+
+                return new ApiResponse
                 {
-                    courseName = courseDto.CourseName,
-                    description = courseDto.Description,
-                    categoryId = courseDto.CategoryId,
-                    duration = courseDto.DurationHours,
-                    provider = courseDto.TrainingProvider,
-                    createdBy = courseDto.CreatedBy,
-                    isActive = courseDto.IsActive,
-
+                    Success = true,
+                    Message = "Course created successfully.",
+                    Data = newId
                 };
-                try
+            }
+            catch (Exception ex)
+            {
+                // ✅ Log the real exception
+                //_logger.LogError(ex, "Error creating course for CategoryId {CategoryId}",
+                //                 courseDto.CategoryId);
+                return new ApiResponse
                 {
-                    var newId = await connection.QuerySingleAsync<int>(new CommandDefinition("USP_Master_CreateCourse", parameters, cancellationToken: ct));
-                    return new ApiResponse
-                    {
-                        Success = true,
-                        Message = "Course created successfully.",
-                        Data = newId
-                    };
-                }
-                catch (Exception ex)
-                {
-                    return new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Error creating course."
-                    };
-                }
+                    Success = false,
+                    Message = "Error creating course."
+                };
             }
         }
 

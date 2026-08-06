@@ -6,7 +6,8 @@
 <style>
     /* ✅ Paksa lebar kolom agar DataTables Responsive bisa hitung dengan benar */
     #dTable th:nth-child(1),
-    #dTable td:nth-child(1) {
+    #dTable td:nth-child(1) 
+    {
         width: 50px !important;
         min-width: 50px !important;
     }
@@ -158,6 +159,8 @@
     
     <!-- Compact Filter Panel -->
     <div class="card card-compact mb-3">
+        <input type="hidden" id="currentUser" value="@Model.CurrentUser" />
+        <input type="hidden" id="username" value="@Model.Username" />
         <div class="card-header">
             <h6 class="mb-0 fw-medium">
                 <i class="fas fa-filter me-2"></i>Filters
@@ -303,6 +306,7 @@
                         d.yearFilter = $('#yearFilter').val();
                         d.departmentFilter = $('#departmentFilter').val();
                         d.statusFilter = $('#statusFilter').val();
+                        d.currentUser = $('#currentUser').val();
 
                         console.log("Filters =>", d.companyFilter, d.yearFilter, d.departmentFilter, d.statusFilter);
                     }
@@ -348,7 +352,7 @@
                     $('#companyFilter').prop('selectedIndex', 0);
                     $('#yearFilter').prop('selectedIndex', 1);
                     $('#departmentFilter').prop('selectedIndex', 0);
-                    $('#statusFilter').val('Pending');
+                    $('#statusFilter').val('All');
                     dTable.ajax.reload();
             });
 

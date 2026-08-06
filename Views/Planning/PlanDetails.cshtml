@@ -1,6 +1,7 @@
 ﻿@model PlanDetailVM
 @{
-    var status = (Model.Plans.DocStatus != 2 ) ? "enabled" : "disabled"; 
+    //var status = (Model.Plans.DocStatus != 2 ) ? "enabled" : "disabled"; 
+    var edit = (Model.Plans.CanEdit == 1) ? "enable" : "disable";
 }
 @{
     var action = (Model.Plans.DocStatus == 1 || Model.Plans.DocStatus == 1) ? "enabled" : "disabled";
@@ -102,7 +103,7 @@
     <div class="card card-compact">
         <div class="card-header p-2">
             @* <h5 class="mb-0 fw-medium">Training Plans</h5> *@
-            <button type="button" class="btn btn-sm btn-outline-primary add-course" @status
+            <button type="button" class="btn btn-sm btn-outline-primary add-course" @edit
                     data-bs-toggle="modal" data-bs-target="#modalAddCourse">
                 <i class="fas fa-book-medical me-1"></i>Add Course
             </button>
@@ -365,6 +366,34 @@
         </div>
     </div>
 </div>
+<!--Modal for remarks-->
+<div class="modal fade" id="remarksModal" tabindex="-1" aria-labelledby="remarksModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="remarksForm" asp-controller="Act" asp-action="PlanningAct" method="post">
+            <input type="hidden" id="modal-planId" name="modal-PlanId" />
+            
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="remarksModalLabel">Enter Remarks</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="actionNameInput" name="ActionName" />
+                    <div class="mb-3">
+                        <label for="remarksInput" class="form-label">Remarks</label>
+                        <textarea class="form-control" id="remarksInput" name="Remarks" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <!-- Course data untuk typeahead -->
 <script id="course-data" type="application/json">
     [
@@ -896,5 +925,51 @@
             });
         }
 
+        // ============================================================
+        // Action
+        // ============================================================
+        //ACTION====================================================================
+        function Action(actionName)
+        {
+            const data = document.getElementById("hidden-data");
+
+            let _id = data.dataset.kpiid;
+            let _dept = data.dataset.department;
+            let _sts = data.dataset.status;
+            let _co = data.dataset.company;
+            let _inbox = data.dataset.inbox;
+            let _month = data.dataset.month;
+            let _tmonth = data.dataset.tmonth;
+            let _tyear = data.dataset.tyear;
+
+            console.log(`dept: ${_dept} sts: ${_sts} co: ${_co} inbox: ${_inbox} month: ${_month} tyear: ${_tyear} tmonth: ${_tmonth}`);
+
+
+            if (actionName === 'Approve' || actionName === 'Reject' || actionName=== 'Request for Approve')
+            {
+                // Set the hidden input value to the action name
+                $('#kpi-id').val(_id);
+                $('#actionNameInput').val(actionName);
+                $('#remarksInput').val(''); // clear previous remarks
+
+                $('#dept-h').val(_dept);
+                $('#sts-h').val(_sts);
+                $('#co-h').val(_co);
+                $('#inbox-h').val(_inbox);
+                $('#month-h').val(_month);
+                $('#tyear-h').val(_tyear);
+                $('#tmonth-h').val(_tmonth);
+
+                // Show the modal
+                document.getElementById('remarksModalLabel').textContent = actionName + ' Remarks';
+                var remarksModal = new bootstrap.Modal(document.getElementById('remarksModal'));
+                remarksModal.show();
+            } else {
+            // Handle other actions normally
+            alert('Action: ' + actionName);
+            }
+
+        };
+        //-----------------------------------------------------------------------------------------
     </script>
 }

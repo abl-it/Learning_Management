@@ -558,6 +558,21 @@ namespace Training.Services
             }
         }
 
+        public async Task<string> GetRoleAsync(string username)
+        {
+            using( var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                var query = @"SELECT dbo.fc_GetRole(@username);";
+                var parameters = new DynamicParameters();
+                parameters.Add("@username", username);
+                var result = await connection.QueryFirstOrDefaultAsync<string>(
+                    query,
+                    parameters,
+                    commandType: CommandType.Text);
+                return result;
+            }
+        }
 
     }
 }

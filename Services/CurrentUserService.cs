@@ -2,7 +2,7 @@
 using Training.Models;
 using Training.Services.IServices;
 
-namespace KPI.Services
+namespace Training.Services
 {
     public class CurrentUserService : ICurrentUserService
     {

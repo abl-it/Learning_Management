@@ -1,4 +1,4 @@
-using KPI.Services;
+using Serilog;
 using Training.Data;
 using Training.Filters;
 using Training.Middleware;
@@ -6,6 +6,14 @@ using Training.Services;
 using Training.Services.IServices;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext();
+});
+
 // Add configuration for connection string
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 //builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("ConnectionStrings"));
@@ -40,6 +48,7 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ITrainingService, TrainingService>();
 builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IInitialService, InitialService>();
+builder.Services.AddScoped<IActionService, ActionService>();
 
 // Configure anti-forgery
 builder.Services.AddAntiforgery(options =>
@@ -50,6 +59,11 @@ builder.Services.AddAntiforgery(options =>
 
 
 var app = builder.Build();
+
+Log.Information("======================================");
+Log.Information("ESS Application Started");
+Log.Information("======================================");
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

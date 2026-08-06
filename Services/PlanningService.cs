@@ -236,6 +236,12 @@ namespace Training.Services
                 whereClause.Append(" AND ABRV = @abrv");
                 parameters.Add("@abrv", request.DepartmentFilter);
             }
+            else 
+            { 
+                whereClause.Append(" AND ABRV in (SELECT DISTINCT ABRV FROM dbo.fc_GetDepartmentsByAccess(@employeeCode, @doc))"); // Exclude 'All' if no specific department filter is applied
+                parameters.Add("@employeeCode", request.EmployeeCode); 
+                parameters.Add("@doc", "PLAN");
+            }
             // Status filter
             if (!string.IsNullOrWhiteSpace(request.StatusFilter) && request.StatusFilter != "All")
             {
@@ -268,7 +274,7 @@ namespace Training.Services
             {orderBy}
             OFFSET @offset ROWS 
             FETCH NEXT @length ROWS ONLY";
-
+           
             var plans = await connection.QueryAsync<PlanDisp>(new CommandDefinition(dataSql, parameters));
 
             return new DataTableResponse<PlanDisp>
@@ -339,13 +345,34 @@ namespace Training.Services
 
             // Build final data query
             var dataSql = $@"
-                    Select * 
-                    From dbo.Training_YearlyPlansDetail 
+                    Select a.*, b.CategoryName 
+                    From dbo.Training_YearlyPlansDetail a left join Master_TrainingCategories b on a.CategoryId=b.CategoryId
                     {whereClause}
                     {orderBy}
                     OFFSET @offset ROWS 
                     FETCH NEXT @length ROWS ONLY";
+            
+            // ✅ Only need username & docType as parameters now
+            //parameters.Add("@id", planId);
+            //parameters.Add("@username", request.Username);  // ✅ replaces EmployeeCode + Role
+            //parameters.Add("@docType", "PLAN");
 
+            //var dataSql = $@"
+            //                SELECT  d.*,
+            //                        perm.CanShow,
+            //                        perm.CanEdit,
+            //                        perm.CanAction
+            //                FROM    dbo.Training_YearlyPlansDetail  d
+            //                INNER JOIN dbo.Training_YearlyPlans     p    ON p.PlanId = d.PlanId
+            //                CROSS APPLY dbo.fc_GetDocPermission(
+            //                                @username,       -- ✅ only 3 params!
+            //                                p.PlanId,
+            //                                @docType
+            //                            )                   perm
+            //                {whereClause}
+            //                {orderBy}
+            //                OFFSET @offset ROWS
+            //                FETCH NEXT @length ROWS ONLY";
             var plansDet = await connection.QueryAsync<PlanDetailView>(new CommandDefinition(dataSql, parameters));
 
             return new DataTableResponse<PlanDetailView>
@@ -430,6 +457,8 @@ namespace Training.Services
             }
         }
 
+       
+
         public async Task<int> AddPlansDetail(PlanDetailDTO planDetail)
         {
             using(var connection = new SqlConnection(_connectionString))
@@ -476,6 +505,93 @@ namespace Training.Services
                                                           parameters, 
                                                           commandType: CommandType.StoredProcedure);
                 return result;
+            }
+        }
+
+        public async Task<Plans> GetPlansPermission(int id, string user)
+        {
+            using(var connection = new SqlConnection(_connectionString))
+            {
+                var sql = @"SELECT  p.*,
+                                    perm.CanShow,
+                                    perm.CanEdit,
+                                    perm.CanAction,
+                                    perm.IsTC
+                            FROM    dbo.Training_YearlyPlans p
+                            CROSS APPLY dbo.fc_GetDocPermission(
+                                            @username,
+                                            @id,
+                                            @docType
+                                        ) perm
+                            WHERE p.PlanId = @id;
+                            ";
+                var parameters = new DynamicParameters();
+                parameters.Add("@id", id);
+                parameters.Add("@username", user);
+                parameters.Add("@docType", "PLAN");
+                var plan = await connection.QueryFirstOrDefaultAsync<Plans>(sql,
+                                                                       parameters,
+                                                                       commandType: CommandType.Text);
+                
+                return plan;
+            }
+        }
+
+        public async Task<ApiResponse> UpdateNewCourseAsync(UpdateNewCourseRequest request, string username)
+        {
+            try
+            {
+                using var connection = new SqlConnection(_connectionString);
+
+                var parameters = new DynamicParameters();
+                parameters.Add("@planDetailId", request.PlanDetailId, DbType.Int32);
+                parameters.Add("@courseId", request.CourseId, DbType.Int32);
+                parameters.Add("@courseName", request.CourseName, DbType.String);
+                parameters.Add("@categoryId", request.CategoryId, DbType.Int32);
+                parameters.Add("@categoryName", request.CategoryName, DbType.String);
+                parameters.Add("@isNewCourse", request.IsNewCourse, DbType.Int32);
+                parameters.Add("@by", username, DbType.String);
+
+                // ✅ SP handles both:
+                //    1. Insert to MasterCourse if isNewCourse = 1
+                //    2. Update YearlyPlansDetail
+                var rowAffected = await connection.ExecuteScalarAsync<int>(
+                    "USP_Training_UpdateNewCourse",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+
+                if (rowAffected <= 0)
+                    return new ApiResponse
+                    {
+                        Success = false,
+                        Message = "No record updated. Please try again."
+                    };
+
+                return new ApiResponse
+                {
+                    Success = true,
+                    Message = "Course updated successfully.",
+                    Data = new { RowAffected = rowAffected }
+                };
+            }
+            catch (SqlException sqlEx)
+            {
+                // _logger.LogError(sqlEx, "SQL error in UpdateNewCourseAsync");
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "Database error: " + sqlEx.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, "Unexpected error in UpdateNewCourseAsync");
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "Unexpected error: " + ex.Message
+                };
             }
         }
         #endregion

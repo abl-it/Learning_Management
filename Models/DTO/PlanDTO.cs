@@ -21,5 +21,14 @@
         public int IsNewCourse { get; set; }
     }
 
-   
+    public class UpdateNewCourseRequest
+    {
+        public int PlanDetailId { get; set; }
+        public int CourseId { get; set; }  // 0 = new course
+        public string CourseName { get; set; }
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
+        public int IsNewCourse { get; set; }  // 1 = insert to master
+    }
+
 }

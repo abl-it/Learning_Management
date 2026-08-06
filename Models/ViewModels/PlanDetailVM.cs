@@ -6,7 +6,8 @@ namespace Training.Models.ViewModels
     {
         public List<Course> Courses { get; set; } = new();
         public List<Category> Categories { get; set; } = new();
-        public List<PlanDetailView> PlanDetail { get; set; } 
+        public List<PlanDetailView> PlanDetail { get; set; }
+        public List<History> Histories { get; set; }
         public PlanDetailParameters Parameters { get; set; }
 
         public Plans Plans { get; set; }
@@ -26,6 +27,7 @@ namespace Training.Models.ViewModels
 
         public string SelectedAction { get; set; }
         public int PlanId { get; set; }
+        public string Username { get; set; }
     }
 
     public class PlanDetailView
@@ -39,6 +41,7 @@ namespace Training.Models.ViewModels
         public string CourseName { get; set; }
         public int CategoryId { get; set; }
         public string CategoryCode { get; set; }
+        public string CategoryName { get; set; }
         public int TotalSessions { get; set; }
         public int TotalParticipants { get; set; }
         public string? TargetParticipant { get; set; }

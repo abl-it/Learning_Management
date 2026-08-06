@@ -28,7 +28,7 @@ namespace Training.Middleware
             if (_env.IsDevelopment())
             {
                 // In development environment, bypass token validation and set username to "admin1"
-                context.Session.SetString("Username", "iswin");
+                context.Session.SetString("Username", "vikri");
                 await _next(context);
                 return;
             }

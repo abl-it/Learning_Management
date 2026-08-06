@@ -18,6 +18,7 @@ namespace Training.Controllers
         private readonly ICourseService _courseService;
         private readonly ITrainingService _trainingService;
         private readonly IPlanningService _planningService;
+        private readonly IActionService _actionService;
         private readonly ICurrentUserService _emp;
         private readonly IAntiforgery _antiforgery;
         public PlanningController(
@@ -26,6 +27,7 @@ namespace Training.Controllers
             ICourseService courseService,
             ITrainingService trainingService,
             IPlanningService planingService,
+            IActionService actionService,
             IAntiforgery antiforgery
             )
         {
@@ -34,6 +36,7 @@ namespace Training.Controllers
             _trainingService = trainingService;
             _emp = emp;
             _planningService = planingService;
+            _actionService = actionService;
             _antiforgery = antiforgery;
         }
         public IActionResult Index()
@@ -262,6 +265,8 @@ namespace Training.Controllers
             var _selectedCompany = _companies.FirstOrDefault()?.CoCode?.ToString() ?? "ABL";
             var _year = await _trainingService.GetFiscalYearsAsync();
             var _yearActive = _year.Where(y => y.Status == "Active").Select(y=>y.Year).FirstOrDefault();
+            var _cUser = _emp.CurrentEmployee.EmployeeCode ?? "";
+            var _uName = _emp.CurrentEmployee.Username ?? "";
 
             var viewModel = new PlanVM
             {
@@ -273,6 +278,8 @@ namespace Training.Controllers
                 //YearList = Enumerable.Range(DateTime.Now.Year - 1, 5).ToList(),
                 YearList = _year.OrderBy(y=>y.Year).ToList(),
                 SelectedYear = yr==0? _yearActive : yr,
+                CurrentUser = _cUser,
+                Username = _uName,
             };
 
             return View(viewModel);
@@ -309,6 +316,8 @@ namespace Training.Controllers
                 YearFilter = form["yearFilter"],
                 DepartmentFilter = form["departmentFilter"],
                 StatusFilter = form["statusFilter"],
+                EmployeeCode = form["currentUser"],
+                Username = form["username"],
                 
                 //CategoryId = int.TryParse(form["category"], out var categoryId) ? categoryId : 0,
             };
@@ -389,8 +398,8 @@ namespace Training.Controllers
         //Data tables
         public async Task<IActionResult> PlanDetail(PlanDetailParameters param, int pId = 0) 
         {
-            var _plans = await _planningService.GetPlansByIdAsync(pId);
-
+            //var _plans = await _planningService.GetPlansByIdAsync(pId);
+            var _plans = await _planningService.GetPlansPermission(pId, _emp.CurrentEmployee.Username);
 
             var _co = _plans.CoCode; //pCo==""?_emp.CurrentEmployee.CoCode:pCo;
             var _dept = _plans.ABRV; //pDept==""?_emp.CurrentEmployee.ABRV:pDept;
@@ -411,6 +420,8 @@ namespace Training.Controllers
 
             //var planDet = await _planningService.GetPlansDetailAsync(_plans.PlanId);  // ✅ Returns List<PlanDetailView>
             var _actions = await _trainingService.GetActionsAsync("PLAN", _plans.Strategy, _plans.PlanId);
+            var _histories = await _actionService.GetHistoriesAsync(_plans.PlanId, "PLAN");
+
             PlanDetailVM model = new PlanDetailVM() 
             {
                 //PlanDetail = planDet,  // ✅ Use the first plan detail or empty if none
@@ -420,6 +431,8 @@ namespace Training.Controllers
                 FiscalYears = _year,
                 ActionList = _actions,
                 Courses = _courses,
+                Username = _emp.CurrentEmployee.Username ?? "",
+                Histories = _histories,
             };
             return View(model);
         }
@@ -451,6 +464,7 @@ namespace Training.Controllers
 
                 // Custom filters
                 PlanId = form["planId"],
+                Username = form["username"],
                 //CategoryFilter = form["categoryFilter"],
                 //YearFilter = form["yearFilter"],
                 //DepartmentFilter = form["departmentFilter"],
@@ -593,7 +607,31 @@ namespace Training.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdateNewCourse([FromBody] UpdateNewCourseRequest request)
+        {
+            try
+            {
+                if (request == null)
+                    return Json(new { success = false, message = "Invalid request." });
 
+                if (string.IsNullOrWhiteSpace(request.CourseName))
+                    return Json(new { success = false, message = "Course name is required." });
+
+                if (request.CategoryId <= 0)
+                    return Json(new { success = false, message = "Category is required." });
+
+                var username = User.Identity?.Name ?? "system";
+
+                var result = await _planningService.UpdateNewCourseAsync(request, username);
+
+                return Json(new { success = result.Success, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Server error: " + ex.Message });
+            }
+        }
         #endregion
 
 

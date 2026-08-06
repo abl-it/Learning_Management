@@ -19,6 +19,8 @@ namespace Training.Services.IServices
 
         Task<Plans> GetPlansByDeptAsync(string co, string dept, int year); 
         Task<Plans> GetPlansByIdAsync(int id);
+        Task<Plans> GetPlansPermission(int id, string user);
+
         //Task<ApiResponse> CreatePlanAsync(Plans plan);
         //Task<ApiResponse> UpdatePlanAsync(Plans plan);
         //Task<ApiResponse> DeletePlanAsync(int planId);
@@ -33,5 +35,6 @@ namespace Training.Services.IServices
         Task<List<PlanDetailView>> GetPlansDetailByDeptAsync(string dept, int year);
         Task<int> AddPlansDetail(PlanDetailDTO planDetail);
         Task<int> DeletePlansDetail(int id, string by);
+        Task<ApiResponse> UpdateNewCourseAsync(UpdateNewCourseRequest request, string username);
     }
 }

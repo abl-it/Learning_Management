@@ -12,10 +12,13 @@
         public string SelectedStatus { get; set; }
 
         // New property added here
-        public List<string> StatusList { get; set; } = new() { "All", "Draft", "Pending", "Approved", "Canceled" };
+        public List<string> StatusList { get; set; } = new() { "All", "Draft", "Pending", "Approved", "Canceled", "Rejected" };
         // New property added here
         //public List<string> YearList1 { get; set; } = new() { "2026", "2027", "2028", "2029" };
         public List<FiscalYears> YearList { get; set; }
+        public string CurrentUser { get; set; }
+        public string Username { get; set; }
+        
     }
 
     public class PlanDisp
@@ -32,6 +35,11 @@
 
         public int PlansNbr { get; set; }
 
+        public int CanShow { get; set; }
+        public int CanEdit { get; set; }
+        public int CanAction { get; set; }
+
+        public int IsTC { get; set; }
     }
 
 }

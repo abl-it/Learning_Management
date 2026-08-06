@@ -22,5 +22,10 @@ namespace Training.Models
         public string Workflow { get; set; }
         public string Strategy { get; set; }
 
+        public int CanShow { get; set; }
+        public int CanEdit { get; set; }
+        public int CanAction { get; set; }
+        public int IsTC { get; set; }
+
     }
 }

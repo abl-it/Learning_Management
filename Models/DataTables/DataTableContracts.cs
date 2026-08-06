@@ -32,8 +32,10 @@
         public string? UnitFilter { get; set; }
         public string? GroupFilter { get; set; }
 
-        //for plansDetail
-        
+        //for plans
+        public string EmployeeCode { get; set; }
+        public string Username { get; set; }
+
 
     }
     public class DtPlansDetailRequest
@@ -48,7 +50,7 @@
         // Custom filters
         public string? PlanId { get; set; }
         //for plansDetail
-
+        public string Username { get; set; }
 
     }
     public class DataTableRequestMaster

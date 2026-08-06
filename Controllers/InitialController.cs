@@ -1,6 +1,6 @@
 ﻿using AspNetCoreGeneratedDocument;
 using Azure;
-using KPI.Services;
+using Training.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;

@@ -1,6 +1,9 @@
 ﻿@model PlanDetailVM
 @{
-    var status = (Model.Plans.DocStatus != 2) ? "enabled" : "disabled";
+    var canEdit = (Model.Plans.CanEdit == 1) ? "enabled" : "disabled";
+    var canAction = (Model.Plans.CanAction == 1) ? "enabled" : "disabled";
+    var isTC = (Model.Plans.IsTC == 1) ? "true" : "false";
+    //var status = (Model.Plans.DocStatus != 2) ? "enabled" : "disabled";
 }
 @{
     var action = (Model.Plans.DocStatus == 1 || Model.Plans.DocStatus == 1) ? "enabled" : "disabled";
@@ -122,7 +125,6 @@
 <div class="container-fluid">
     <!-- Compact Header -->
     <div class="row justify-content-between align-items-center mb-5">
-
         <div class="row g-3 align-items-center">
             <div class="col-12 col-md-auto">
                 <h4 class="mb-0 fw-medium">
@@ -137,7 +139,7 @@
                     <button class="btn btn-primary dropdown-toggle"
                             style="min-width:150px;"
                             type="button" id="dropdownMenuButton"
-                            data-bs-toggle="dropdown" aria-expanded="false">
+                            data-bs-toggle="dropdown" aria-expanded="false" @canAction>
                         Action
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
@@ -173,6 +175,7 @@
         <div class="card-body">
             <div class="row spacing-sm align-items-end">
                 <input type="hidden" id="planId" value="@Model.Plans.PlanId" />
+                <input type="hidden" id="username" value="@Model.Username" />
                 <!-- Company Code Filter -->
                 <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
                     <label for="company" class="form-label text-xs fw-medium mb-1">Company</label>
@@ -200,7 +203,7 @@
     <div class="card card-compact">
         <div class="card-header p-2">
             @* <h5 class="mb-0 fw-medium">Training Plans</h5> *@
-            <button type="button" class="btn btn-sm btn-outline-primary add-course" @status
+            <button type="button" class="btn btn-sm btn-outline-primary add-course" @canEdit
                     data-bs-toggle="modal" data-bs-target="#modalAddCourse">
                 <i class="fas fa-book-medical me-1"></i>Add Course
             </button>
@@ -231,7 +234,24 @@
 
 
         
-
+    </div>
+        
+    <!-- History -->
+        <div class="card card-compact mt-2">
+            <div class="card-header p-2">
+                <h6>History</h6>
+            </div>
+            <div class="card-body p-2">
+                 @foreach (var item in Model.Histories)
+                {
+                    <div class="col-12" style="font-size: 0.75rem;">
+                        <strong>@item.Date : @item.Action </strong> by @item.ChangeByName (@item.Remark) - @item.NextState.
+                    </div>
+                } 
+               
+            </div>
+        </div>
+    
     <div>
         <input type="hidden" id="co" value="@Model.Parameters.Co" />
         <input type="hidden" id="yr" value="@Model.Parameters.Yr" />
@@ -242,196 +262,346 @@
 
     </div>
 </div>
-    <!-- Modal Add Course -->
-    <div class="modal fade" id="modalAddCourse" tabindex="-1" aria-labelledby="modalAddCourseLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
 
-                <div class="modal-header">
-                    <h5 class="modal-title fw-semibold" id="modalAddCourseLabel">
-                        <i class="fas fa-book-medical me-2"></i>Add Course
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
 
-                <div class="modal-body">
-                    <input type="hidden" id="modal-year-h" value="@Model.Plans.Year" />
-                    <input type="hidden" id="modal-plan-id-h" value="@Model.Plans.PlanId" />
-                    <input type="hidden" id="modal-abrv-h" value="@Model.Plans.ABRV" />
-                    <input type="hidden" id="modal-co-h" value="@Model.Plans.CoCode" />
-                    <input type="hidden" id="modal-plan-status-h" value="@Model.Plans.PlanStatus" />
 
-                    <div class="row g-3">
+<!-- Modal Add Course -->
+<div class="modal fade" id="modalAddCourse" tabindex="-1" aria-labelledby="modalAddCourseLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
 
-                        <!-- Month -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1">
-                                Month <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select form-select-sm" id="modal-month">
-                                <option value="">-- Select Month --</option>
-                                <option value="1">January</option>
-                                <option value="2">February</option>
-                                <option value="3">March</option>
-                                <option value="4">April</option>
-                                <option value="5">May</option>
-                                <option value="6">June</option>
-                                <option value="7">July</option>
-                                <option value="8">August</option>
-                                <option value="9">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                            <div class="invalid-feedback">Month is required.</div>
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="modalAddCourseLabel">
+                    <i class="fas fa-book-medical me-2"></i>Add Course
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="modal-year-h" value="@Model.Plans.Year" />
+                <input type="hidden" id="modal-plan-id-h" value="@Model.Plans.PlanId" />
+                <input type="hidden" id="modal-abrv-h" value="@Model.Plans.ABRV" />
+                <input type="hidden" id="modal-co-h" value="@Model.Plans.CoCode" />
+                <input type="hidden" id="modal-plan-status-h" value="@Model.Plans.PlanStatus" />
+
+                <div class="row g-3">
+
+                    <!-- Month -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Month <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select form-select-sm" id="modal-month">
+                            <option value="">-- Select Month --</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <div class="invalid-feedback">Month is required.</div>
+                    </div>
+                    <!-- Blank -->
+                    <div class="col-md-8 col-sm-6 col-12">
+                    </div>
+                    <!-- Category -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Category <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select form-select-sm" id="modal-category">
+                            <option value="">-- Select Category --</option>
+                            @foreach (var item in Model.Categories)
+                            {
+                                <option value="@item.CategoryId">@item.CategoryName</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Category is required.</div>
+                    </div>
+
+                    <!-- Course Name (Typeahead) -->
+                    <div class="col-md-8 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Course Name <span class="text-danger">*</span>
+                        </label>
+                        <div class="position-relative">
+                            <input type="text"
+                                    class="form-control form-control-sm"
+                                    id="modal-course"
+                                    placeholder="Type to search or enter new course..."
+                                    autocomplete="off" />
+                            <!-- Badge: New Course -->
+                            <span class="badge bg-warning text-dark ms-1 d-none" id="badge-new-course">
+                                <i class="fas fa-plus-circle me-1"></i>New Course
+                            </span>
+                            <!-- Typeahead Dropdown -->
+                            <ul class="list-group shadow-sm position-absolute w-100 z-3 d-none"
+                                id="course-suggestions"
+                                style="max-height:200px; overflow-y:auto; top:100%; left:0;">
+                            </ul>
                         </div>
-                        <!-- Blank -->
-                        <div class="col-md-8 col-sm-6 col-12">
-                        </div>
-                        <!-- Category -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1">
-                                Category <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select form-select-sm" id="modal-category">
-                                <option value="">-- Select Category --</option>
-                                @foreach (var item in Model.Categories)
-                                {
-                                    <option value="@item.CategoryId">@item.CategoryName</option>
-                                }
-                            </select>
-                            <div class="invalid-feedback">Category is required.</div>
-                        </div>
-
-                        <!-- Course Name (Typeahead) -->
-                        <div class="col-md-8 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1">
-                                Course Name <span class="text-danger">*</span>
-                            </label>
-                            <div class="position-relative">
-                                <input type="text"
-                                       class="form-control form-control-sm"
-                                       id="modal-course"
-                                       placeholder="Type to search or enter new course..."
-                                       autocomplete="off" />
-                                <!-- Badge: New Course -->
-                                <span class="badge bg-warning text-dark ms-1 d-none" id="badge-new-course">
-                                    <i class="fas fa-plus-circle me-1"></i>New Course
-                                </span>
-                                <!-- Typeahead Dropdown -->
-                                <ul class="list-group shadow-sm position-absolute w-100 z-3 d-none"
-                                    id="course-suggestions"
-                                    style="max-height:200px; overflow-y:auto; top:100%; left:0;">
-                                </ul>
-                            </div>
-                            <!-- Hidden fields -->
-                            <input type="hidden" id="modal-course-id" value="" />
-                            <input type="hidden" id="modal-is-new-course" value="0" />
-                            <div class="invalid-feedback d-block d-none" id="course-error">Course name is required.</div>
-                        </div>
+                        <!-- Hidden fields -->
+                        <input type="hidden" id="modal-course-id" value="" />
+                        <input type="hidden" id="modal-is-new-course" value="0" />
+                        <div class="invalid-feedback d-block d-none" id="course-error">Course name is required.</div>
+                    </div>
 
                     
-                        <!-- Number of Sessions -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1"># Session</label>
-                            <input type="number" class="form-control form-control-sm" id="modal-session" placeholder="0" min="0" />
-                            <div class="invalid-feedback">Session is required.</div>
-                        </div>
+                    <!-- Number of Sessions -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1"># Session</label>
+                        <input type="number" class="form-control form-control-sm" id="modal-session" placeholder="0" min="0" />
+                        <div class="invalid-feedback">Session is required.</div>
+                    </div>
 
-                        <!-- Participant -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1"># Participant</label>
-                            <input type="number" class="form-control form-control-sm" id="modal-participant" placeholder="0" min="0" />
-                            <div class="invalid-feedback">Participant is required.</div>
-                        </div>
+                    <!-- Participant -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1"># Participant</label>
+                        <input type="number" class="form-control form-control-sm" id="modal-participant" placeholder="0" min="0" />
+                        <div class="invalid-feedback">Participant is required.</div>
+                    </div>
 
-                        <!-- Duration -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1">Plan Duration (Hours)</label>
-                            <input type="text" class="form-control form-control-sm" id="modal-duration" placeholder="e.g. 2 Hours" />
-                            <div class="invalid-feedback">Duration is required.</div>
-                        </div>
+                    <!-- Duration -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Plan Duration (Hours)</label>
+                        <input type="text" class="form-control form-control-sm" id="modal-duration" placeholder="e.g. 2 Hours" />
+                        <div class="invalid-feedback">Duration is required.</div>
+                    </div>
 
                     
-                        <!-- Provider -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1">Provider</label>
-                            <input type="text" class="form-control form-control-sm" id="modal-provider" placeholder="Provider name" />
-                            <div class="invalid-feedback">Provider is required.</div>
-                        </div>
+                    <!-- Provider -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Provider</label>
+                        <input type="text" class="form-control form-control-sm" id="modal-provider" placeholder="Provider name" />
+                        <div class="invalid-feedback">Provider is required.</div>
+                    </div>
 
-                        <!-- Estimated Cost -->
-                        <div class="col-md-4 col-sm-6 col-12">
-                            <label class="form-label fw-medium text-xs mb-1">Est. Cost</label>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text">Rp</span>
-                                <input type="number" class="form-control" id="modal-cost" placeholder="0.00" min="0" step="0.01" />
-                            </div>
-                        </div>
-
-                        <!-- Target Participant (Multi-select with tags) -->
-                        <div class="col-12">
-                            <label class="form-label fw-medium text-xs mb-1">Target Participant</label>
-
-                            <!-- Dropdown Pilihan -->
-                            <div class="d-flex flex-wrap gap-2 mb-2">
-                                @foreach (var role in new[] { "Operator", "SPV", "Planner", "Manager", "All" })
-                                {
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-secondary btn-target-option"
-                                            data-value="@role">
-                                        <i class="fas fa-plus me-1"></i>@role
-                                    </button>
-                                }
-                            </div>
-
-                            <!-- Tag Container -->
-                            <div id="target-tags-container"
-                                 class="d-flex flex-wrap gap-2 p-2 border rounded bg-light"
-                                 style="min-height: 38px;">
-                                <span class="text-muted text-xs fst-italic" id="target-placeholder">
-                                    No target selected
-                                </span>
-                            </div>
-                            <div class="invalid-feedback">Target Participant is required.</div>
-
-                            <!-- Hidden input simpan value -->
-                            <input type="hidden" id="modal-target-participant" value="" />
+                    <!-- Estimated Cost -->
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Est. Cost</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="modal-cost" placeholder="0.00" min="0" step="0.01" />
                         </div>
                     </div>
-                </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-primary btn-sm" id="btn-modal-save">
-                        <i class="fas fa-save me-1"></i>Save Course
-                    </button>
-                </div>
+                    <!-- Target Participant (Multi-select with tags) -->
+                    <div class="col-12">
+                        <label class="form-label fw-medium text-xs mb-1">Target Participant</label>
 
+                        <!-- Dropdown Pilihan -->
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            @foreach (var role in new[] { "Operator", "SPV", "Planner", "Manager", "All" })
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary btn-target-option"
+                                        data-value="@role">
+                                    <i class="fas fa-plus me-1"></i>@role
+                                </button>
+                            }
+                        </div>
+
+                        <!-- Tag Container -->
+                        <div id="target-tags-container"
+                                class="d-flex flex-wrap gap-2 p-2 border rounded bg-light"
+                                style="min-height: 38px;">
+                            <span class="text-muted text-xs fst-italic" id="target-placeholder">
+                                No target selected
+                            </span>
+                        </div>
+                        <div class="invalid-feedback">Target Participant is required.</div>
+
+                        <!-- Hidden input simpan value -->
+                        <input type="hidden" id="modal-target-participant" value="" />
+                    </div>
+                </div>
             </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-modal-save">
+                    <i class="fas fa-save me-1"></i>Save Course
+                </button>
+            </div>
+
         </div>
     </div>
-    <!-- Course data untuk typeahead -->
-    <script id="course-data" type="application/json">
-            [
-                @for (int i = 0; i < Model.Courses.Count; i++)
-                {
-                            <text>
-                                    {
-                                        "id":         "@Model.Courses[i].CourseId",
-                                        "name":       "@Model.Courses[i].CourseName",
-                                        "categoryId": "@Model.Courses[i].CategoryId"
-                                    }@(i < Model.Courses.Count - 1 ? "," : "")
-                            </text>
-                }
-            ]
-    </script>
+</div>
+<!--Modal for remarks-->
+<div class="modal fade" id="remarksModal" tabindex="-1"
+        aria-labelledby="remarksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="remarksModalLabel">
+                    <i class="fas fa-comment-alt me-2"></i>Enter Remarks
+                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Hidden Fields -->
+                <input type="hidden" id="modal-planId" value="" />
+                <input type="hidden" id="actionNameInput" value="" />
+
+                <div class="mb-3">
+                    <label for="remarksInput" class="form-label fw-medium">
+                        Remarks <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control"
+                                id="remarksInput"
+                                rows="3"
+                                placeholder="Enter your remarks here..."></textarea>
+                    <!-- ✅ Inline validation message -->
+                    <div class="invalid-feedback" id="remarks-error">
+                        Remarks is required.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary btn-sm"
+                        id="btn-remarks-submit">
+                    <i class="fas fa-paper-plane me-1"></i>Submit
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+    
+<!-- ✅ Modal Update New Course — TC Only -->
+<div class="modal fade" id="modalUpdateCourse" tabindex="-1"
+        aria-labelledby="modalUpdateCourseLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="modalUpdateCourseLabel">
+                    <i class="fas fa-pencil-alt me-2"></i>Update New Course
+                </h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Hidden Fields -->
+                <input type="hidden" id="update-detail-id" value="" />
+                <input type="hidden" id="update-course-id" value="" />  <!-- 0 = new -->
+                <input type="hidden" id="update-is-new" value="0" /> <!-- 1 = new course -->
+
+                <div class="row g-3">
+
+                    <!-- Category -->
+                    <div class="col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Category <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select form-select-sm" id="update-category">
+                            <option value="">-- Select Category --</option>
+                            @foreach (var item in Model.Categories)
+                            {
+                                <option value="@item.CategoryId">@item.CategoryName</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Category is required.</div>
+                    </div>
+
+                    <!-- Course Name — Typeahead -->
+                    <div class="col-12">
+                        <label class="form-label fw-medium text-xs mb-1">
+                            Course Name <span class="text-danger">*</span>
+                        </label>
+                        <div class="position-relative">
+                            <input type="text"
+                                    class="form-control form-control-sm"
+                                    id="update-course-name"
+                                    placeholder="Search existing or type new course..."
+                                    autocomplete="off" />
+
+                            <!-- ✅ Badge: New Course -->
+                            <span class="badge bg-warning text-dark ms-1 d-none"
+                                    id="update-badge-new-course">
+                                <i class="fas fa-plus-circle me-1"></i>New Course
+                            </span>
+
+                            <!-- ✅ Typeahead Dropdown -->
+                            <ul class="list-group shadow-sm position-absolute w-100 z-3 d-none"
+                                id="update-course-suggestions"
+                                style="max-height:200px; overflow-y:auto; top:100%; left:0;">
+                            </ul>
+                        </div>
+                        <div class="invalid-feedback d-block d-none"
+                                id="update-course-error">
+                            Course name is required.
+                        </div>
+                        <!-- ✅ Info text -->
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Select existing course or type a new name to add to master course.
+                        </small>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-warning btn-sm"
+                        id="btn-update-course-save">
+                    <i class="fas fa-save me-1"></i>Update
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Course data untuk typeahead -->
+<script id="course-data" type="application/json">
+        [
+            @for (int i = 0; i < Model.Courses.Count; i++)
+            {
+                        <text>
+                                {
+                                    "id":         "@Model.Courses[i].CourseId",
+                                    "name":       "@Model.Courses[i].CourseName",
+                                    "categoryId": "@Model.Courses[i].CategoryId"
+                                }@(i < Model.Courses.Count - 1 ? "," : "")
+                        </text>
+            }
+        ]
+</script>
 
     @section Scripts
     {
         <script>
+                // ============================================================
+                // ✅ Server-side flags — declared FIRST before anything else
+                // ============================================================
+                var isTC      = @(Model.Plans.IsTC == 1 ? "true" : "false");
+                var canEdit   = @(Model.Plans.CanEdit == 1 ? "true" : "false");
+                var canAction = @(Model.Plans.CanAction == 1 ? "true" : "false");
+
                 // ============================================================
                 // GLOBAL
                 // ============================================================
@@ -475,6 +645,7 @@
                             type: 'POST',
                             data: function (d) {
                                 d.planId = $('#planId').val();
+                                d.username = $('#username').val();
                                 //console.log("Filters =>", d.companyFilter, d.yearFilter, d.departmentFilter, d.statusFilter);
                                 console.log("Filters =>", $('#co').val(), $('#yr').val(), $('#dp').val(), $('#st').val(), $('#planId').val());  
                             }
@@ -486,25 +657,26 @@
                                     return GetMonthName(data);
                                 }
                             },
-                            { 
-                                data: 'courseCode',
-                                render: function (data, type, row) {
-                                    if (row.isNewCourse == 1)
+                             { 
+                                 data: 'courseCode',
+                                 render: function (data, type, row) {
+                                     if (row.isNewCourse == 1)
+                                     {
+                                         return `
+                                                 <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">
+                                                     <i class="fas fa-plus-circle me-1"></i>New
+                                             </span>
+                                         `;                                            
+                                     }
+                                     else
                                     {
-                                        return `
-                                                <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">
-                                                    <i class="fas fa-plus-circle me-1"></i>New
-                                            </span>
-                                        `;                                            
-                                    }
-                                    else
-                                    {
-                                        return data;    
-                                    }                                    
-                                }
-                            },
+                                         return data;    
+                                     }                                    
+                                 }
+                             },
+                              
                             { data: 'courseName'},
-                            { data: 'categoryCode'},
+                            { data: 'categoryName'},
                             { data: 'totalSessions'},
                             { data: 'totalParticipants'},
                             { data: 'plannedDuration'},
@@ -514,17 +686,38 @@
                                 data: null,
                                 orderable: false,
                                 render: function (data, type, row) {
-                                            return `<button class="btn btn-xs btn-danger btn-delete-row"
-                                                        data-detail-id="${row.planDetailId}"
-                                                        title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>`;
-                                        }
+                                    var html = '';
+
+                                    // ✅ Delete button — use JS canEdit variable
+                                    if (canEdit) {
+                                        html += `
+                                            <button class="btn btn-xs btn-danger btn-delete-row"
+                                                    data-detail-id="${row.planDetailId}"
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>`;
+                                    }
+
+                                    // ✅ Edit NEW badge button — only if isTC
+                                    if (row.isNewCourse === 1 && isTC) {
+                                        html += `
+                                            <button class="btn btn-xs btn-warning btn-edit-new-course ms-1"
+                                                    data-detail-id="${row.planDetailId}"
+                                                    data-course-name="${row.courseName}"
+                                                    data-category-id="${row.categoryId ?? ''}"
+                                                    data-category-name="${row.categoryName ?? ''}"
+                                                    title="Update Course">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>`;
+                                    }
+
+                                    return html || '<span class="text-muted">—</span>';
+                                }
                             }
 
                         ],
                         // ✅ Gunakan columnDefs untuk mengatur responsive
-                                                   columnDefs: [
+                    columnDefs: [
                     // ✅ Hapus width dari sini, sudah dihandle CSS
                     { targets: 0, className: 'text-start'  },  // MONTH
                     { targets: 1, className: 'text-center' },  // CODE
@@ -566,7 +759,7 @@
                     //        dTable.ajax.reload();
                     //});
 
-                            // ============================================================
+                    // ============================================================
                     // Reset Modal saat dibuka
                     // ============================================================
                     $('#modalAddCourse').on('show.bs.modal', function () {
@@ -840,8 +1033,377 @@
 
                     });
 
+                // ============================================================
+                // AJAX — Submit Remarks
+                // (Place this INSIDE $(document).ready)
+                // ============================================================
+                $(document).on('click', '#btn-remarks-submit', function () {
 
+                    var remarks    = $.trim($('#remarksInput').val());
+                    var actionName = $('#actionNameInput').val();
+                    var planId     = parseInt($('#modal-planId').val()) || 0;
+
+                    // ✅ Client-side validation
+                    if (!remarks) {
+                        $('#remarksInput').addClass('is-invalid');
+                        $('#remarks-error').show();
+                        return;
+                    }
+
+                    // ✅ Clear validation state
+                    $('#remarksInput').removeClass('is-invalid').addClass('is-valid');
+                    $('#remarks-error').hide();
+
+                    // ✅ Build payload
+                    var payload = {
+                        Id:         planId,
+                        ActionName: actionName,
+                        Remarks:    remarks,
+                        Co:         $('#co').val(),
+                        Yr:         $('#yr').val(),
+                        Dp:         $('#dp').val(),
+                        St:         $('#st').val()
+                    };
+
+                    console.log('Remarks Payload:', payload);
+
+                    // ✅ Disable button & show spinner
+                    $('#btn-remarks-submit')
+                        .prop('disabled', true)
+                        .html('<span class="spinner-border spinner-border-sm me-1"></span>Submitting...');
+
+                    $.ajax({
+                        url:         '@Url.Action("PlanningAct", "Action")',
+                        type:        'POST',
+                        contentType: 'application/json',
+                        data:        JSON.stringify(payload),
+                        success: function (res) {
+                            if (res.success) {
+
+                                // ✅ 1. Hide modal
+                                bootstrap.Modal.getInstance(
+                                    document.getElementById('remarksModal')
+                                ).hide();
+
+                                // ✅ 2. Show success toast briefly
+                                showToast('success', res.message || actionName + ' submitted successfully.');
+
+                                // ✅ 3. Redirect to Plans page after short delay
+                                setTimeout(function () {
+                                    window.location.href = '@Url.Action("Plans", "Planning")?' + $.param({
+                                        co: $('#co').val(),
+                                        dp: $('#dp').val(),
+                                        yr: $('#yr').val(),
+                                        st: $('#st').val()
+                                    });
+                                }, 1500); // slight delay so toast is visible
+
+                            } else {
+                                // ✅ Show danger toast — keep modal open
+                                showToast('danger', res.message || 'Failed to submit action.');
+                            }
+                        },
+                        error: function (xhr) {
+                            var errMsg = 'Unknown server error.';
+                            try {
+                                var parsed = JSON.parse(xhr.responseText);
+                                errMsg = parsed.message || errMsg;
+                            } catch (e) {
+                                errMsg = xhr.responseText || errMsg;
+                            }
+                            showToast('danger', 'Server error: ' + errMsg);
+                        },
+                        complete: function () {
+                            // ✅ Always re-enable button
+                            $('#btn-remarks-submit')
+                                .prop('disabled', false)
+                                .html('<i class="fas fa-paper-plane me-1"></i>Submit');
+                        }
+                    });
                 });
+                // ============================================================
+                // Reset remarks modal when closed
+                // ============================================================
+                $('#remarksModal').on('hidden.bs.modal', function () {
+                    $('#remarksInput').val('').removeClass('is-valid is-invalid');
+                    $('#actionNameInput').val('');
+                    $('#modal-planId').val('');
+                    $('#remarks-error').hide();
+                    $('#btn-remarks-submit')
+                        .prop('disabled', false)
+                        .html('<i class="fas fa-paper-plane me-1"></i>Submit');
+                });
+
+                }); // end ready
+                // ============================================================
+                // Open Update Course Modal — isTC only
+                // ============================================================
+                $(document).on('click', '.btn-edit-new-course', function () {
+                    if (!@isTC) return;
+
+                    var detailId   = $(this).data('detail-id');
+                    var courseName = $(this).data('course-name');
+                    var categoryId = $(this).data('category-id');
+
+                    // ✅ Populate fields
+                    $('#update-detail-id').val(detailId);
+                    $('#update-course-id').val('0');
+                    $('#update-is-new').val('0');
+                    $('#update-course-name').val(courseName).removeClass('is-valid is-invalid');
+                    $('#update-category').val(categoryId).removeClass('is-valid is-invalid');
+                    $('#update-badge-new-course').addClass('d-none');
+                    $('#update-course-suggestions').addClass('d-none').empty();
+                    $('#update-course-error').addClass('d-none');
+
+                    // ✅ Show modal
+                    new bootstrap.Modal(document.getElementById('modalUpdateCourse')).show();
+                });
+                        
+
+        
+        // ============================================================
+        // Typeahead — Update Course Modal
+        // ============================================================
+        $(document).on('input', '#update-course-name', function () {
+            var keyword    = $.trim($(this).val()).toLowerCase();
+            var categoryId = $('#update-category').val();
+            var $list      = $('#update-course-suggestions');
+
+            // ✅ Reset course selection
+            $('#update-course-id').val('0');
+            $('#update-is-new').val('0');
+            $('#update-badge-new-course').addClass('d-none');
+
+            if (keyword.length < 1) {
+                $list.addClass('d-none').empty();
+                return;
+            }
+
+            // ✅ Filter from allCourses (already loaded globally)
+            var filtered = allCourses.filter(function (c) {
+                var matchName = c.name.toLowerCase().includes(keyword);
+                var matchCat  = categoryId ? c.categoryId == categoryId : true;
+                return matchName && matchCat;
+            });
+
+            $list.empty();
+
+            // ✅ Existing courses
+            filtered.forEach(function (c) {
+                $list.append(
+                    $('<li>')
+                        .addClass('list-group-item list-group-item-action py-1 px-2 text-sm cursor-pointer')
+                        .attr('data-id',   c.id)
+                        .attr('data-name', c.name)
+                        .attr('data-cat',  c.categoryId)
+                        .html(`<i class="fas fa-book me-1 text-primary"></i>${c.name}`)
+                );
+            });
+
+            // ✅ Always show "Add as new" option
+            $list.append(
+                $('<li>')
+                    .addClass('list-group-item list-group-item-action py-1 px-2 text-sm text-warning fw-semibold cursor-pointer')
+                    .attr('data-new', '1')
+                    .html(`<i class="fas fa-plus-circle me-1"></i>Add as new course:
+                           "<strong>${$.trim($('#update-course-name').val())}</strong>"`)
+            );
+
+            $list.removeClass('d-none');
+        });
+        // ============================================================
+        // Select from Update Course Suggestions
+        // ============================================================
+        $(document).on('click', '#update-course-suggestions li', function () {
+            var id    = $(this).attr('data-id');
+            var name  = $(this).attr('data-name');
+            var catId = $(this).attr('data-cat');
+            var isNew = $(this).attr('data-new');
+
+            if (isNew === '1') {
+                // ✅ New course — keep typed name, mark as new
+                $('#update-course-id').val('0');
+                $('#update-is-new').val('1');
+                $('#update-badge-new-course').removeClass('d-none');
+            } else {
+                // ✅ Existing course — fill fields
+                $('#update-course-name').val(name);
+                $('#update-course-id').val(id);
+                $('#update-is-new').val('0');
+                $('#update-badge-new-course').addClass('d-none');
+
+                // ✅ Auto-select category if not already selected
+                if (!$('#update-category').val() && catId) {
+                    $('#update-category').val(catId);
+                }
+            }
+
+            // ✅ Clear validation & hide suggestions
+            $('#update-course-suggestions').addClass('d-none').empty();
+            $('#update-course-error').addClass('d-none');
+            $('#update-course-name').removeClass('is-invalid').addClass('is-valid');
+        });
+
+        // ✅ Close suggestions when clicking outside
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#update-course-name, #update-course-suggestions').length) {
+                $('#update-course-suggestions').addClass('d-none').empty();
+            }
+        });
+
+        // ============================================================
+        // Save Update Course — AJAX
+        // ============================================================
+        $(document).on('click', '#btn-update-course-save', function () {
+            var detailId     = parseInt($('#update-detail-id').val())  || 0;
+            var courseId     = parseInt($('#update-course-id').val())  || 0;
+            var isNew        = $('#update-is-new').val() === '1' ? 1 : 0;
+            var courseName   = $.trim($('#update-course-name').val());
+            var categoryId   = parseInt($('#update-category').val())   || 0;
+            var categoryName = $('#update-category option:selected').text();
+            var isValid      = true;
+
+            // ✅ Validate category
+            if (!categoryId) {
+                $('#update-category').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#update-category').removeClass('is-invalid').addClass('is-valid');
+            }
+
+            // ✅ Validate course name
+            if (!courseName) {
+                $('#update-course-name').addClass('is-invalid');
+                $('#update-course-error').text('Course name is required.').removeClass('d-none');
+                isValid = false;
+            } else {
+                $('#update-course-name').removeClass('is-invalid').addClass('is-valid');
+                $('#update-course-error').addClass('d-none');
+            }
+
+            if (!isValid) return;
+
+            // ✅ Build payload
+            var payload = {
+                PlanDetailId : detailId,
+                CourseId     : courseId,     // 0 = new course
+                CourseName   : courseName,
+                CategoryId   : categoryId,
+                CategoryName : categoryName,
+                IsNewCourse  : isNew         // 1 = insert to master, 0 = existing
+            };
+
+            console.log('Update Course Payload:', payload);
+
+            // ✅ Disable button & show spinner
+            $('#btn-update-course-save')
+                .prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm me-1"></span>Updating...');
+
+            $.ajax({
+                url:         '@Url.Action("UpdateNewCourse", "Planning")',
+                type:        'POST',
+                contentType: 'application/json',
+                data:        JSON.stringify(payload),
+                success: function (res) {
+                    if (res.success) {
+                        // ✅ Hide modal
+                        bootstrap.Modal.getInstance(
+                            document.getElementById('modalUpdateCourse')
+                        ).hide();
+
+                        // ✅ Show success toast
+                        showToast('success', res.message || 'Course updated successfully.');
+
+                        // ✅ Reload DataTable
+                        setTimeout(function () {
+                            dTable.ajax.reload(null, false);
+                        }, 800);
+
+                    } else {
+                        showToast('danger', res.message || 'Failed to update course.');
+                    }
+                },
+                error: function (xhr) {
+                    var errMsg = 'Unknown server error.';
+                    try {
+                        var parsed = JSON.parse(xhr.responseText);
+                        errMsg = parsed.message || errMsg;
+                    } catch (e) {
+                        errMsg = xhr.responseText || errMsg;
+                    }
+                    showToast('danger', 'Server error: ' + errMsg);
+                },
+                complete: function () {
+                    $('#btn-update-course-save')
+                        .prop('disabled', false)
+                        .html('<i class="fas fa-save me-1"></i>Update');
+                }
+            });
+        });
+
+        // ============================================================
+        // Reset Update Course Modal when closed
+        // ============================================================
+        $('#modalUpdateCourse').on('hidden.bs.modal', function () {
+            $('#update-detail-id').val('');
+            $('#update-course-id').val('0');
+            $('#update-is-new').val('0');
+            $('#update-course-name').val('').removeClass('is-valid is-invalid');
+            $('#update-category').val('').removeClass('is-valid is-invalid');
+            $('#update-badge-new-course').addClass('d-none');
+            $('#update-course-suggestions').addClass('d-none').empty();
+            $('#update-course-error').addClass('d-none');
+            $('#btn-update-course-save')
+                .prop('disabled', false)
+                .html('<i class="fas fa-save me-1"></i>Update');
+        });
+
+                // ============================================================
+                // Action — Open Remarks Modal
+                // ============================================================
+                function Action(actionName) {
+                    var _planId = $('#planId').val();
+                    var _co     = $('#co').val();
+                    var _yr     = $('#yr').val();
+                    var _dp     = $('#dp').val();
+                    var _st     = $('#st').val();
+
+                    console.log(`Action: ${actionName} | PlanId: ${_planId} | Co: ${_co} | Yr: ${_yr} | Dp: ${_dp}`);
+
+                    if (
+                        actionName === 'Approve'             ||
+                        actionName === 'Reject'              ||
+                        actionName === 'Request for Approve'
+                    ) {
+                        // ✅ Set hidden fields
+                        $('#modal-planId').val(_planId);
+                        $('#actionNameInput').val(actionName);
+
+                        // ✅ Reset remarks field & validation state
+                        $('#remarksInput').val('').removeClass('is-valid is-invalid');
+                        $('#remarks-error').hide();
+
+                        // ✅ Update modal title dynamically with icon per action
+                        var iconMap = {
+                            'Approve'            : '<i class="fas fa-check-circle text-success me-2"></i>',
+                            'Reject'             : '<i class="fas fa-times-circle text-danger me-2"></i>',
+                            'Request for Approve': '<i class="fas fa-paper-plane text-primary me-2"></i>'
+                        };
+                        $('#remarksModalLabel').html((iconMap[actionName] || '') + actionName + ' Remarks');
+
+                        // ✅ Show modal
+                        var remarksModal = new bootstrap.Modal(document.getElementById('remarksModal'));
+                        remarksModal.show();
+
+                    } else {
+                        // Handle other actions
+                        alert('Action: ' + actionName);
+                    }
+                }
+
+
+
                 // ✅ Definisikan sebagai JavaScript function,
                 function GetMonthName(month) {
                     const months = [
@@ -852,7 +1414,7 @@
                     return months[month - 1] ?? month; // fallback ke angka jika invalid
                 } 
                 //------------------------------- ============================================================
-                        // ============================================================
+                // ============================================================
                 // Helper Functions
                 // ============================================================
                 function validateModalForm() {
