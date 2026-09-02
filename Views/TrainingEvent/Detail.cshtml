@@ -1,0 +1,726 @@
+﻿@using Training.Models.DTO.Event
+@model TrainingEventDetailDto
+
+@{
+    ViewData["Title"] = "Training Event Detail";
+
+    var docStatus = Model.DocStatus ?? 0;
+
+    var eventTypeText =
+        Model.EventType == "I"
+            ? "Internal"
+            : Model.EventType == "E"
+                ? "External"
+                : Model.EventType;
+
+    var statusClass =
+        docStatus == 0
+            ? "bg-secondary"
+            : docStatus == 1
+                ? "bg-warning text-dark"
+                : "bg-success";
+}
+
+<div class="container px-3">
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+
+    <div>
+        <h4 class="mb-0">
+            <i class="bi bi-calendar-event"></i>
+            Training Event
+        </h4>
+
+        <div class="text-muted small">
+            @Model.EventCode
+        </div>
+    </div>
+
+    <div class="d-flex gap-1">
+
+        @* =====================================================
+           EDIT / DELETE
+           ===================================================== *@
+
+        @if (Model.CanEdit)
+        {
+            <a asp-controller="TrainingEvent"
+               asp-action="Edit"
+               asp-route-id="@Model.TrainingEventId"
+               class="btn btn-sm btn-warning">
+
+                <i class="bi bi-pencil-square"></i>
+                Edit
+            </a>
+
+            <button type="button"
+                    class="btn btn-sm btn-danger"
+                    id="btnDeleteEvent"
+                    data-id="@Model.TrainingEventId">
+
+                <i class="bi bi-trash"></i>
+                Delete
+            </button>
+        }
+
+
+        @* =====================================================
+           WORKFLOW ACTION
+           ===================================================== *@
+
+        @if (Model.CanAction &&
+             Model.AvailableAction == "Post")
+        {
+            <button type="button"
+                    class="btn btn-sm btn-primary"
+                    id="btnPostEvent">
+
+                <i class="bi bi-send"></i>
+                Post
+            </button>
+        }
+
+        @if (Model.CanAction &&
+             Model.AvailableAction == "ApproveReject")
+        {
+            <button type="button"
+                    class="btn btn-sm btn-success"
+                    id="btnApproveEvent">
+
+                <i class="bi bi-check-lg"></i>
+                Approve
+            </button>
+
+            <button type="button"
+                    class="btn btn-sm btn-danger"
+                    id="btnRejectEvent">
+
+                <i class="bi bi-x-lg"></i>
+                Reject
+            </button>
+        }
+
+
+        @* =====================================================
+           BACK
+           ===================================================== *@
+
+        <button type="button"
+                class="btn btn-sm btn-secondary"
+                id="btnBackToEventIndex">
+
+            <i class="bi bi-arrow-left"></i>
+            Back
+        </button>
+
+    </div>
+</div>
+
+
+    <!-- =========================================================
+         EVENT INFORMATION
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2">
+
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+
+            <span class="fw-semibold">
+                <i class="fas fa-info-circle me-1"></i>
+                Event Information
+            </span>
+
+            <span class="badge @statusClass">
+                @Model.Status
+            </span>
+
+        </div>
+
+        <div class="card-body py-2">
+
+            <div class="row g-2">
+
+                <!-- Event Code -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Event Code
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.EventCode"
+                           readonly />
+                </div>
+
+                <!-- Course -->
+                <div class="col-md-4">
+                    <label class="form-label mb-1">
+                        Course
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.CourseName"
+                           readonly />
+                </div>
+
+                <!-- Category -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Category
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.TrainingCategory"
+                           readonly />
+                </div>
+
+                <!-- Type -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Type
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@eventTypeText"
+                           readonly />
+                </div>
+
+                <!-- Company -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Company
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.CoCode"
+                           readonly />
+                </div>
+
+
+                <!-- Department -->
+                <div class="col-md-3">
+                    <label class="form-label mb-1">
+                        Department
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.DeptName"
+                           readonly />
+                </div>
+
+                <!-- Trainer -->
+                <div class="col-md-4">
+                    <label class="form-label mb-1">
+                        Trainer
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.TrainerName"
+                           readonly />
+                </div>
+
+                <!-- Trainer ID -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Trainer ID
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.TrainerId"
+                           readonly />
+                </div>
+
+                <!-- Session -->
+                <div class="col-md-1">
+                    <label class="form-label mb-1">
+                        Session
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm text-center"
+                           value="@Model.SessionCount"
+                           readonly />
+                </div>
+
+                <!-- Hours -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Hours
+                    </label>
+
+                    <div class="input-group input-group-sm">
+
+                        <input type="text"
+                               class="form-control text-end"
+                               value="@Model.DurationHours"
+                               readonly />
+
+                        <span class="input-group-text">
+                            hrs
+                        </span>
+
+                    </div>
+                </div>
+
+
+                <!-- Start Date -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Start Date
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.EventStartDate.ToString("dd/MM/yyyy HH:mm")"
+                           readonly />
+                </div>
+
+                <!-- End Date -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        End Date
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.EventEndDate.ToString("dd/MM/yyyy HH:mm")"
+                           readonly />
+                </div>
+
+                <!-- Venue -->
+                <div class="col-md-4">
+                    <label class="form-label mb-1">
+                        Venue
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.Venue"
+                           readonly />
+                </div>
+
+                <!-- Budget -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Budget
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm text-end"
+                           value="@(Model.Budget?.ToString("#,##0.00") ?? "-")"
+                           readonly />
+                </div>
+
+                <!-- Participant -->
+                <div class="col-md-2">
+                    <label class="form-label mb-1">
+                        Participants
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm text-center"
+                           value="@Model.ParticipantQuota"
+                           readonly />
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         TITLE / DESCRIPTION / OBJECTIVE
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2">
+
+        <div class="card-header py-2">
+            <span class="fw-semibold">
+                <i class="fas fa-file-alt me-1"></i>
+                Training Information
+            </span>
+        </div>
+
+        <div class="card-body py-2">
+
+            <div class="row g-2">
+
+                <div class="col-md-12">
+
+                    <label class="form-label mb-1">
+                        Training Title
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.TrainingTitle"
+                           readonly />
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label mb-1">
+                        Description
+                    </label>
+
+                    <textarea class="form-control form-control-sm"
+                              rows="3"
+                              readonly>@Model.TrainingDescription</textarea>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label mb-1">
+                        Objective
+                    </label>
+
+                    <textarea class="form-control form-control-sm"
+                              rows="3"
+                              readonly>@Model.TrainingObjective</textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         PARTICIPANTS
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2">
+
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+
+            <span class="fw-semibold">
+                <i class="fas fa-users me-1"></i>
+                Participants
+            </span>
+
+            <span class="badge bg-primary">
+                @Model.Participants.Count
+            </span>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-sm table-hover table-bordered mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th style="width:45px"
+                                class="text-center">
+                                #
+                            </th>
+
+                            <th style="width:140px">
+                                Employee Code
+                            </th>
+
+                            <th>
+                                Name
+                            </th>
+
+                            <th style="width:100px">
+                                ABRV
+                            </th>
+
+                            <th>
+                                Department
+                            </th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.Participants.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5"
+                                    class="text-center text-muted py-3">
+                                    No participants found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            var no = 1;
+
+                            foreach (var participant in Model.Participants)
+                            {
+                                <tr>
+
+                                    <td class="text-center">
+                                        @no
+                                    </td>
+
+                                    <td>
+                                        @participant.EmployeeCode
+                                    </td>
+
+                                    <td>
+                                        @participant.Name
+                                    </td>
+
+                                    <td>
+                                        @participant.ABRV
+                                    </td>
+
+                                    <td>
+                                        @participant.DeptName
+                                    </td>
+
+                                </tr>
+
+                                no++;
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         AUDIT INFORMATION
+         ========================================================= -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-header py-2">
+            <span class="fw-semibold">
+                <i class="fas fa-history me-1"></i>
+                Audit Information
+            </span>
+        </div>
+
+        <div class="card-body py-2">
+
+            <div class="row g-2">
+
+                <div class="col-md-3">
+
+                    <label class="form-label mb-1">
+                        Created By
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.CreatedBy"
+                           readonly />
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label mb-1">
+                        Created Date
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")"
+                           readonly />
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label mb-1">
+                        Modified By
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.ModifiedBy"
+                           readonly />
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <label class="form-label mb-1">
+                        Modified Date
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@(Model.ModifiedDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")"
+                           readonly />
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =============================================================
+     MODAL Action
+     ============================================================= -->
+   
+
+
+<!-- =============================================================
+     REJECT MODAL
+     ============================================================= -->
+    @if (Model.CanAction)
+    {
+        <div class="modal fade"
+             id="rejectEventModal"
+             tabindex="-1"
+             aria-labelledby="rejectEventModalLabel"
+             aria-hidden="true">
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content">
+
+                    <div class="modal-header py-2">
+
+                        <h6 class="modal-title"
+                            id="rejectEventModalLabel">
+
+                            <i class="bi bi-x-circle text-danger"></i>
+                            Reject Training Event
+
+                        </h6>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div class="alert alert-warning py-2 small">
+
+                            <i class="bi bi-exclamation-triangle"></i>
+
+                            Please provide a reason for rejecting
+                            this training event.
+
+                        </div>
+
+                        <label for="rejectReason"
+                               class="form-label">
+
+                            Reject Reason
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <textarea id="rejectReason"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="1000"
+                                  placeholder="Enter rejection reason..."></textarea>
+
+                        <div class="invalid-feedback">
+                            Reject reason is required.
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer py-2">
+
+                        <button type="button"
+                                class="btn btn-sm btn-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-sm btn-danger"
+                                id="btnConfirmReject">
+
+                            <i class="bi bi-x-lg"></i>
+                            Reject
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+
+
+
+<form id="deleteEventForm"
+      asp-controller="TrainingEvent"
+      asp-action="Delete"
+      method="post"
+      class="d-none">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden"
+           name="id"
+           value="@Model.TrainingEventId" />
+
+</form>
+@section Scripts {
+
+    <script>
+
+        const trainingEventDetailUrls = {
+    index: '@Url.Action("Index", "TrainingEvent")',
+    edit: '@Url.Action("Edit", "TrainingEvent")',
+    delete: '@Url.Action("Delete", "TrainingEvent")',
+    eventAction: '@Url.Action("EventAct", "Action")'
+};
+
+        const trainingEventDetail = {
+            id: @Model.TrainingEventId,
+            canEdit: @Model.CanEdit.ToString().ToLowerInvariant(),
+            canAction: @Model.CanAction.ToString().ToLowerInvariant(),
+            availableAction: '@(Model.AvailableAction ?? "")',
+            docStatus: @(Model.DocStatus ?? 0)
+        };
+
+    </script>
+
+    <script src="~/js/training-event-detail.js"
+            asp-append-version="true"></script>
+}

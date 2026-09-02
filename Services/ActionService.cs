@@ -57,5 +57,74 @@ namespace Training.Services
             }
         }
 
+        public async Task<ApiResponse> ActionEventAsync(ActionVM act)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                var parameters = new DynamicParameters();
+
+                parameters.Add(
+                    "@id",
+                    act.Id,
+                    DbType.Int64);
+
+                parameters.Add(
+                    "@actionName",
+                    act.ActionName,
+                    DbType.String);
+
+                parameters.Add(
+                    "@remarks",
+                    act.Remarks ?? string.Empty,
+                    DbType.String);
+
+                parameters.Add(
+                    "@by",
+                    act.By,
+                    DbType.String);
+
+                parameters.Add(
+                    "@doc",
+                    "EVENT",
+                    DbType.String);
+
+                parameters.Add(
+                    "@role",
+                    act.Role,
+                    DbType.String);
+
+                var result = await connection.ExecuteScalarAsync<int>(
+                    "USP_Approve",
+                    parameters,
+                    commandType: CommandType.StoredProcedure);
+
+                return new ApiResponse
+                {
+                    Success = result > 0,
+                    Message = $"USP_Approve result = {result}",
+                    Data = new
+                    {
+                        Result = result
+                    }
+                };
+                //return new ApiResponse
+                //{
+                //    Success = result > 0,
+                //    Message = result switch
+                //    {
+                //        > 0 => "Action successfully.",
+                //        -1 => "Training event not found.",
+                //        -2 => "Workflow transition is not configured.",
+                //        -3 => "Document status is not configured.",
+                //        _ => "Action was not executed."
+                //    },
+                //    Data = new
+                //    {
+                //        Result = result
+                //    }
+                //};
+            }
+        }
+
     }
 }

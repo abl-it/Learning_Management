@@ -2,7 +2,7 @@
 {
     public class ActionVM
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string ActionName { get; set; }
         public string Remarks { get; set; }
         public string By { get; set; }

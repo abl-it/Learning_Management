@@ -1,0 +1,107 @@
+﻿<link href="~/css/event.css" rel="stylesheet" />
+
+<div class="container-fluid">
+    <!-- Compact Header -->
+    <div class="row justify-content-between align-items-center mb-5">
+
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-auto">
+                <h4 class="mb-0 fw-medium">
+                    <i class="fa-solid fa-people-line me-2"></i>Training Event Management
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Filter Panel -->
+    <div class="card card-compact mb-3">
+        @* <input type="hidden" id="currentUser" value="@Model.CurrentUser" /> *@
+        @* <input type="hidden" id="username" value="@Model.Username" /> *@
+        <div class="card-header">
+            <h6 class="mb-0 fw-medium">
+                <i class="fas fa-filter me-2"></i>Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row spacing-sm align-items-end">
+                <!-- Company Code Filter -->
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="companyFilter" class="form-label text-xs fw-medium mb-1">Company</label>
+                    <select id="companyFilter" class="form-select form-select-xs">
+                        <option value="">All Company</option>
+                    </select>
+                </div>
+                
+                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-12">
+                    <label for="departmentFilter" class="form-label text-xs fw-medium mb-1">Department</label>
+                    <select id="departmentFilter" class="form-select form-select-xs">
+                        <option value="">All Department</option>
+                    </select>
+                </div>
+                <!-- Status Filter -->
+                <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 col-12">
+                    <label for="statusFilter" class="form-label text-xs fw-medium mb-1">Status</label>
+                    <select class="form-select form-select-xs" id="statusFilter">
+                        <option value="">All</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Canceled">Canceled</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-xl-1 col-lg-1 col-md-6 col-sm-6 col-12">
+                    <button type="button" class="btn btn-xs btn-outline-secondary w-100" id="clearFilters">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--add Event -->
+    <div class="d-flex justify-content-end mb-3">
+        <a asp-controller="TrainingEvent"
+           asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>
+            Add Event
+        </a>
+    </div>
+
+    <!-- Compact DataTable -->
+    <div class="card card-compact">
+        <div class="card-body p-2 overflow-hidden">
+            <table id="dTable"
+                   class="table table-striped table-compact w-100">
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+
+        const urls = {
+
+            getEvents: '@Url.Action("GetEvents", "TrainingEvent")',
+
+            getCompanies: '@Url.Action("GetCompanies", "Home", new { type = "EVENT" })',
+            
+            getDepartments: '@Url.Action("GetDepartments", "Home", new { type = "EVENT" })',
+
+            detail: '@Url.Action("Detail", "TrainingEvent")',
+
+            edit: '@Url.Action("Edit", "TrainingEvent")',
+
+            //profileImage: '@Url.Content("~/api/Employee/profile-image")'
+
+        };
+
+    </script>
+
+    <script src="~/js/event.js" asp-append-version="true"></script>
+
+}

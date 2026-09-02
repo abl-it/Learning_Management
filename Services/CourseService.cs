@@ -266,8 +266,9 @@ namespace Training.Services
             try
             {
                 using var connection = new SqlConnection(_connectionString);
-                var sql = @"SELECT a.*, b.Color 
-                            FROM Master_Courses a Left Join Master_TrainingCategories b on a.CategoryId = b.CategoryId 
+                var sql = @"SELECT a.*, b.Color, b.CategoryName 
+                            FROM Master_Courses a Left Join Master_TrainingCategories b
+                                    on a.CategoryId = b.CategoryId 
                             WHERE a.IsActive=1;";
                 return (await connection.QueryAsync<Course>(sql)).ToList(); 
             }

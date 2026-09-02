@@ -12,73 +12,98 @@ namespace Training.Middleware
         private readonly ILogger<SessionTokenMiddleware> _logger;
         private readonly IWebHostEnvironment _env;
         private readonly string _secretKey = "fQdrtYklILI4/muy00eWb80w2OrGs6hugJIbUCZKvJQ=";
-       // private readonly string _login = "http://localhost:5006/Account/Login/";
-        
+        private readonly IConfiguration _configuration;
+
         public SessionTokenMiddleware(RequestDelegate next
                                         , ILogger<SessionTokenMiddleware> logger
-                                        , IWebHostEnvironment env)
+                                        , IWebHostEnvironment env
+                                        , IConfiguration configuration)
         {
             _next = next;
             _logger = logger;
             _env = env;
+            _configuration = configuration;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
+            _logger.LogInformation("SessionTokenMiddleware started.");
+            _logger.LogInformation("Request : {Path}", context.Request.Path);
+
             if (_env.IsDevelopment())
             {
-                // In development environment, bypass token validation and set username to "admin1"
-                context.Session.SetString("Username", "vikri");
+                context.Session.SetString("Username", "hdahlia");
                 await _next(context);
                 return;
             }
 
             var sessionId = context.Request.Query["token"].FirstOrDefault();
-            string sId = context.Session.GetString("appId");
+
+            _logger.LogInformation("SessionID : {SessionId}", sessionId);
 
             if (!string.IsNullOrEmpty(sessionId))
             {
-                var token = await RequestTokenFromP01(context, sessionId);
-                
-                // Validate and extract information from the token
-                var username = ValidateAndExtractToken(token);
-                if (username != null)
+                var token = await RequestTokenFromP01(sessionId);
+
+                if (string.IsNullOrWhiteSpace(token))
                 {
-                    // Store the token and username in the session
+                    _logger.LogWarning("Token not found.");
+
+                    context.Response.Redirect(GetLoginUrl());
+                    return;
+                }
+
+                var username = ValidateAndExtractToken(token);
+
+                if (!string.IsNullOrEmpty(username))
+                {
                     context.Session.SetString("JWT", token);
                     context.Session.SetString("Username", username);
+                    context.Session.SetString("SessionID", sessionId);
                 }
                 else
                 {
-                    // Invalid token
-                    context.Response.Redirect(GetLoginUrl(context));
-					return;
+                    context.Response.Redirect(GetLoginUrl());
+                    return;
                 }
             }
             else if (string.IsNullOrEmpty(context.Session.GetString("JWT")))
             {
-                // Redirect to P01 for login
-                //context.Response.Redirect(_login);
-				context.Response.Redirect(GetLoginUrl(context));
-				return;
+                context.Response.Redirect(GetLoginUrl());
+                return;
             }
 
             await _next(context);
         }
 
-        private async Task<string> RequestTokenFromP01(HttpContext context, string sessionId)
+        private async Task<string?> RequestTokenFromP01(string sessionId)
         {
-            using var client = new HttpClient();
-            //client.GetAsync($"http://localhost:5006/api/token?sessionId={sessionId}");
-			//production
-			//client.GetAsync($"http://192.168.41.72:1115/home/api/token?sessionId={sessionId}");
-			var response = await client.GetAsync(GetToken(context, sessionId));
-
-			if (response.IsSuccessStatusCode)
+            try
             {
+                using var client = new HttpClient
+                {
+                    Timeout = TimeSpan.FromSeconds(10)
+                };
+
+                var response = await client.GetAsync(GetToken(sessionId));
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning(
+                        "Token API returned {StatusCode}",
+                        response.StatusCode);
+
+                    return null;
+                }
+
                 return await response.Content.ReadAsStringAsync();
             }
-            return null;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cannot connect to Token API.");
+
+                return null;
+            }
         }
         private string ValidateAndExtractToken(string token)
         {
@@ -90,9 +115,9 @@ namespace Training.Middleware
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero
-                
-            };
 
+            };
+            //_logger.LogInformation("User : {Username}",username);
             try
             {
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
@@ -107,34 +132,20 @@ namespace Training.Middleware
             }
         }
 
-		private string GetLoginUrl(HttpContext context)
-		{
-			// Get the scheme (http/https) and host (domain or IP)
-			var scheme = context.Request.Scheme;
-			var host = context.Request.Host.ToString();
+        private string GetLoginUrl()
+        {
+            return _configuration["SSO:PublicLogin"]!;
+        }
+        private string GetToken(string sessionId)
+        {
+            var baseUrl = _configuration["SSO:InternalApi"]!.TrimEnd('/');
 
-			// Get the base path (if any, e.g., /app)
-			var basePath = context.Request.PathBase.ToString();
+            var url = $"{baseUrl}/home/api/token?sessionId={sessionId}";
 
-			// Construct the login URL dynamically
-			var loginUrl = $"{scheme}://{host}/home/Account/Login/";
+            _logger.LogInformation("Token URL : {Url}", url);
 
-			return loginUrl;
-		}
-		private string GetToken(HttpContext context, string sessionId)
-		{
-			// Get the scheme (http/https) and host (domain or IP)
-			var scheme = context.Request.Scheme;
-			var host = context.Request.Host.ToString();
+            return url;
+        }
 
-			// Get the base path (if any, e.g., /app)
-			var basePath = context.Request.PathBase.ToString();
-
-			// Construct the login URL dynamically
-			var loginUrl = $"{scheme}://{host}/home/api/token?sessionId={sessionId}";
-
-			return loginUrl;
-		}
-
-	}
+    }
 }

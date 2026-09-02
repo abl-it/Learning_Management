@@ -1,5 +1,6 @@
 ﻿using Training.Models;
 using Training.Models.DataTables;
+using Training.Models.DTO;
 
 namespace Training.Services.IServices
 {
@@ -38,5 +39,19 @@ namespace Training.Services.IServices
         Task<List<Company>> GetCompaniesByAccessAsync(string workflow, string employeeCode);
 
         Task<string> GetRoleAsync(string username);
+
+        //TypeAhead
+        Task<IReadOnlyList<EmployeeLookupDto>> SearchInternalTrainersAsync(
+            string? term,
+            CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<DepartmentLookupModel>> GetDepartmentsAsync(
+            string? coCode,
+            CancellationToken cancellationToken = default);
+
+
+        Task<IReadOnlyList<EmployeeLookupDto>> SearchEmployeesAsync(
+            string? term,
+            CancellationToken cancellationToken = default);
     }
 }

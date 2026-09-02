@@ -1,0 +1,747 @@
+/* ================================================================
+   TRAINING EVENT MODULE
+   Database : SQL Server
+   Purpose  : Training Event Registration & Workflow
+   ================================================================
+
+   Main workflow:
+
+       DRAFT
+          |
+          v
+       SUBMITTED
+          |
+          v
+       PENDING_APPROVAL
+          |
+          +-------> REJECTED
+          |             |
+          |             v
+          |           DRAFT
+          |
+          v
+       APPROVED
+          |
+          v
+       ONGOING
+          |
+          v
+       COMPLETED
+          |
+          v
+       CLOSED
+
+   Notes:
+   - DepartmentId references existing Department master.
+   - EmployeeId references existing Employee master.
+   - TrainerId references existing Employee master when internal.
+   - External trainer can use TrainerName.
+   - Dapper is expected to be used by application layer.
+   - No Entity Framework / Repository is required.
+================================================================ */
+
+
+/* ================================================================
+   1. CREATE TABLE: TrainingEvent
+================================================================ */
+
+IF OBJECT_ID('dbo.TrainingEvent', 'U') IS NULL
+BEGIN
+
+    CREATE TABLE dbo.TrainingEvent
+    (
+        TrainingEventId BIGINT IDENTITY(1,1) NOT NULL,
+
+        EventCode NVARCHAR(30) NOT NULL,
+		
+		CourseId INT NOT NULL,
+
+		CoCode NVARCHAR(20) NULL,
+		
+		ABRV VARCHAR(50) NULL,
+ 
+		DeptName VARCHAR(250) NULL,
+		
+        TrainingTitle NVARCHAR(250) NOT NULL,
+
+        TrainingDescription NVARCHAR(MAX) NULL,
+
+        TrainingObjective NVARCHAR(MAX) NULL,
+
+        EventType CHAR(1) NOT NULL,
+        /*
+            I = Internal
+            E = External
+        */
+
+        TrainingCategoryId INT NULL,
+
+        TrainerId VARCHAR(50) NULL,
+
+        TrainerName NVARCHAR(200) NULL,
+
+        ParticipantQuota INT NOT NULL,
+
+        Budget DECIMAL(18,2) NULL,
+
+        Venue NVARCHAR(500) NULL,
+
+        EventStartDate DATETIME2(0) NOT NULL,
+
+        EventEndDate DATETIME2(0) NOT NULL,
+
+        RegistrationStartDate DATETIME2(0) NULL,
+
+        RegistrationEndDate DATETIME2(0) NULL,
+
+        Workflow NVARCHAR(50) NULL,
+		
+		Strategy VARCHAR(50) NULL DEFAULT ('A'),
+		
+		DocStatus INT NULL
+
+        CreatedBy NVARCHAR(100) NOT NULL,
+
+        CreatedDate DATETIME2(0) NOT NULL
+            CONSTRAINT DF_TrainingEvent_CreatedDate
+            DEFAULT (SYSDATETIME()),
+
+        ModifiedBy NVARCHAR(100) NULL,
+
+        ModifiedDate DATETIME2(0) NULL,
+
+        RowVersion ROWVERSION NOT NULL,
+
+        CONSTRAINT PK_TrainingEvent
+            PRIMARY KEY CLUSTERED (TrainingEventId),
+
+        CONSTRAINT UQ_TrainingEvent_EventCode
+            UNIQUE (EventCode),
+
+        CONSTRAINT CK_TrainingEvent_EventType
+            CHECK (EventType IN ('I', 'E')),
+
+        CONSTRAINT CK_TrainingEvent_ParticipantQuota
+            CHECK (ParticipantQuota > 0),
+
+        CONSTRAINT CK_TrainingEvent_Budget
+            CHECK (Budget IS NULL OR Budget >= 0),
+
+        CONSTRAINT CK_TrainingEvent_Date
+            CHECK (EventEndDate >= EventStartDate),
+
+        
+
+    );
+
+END;
+GO
+
+
+/* ================================================================
+   2. INDEXES: TrainingEvent
+================================================================ */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_TrainingEvent_Status'
+      AND object_id = OBJECT_ID('dbo.TrainingEvent')
+)
+BEGIN
+
+    CREATE INDEX IX_TrainingEvent_Status
+        ON dbo.TrainingEvent(DocStatus);
+
+END;
+GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_TrainingEvent_Department_Status'
+      AND object_id = OBJECT_ID('dbo.TrainingEvent')
+)
+BEGIN
+
+    CREATE INDEX IX_TrainingEvent_Department_Status
+        ON dbo.TrainingEvent
+        (
+            ABRV,
+            Status
+        );
+
+END;
+GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_TrainingEvent_EventDate'
+      AND object_id = OBJECT_ID('dbo.TrainingEvent')
+)
+BEGIN
+
+    CREATE INDEX IX_TrainingEvent_EventDate
+        ON dbo.TrainingEvent
+        (
+            EventStartDate,
+            EventEndDate
+        );
+
+END;
+GO
+
+
+/* ================================================================
+   3. TABLE: TrainingEventParticipant
+      Planned / Registered Participants
+================================================================ */
+
+IF OBJECT_ID('dbo.TrainingEventParticipant', 'U') IS NULL
+BEGIN
+
+    CREATE TABLE dbo.TrainingEventParticipant
+    (
+        TrainingEventParticipantId BIGINT IDENTITY(1,1) NOT NULL,
+
+        TrainingEventId BIGINT NOT NULL,
+
+        EmployeeCode VARCHAR(50) NOT NULL,
+
+        Name VARCHAR(250) NOT NULL,
+
+        CONSTRAINT PK_TrainingEventParticipant
+            PRIMARY KEY CLUSTERED
+            (
+                TrainingEventParticipantId
+            ),
+
+        CONSTRAINT FK_TrainingEventParticipant_Event
+            FOREIGN KEY (TrainingEventId)
+            REFERENCES dbo.TrainingEvent(TrainingEventId),
+
+        
+
+    );
+
+END;
+GO
+
+
+/* Prevent duplicate planned participant */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UX_TrainingEventParticipant_Event_Employee'
+      AND object_id = OBJECT_ID('dbo.TrainingEventParticipant')
+)
+BEGIN
+
+    CREATE UNIQUE INDEX UX_TrainingEventParticipant_Event_Employee
+        ON dbo.TrainingEventParticipant
+        (
+            TrainingEventId,
+            EmployeeCode
+        );
+
+END;
+GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_TrainingEventParticipant_Employee'
+      AND object_id = OBJECT_ID('dbo.TrainingEventParticipant')
+)
+BEGIN
+
+    CREATE INDEX IX_TrainingEventParticipant_Employee
+        ON dbo.TrainingEventParticipant(EmployeeCode);
+
+END;
+GO
+
+
+/* ================================================================
+   4. TABLE: TrainingEventActualParticipant
+      Actual participants attending the training.
+
+      IMPORTANT:
+      PlannedParticipantId is nullable.
+
+      NULL means participant was NOT registered beforehand
+      and was added during actual realization.
+================================================================ */
+
+IF OBJECT_ID('dbo.TrainingEventActualParticipant', 'U') IS NULL
+BEGIN
+
+    CREATE TABLE dbo.TrainingEventActualParticipant
+    (
+        TrainingEventActualParticipantId BIGINT IDENTITY(1,1) NOT NULL,
+
+        TrainingEventId BIGINT NOT NULL,
+
+        EmployeeCode VARCHAR(50) NOT NULL,
+
+        PlannedParticipantId BIGINT NULL,
+
+        AttendanceStatus NVARCHAR(30) NOT NULL,
+
+        Remarks NVARCHAR(1000) NULL,
+
+        CreatedBy NVARCHAR(100) NOT NULL,
+
+        CreatedDate DATETIME2(0) NOT NULL
+            CONSTRAINT DF_TrainingEventActualParticipant_CreatedDate
+            DEFAULT (SYSDATETIME()),
+
+        
+        CONSTRAINT PK_TrainingEventActualParticipant
+            PRIMARY KEY CLUSTERED
+            (
+                TrainingEventActualParticipantId
+            ),
+
+        CONSTRAINT FK_ActualParticipant_Event
+            FOREIGN KEY (TrainingEventId)
+            REFERENCES dbo.TrainingEvent(TrainingEventId),
+
+        CONSTRAINT FK_ActualParticipant_Planned
+            FOREIGN KEY (PlannedParticipantId)
+            REFERENCES dbo.TrainingEventParticipant
+            (
+                TrainingEventParticipantId
+            ),
+
+        CONSTRAINT CK_ActualParticipant_Attendance
+            CHECK
+            (
+                AttendanceStatus IN
+                (
+                    'PRESENT',
+                    'ABSENT',
+                    'PARTIAL'
+                )
+            ),
+
+        
+
+    );
+
+END;
+GO
+
+
+/* One employee can only appear once in actual participant list */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UX_ActualParticipant_Event_Employee'
+      AND object_id =
+          OBJECT_ID('dbo.TrainingEventActualParticipant')
+)
+BEGIN
+
+    CREATE UNIQUE INDEX UX_ActualParticipant_Event_Employee
+        ON dbo.TrainingEventActualParticipant
+        (
+            TrainingEventId,
+            EmployeeCode
+        );
+
+END;
+GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_ActualParticipant_Employee'
+      AND object_id =
+          OBJECT_ID('dbo.TrainingEventActualParticipant')
+)
+BEGIN
+
+    CREATE INDEX IX_ActualParticipant_Employee
+        ON dbo.TrainingEventActualParticipant(EmployeeCode);
+
+END;
+GO
+
+
+/* ================================================================
+   5. TABLE: TrainingEventAssessment
+      Defines whether event has Pre-Test / Post-Test.
+
+      Example:
+
+      Event 100
+          PRE_TEST
+              IsMandatory = 0
+
+          POST_TEST
+              IsMandatory = 1
+================================================================ */
+
+IF OBJECT_ID('dbo.TrainingEventAssessment', 'U') IS NULL
+BEGIN
+
+    CREATE TABLE dbo.TrainingEventAssessment
+    (
+        TrainingEventAssessmentId BIGINT IDENTITY(1,1) NOT NULL,
+
+        TrainingEventId BIGINT NOT NULL,
+
+        AssessmentType NVARCHAR(30) NOT NULL,
+
+        IsMandatory BIT NOT NULL
+            CONSTRAINT DF_TrainingEventAssessment_IsMandatory
+            DEFAULT (0),
+
+        PassingScore DECIMAL(5,2) NULL,
+
+        MaxScore DECIMAL(5,2) NULL,
+
+        IsActive BIT NOT NULL
+            CONSTRAINT DF_TrainingEventAssessment_IsActive
+            DEFAULT (1),
+
+        CreatedBy NVARCHAR(100) NOT NULL,
+
+        CreatedDate DATETIME2(0) NOT NULL
+            CONSTRAINT DF_TrainingEventAssessment_CreatedDate
+            DEFAULT (SYSDATETIME()),
+
+        ModifiedBy NVARCHAR(100) NULL,
+
+        ModifiedDate DATETIME2(0) NULL,
+
+        RowVersion ROWVERSION NOT NULL,
+
+        CONSTRAINT PK_TrainingEventAssessment
+            PRIMARY KEY CLUSTERED
+            (
+                TrainingEventAssessmentId
+            ),
+
+        CONSTRAINT FK_TrainingEventAssessment_Event
+            FOREIGN KEY (TrainingEventId)
+            REFERENCES dbo.TrainingEvent(TrainingEventId),
+
+        CONSTRAINT CK_TrainingEventAssessment_Type
+            CHECK
+            (
+                AssessmentType IN
+                (
+                    'PRE_TEST',
+                    'POST_TEST'
+                )
+            ),
+
+        CONSTRAINT CK_TrainingEventAssessment_Score
+            CHECK
+            (
+                PassingScore IS NULL
+                OR
+                (
+                    PassingScore >= 0
+                    AND
+                    (
+                        MaxScore IS NULL
+                        OR PassingScore <= MaxScore
+                    )
+                )
+            ),
+
+        CONSTRAINT CK_TrainingEventAssessment_MaxScore
+            CHECK
+            (
+                MaxScore IS NULL
+                OR MaxScore > 0
+            )
+
+    );
+
+END;
+GO
+
+
+/* Only one PRE_TEST and one POST_TEST per event */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UX_TrainingEventAssessment_Event_Type'
+      AND object_id =
+          OBJECT_ID('dbo.TrainingEventAssessment')
+)
+BEGIN
+
+    CREATE UNIQUE INDEX UX_TrainingEventAssessment_Event_Type
+        ON dbo.TrainingEventAssessment
+        (
+            TrainingEventId,
+            AssessmentType
+        );
+
+END;
+GO
+
+
+/* ================================================================
+   6. TABLE: TrainingEventAssessmentResult
+      Participant's actual test result.
+
+      ResultStatus:
+          NOT_TAKEN
+          PASSED
+          FAILED
+
+      NULL Score is allowed for NOT_TAKEN.
+================================================================ */
+
+IF OBJECT_ID('dbo.TrainingEventAssessmentResult', 'U') IS NULL
+BEGIN
+
+    CREATE TABLE dbo.TrainingEventAssessmentResult
+    (
+        TrainingEventAssessmentResultId
+            BIGINT IDENTITY(1,1) NOT NULL,
+
+        TrainingEventAssessmentId BIGINT NOT NULL,
+
+        TrainingEventActualParticipantId BIGINT NOT NULL,
+
+        Score DECIMAL(5,2) NULL,
+
+        ResultStatus NVARCHAR(30) NOT NULL,
+
+        AttemptNo INT NOT NULL
+            CONSTRAINT DF_AssessmentResult_AttemptNo
+            DEFAULT (1),
+
+        StartedDateTime DATETIME2(0) NULL,
+
+        CompletedDateTime DATETIME2(0) NULL,
+
+        Remarks NVARCHAR(1000) NULL,
+
+        CreatedBy NVARCHAR(100) NOT NULL,
+
+        CreatedDate DATETIME2(0) NOT NULL
+            CONSTRAINT DF_AssessmentResult_CreatedDate
+            DEFAULT (SYSDATETIME()),
+
+        ModifiedBy NVARCHAR(100) NULL,
+
+        ModifiedDate DATETIME2(0) NULL,
+
+        RowVersion ROWVERSION NOT NULL,
+
+        CONSTRAINT PK_TrainingEventAssessmentResult
+            PRIMARY KEY CLUSTERED
+            (
+                TrainingEventAssessmentResultId
+            ),
+
+        CONSTRAINT FK_AssessmentResult_Assessment
+            FOREIGN KEY (TrainingEventAssessmentId)
+            REFERENCES dbo.TrainingEventAssessment
+            (
+                TrainingEventAssessmentId
+            ),
+
+        CONSTRAINT FK_AssessmentResult_ActualParticipant
+            FOREIGN KEY
+            (
+                TrainingEventActualParticipantId
+            )
+            REFERENCES dbo.TrainingEventActualParticipant
+            (
+                TrainingEventActualParticipantId
+            ),
+
+        CONSTRAINT CK_AssessmentResult_Status
+            CHECK
+            (
+                ResultStatus IN
+                (
+                    'NOT_TAKEN',
+                    'PASSED',
+                    'FAILED'
+                )
+            ),
+
+        CONSTRAINT CK_AssessmentResult_Score
+            CHECK
+            (
+                Score IS NULL
+                OR
+                (
+                    Score >= 0
+                    AND Score <= 100
+                )
+            ),
+
+        CONSTRAINT CK_AssessmentResult_Attempt
+            CHECK
+            (
+                AttemptNo > 0
+            ),
+
+        CONSTRAINT CK_AssessmentResult_Date
+            CHECK
+            (
+                CompletedDateTime IS NULL
+                OR StartedDateTime IS NULL
+                OR CompletedDateTime >= StartedDateTime
+            )
+
+    );
+
+END;
+GO
+
+
+/* ================================================================
+   7. Prevent duplicate result for same participant,
+      assessment and attempt.
+================================================================ */
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UX_AssessmentResult_Participant_Assessment_Attempt'
+      AND object_id =
+          OBJECT_ID('dbo.TrainingEventAssessmentResult')
+)
+BEGIN
+
+    CREATE UNIQUE INDEX
+        UX_AssessmentResult_Participant_Assessment_Attempt
+    ON dbo.TrainingEventAssessmentResult
+    (
+        TrainingEventActualParticipantId,
+        TrainingEventAssessmentId,
+        AttemptNo
+    );
+
+END;
+GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_AssessmentResult_Assessment'
+      AND object_id =
+          OBJECT_ID('dbo.TrainingEventAssessmentResult')
+)
+BEGIN
+
+    CREATE INDEX IX_AssessmentResult_Assessment
+        ON dbo.TrainingEventAssessmentResult
+        (
+            TrainingEventAssessmentId
+        );
+
+END;
+GO
+
+
+
+/* ================================================================
+   10. OPTIONAL: Training Event Attachment
+
+       Useful for:
+       - proposal
+       - quotation
+       - training material
+       - approval document
+       - certificate template
+================================================================ */
+
+IF OBJECT_ID('dbo.TrainingEventAttachment', 'U') IS NULL
+BEGIN
+
+    CREATE TABLE dbo.TrainingEventAttachment
+    (
+        TrainingEventAttachmentId BIGINT IDENTITY(1,1) NOT NULL,
+
+        TrainingEventId BIGINT NOT NULL,
+
+        FileName NVARCHAR(255) NOT NULL,
+
+        OriginalFileName NVARCHAR(255) NOT NULL,
+
+        ContentType NVARCHAR(150) NULL,
+
+        FileSize BIGINT NULL,
+
+        StoragePath NVARCHAR(1000) NULL,
+
+        DocumentType NVARCHAR(50) NULL,
+
+        CreatedBy NVARCHAR(100) NOT NULL,
+
+        CreatedDate DATETIME2(0) NOT NULL
+            CONSTRAINT DF_TrainingEventAttachment_CreatedDate
+            DEFAULT (SYSDATETIME()),
+
+        CONSTRAINT PK_TrainingEventAttachment
+            PRIMARY KEY CLUSTERED
+            (
+                TrainingEventAttachmentId
+            ),
+
+        CONSTRAINT FK_TrainingEventAttachment_Event
+            FOREIGN KEY (TrainingEventId)
+            REFERENCES dbo.TrainingEvent(TrainingEventId),
+
+        CONSTRAINT CK_TrainingEventAttachment_FileSize
+            CHECK
+            (
+                FileSize IS NULL OR FileSize >= 0
+            )
+
+    );
+
+END;
+GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'IX_TrainingEventAttachment_Event'
+      AND object_id =
+          OBJECT_ID('dbo.TrainingEventAttachment')
+)
+BEGIN
+
+    CREATE INDEX IX_TrainingEventAttachment_Event
+        ON dbo.TrainingEventAttachment
+        (
+            TrainingEventId
+        );
+
+END;
+GO

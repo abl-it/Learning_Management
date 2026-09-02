@@ -62,7 +62,65 @@ namespace Training.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> EventAct(
+    [FromBody] ActionVM request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Invalid request payload."
+                    });
+                }
 
+                if (string.IsNullOrWhiteSpace(request.ActionName))
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Action name is required."
+                    });
+                }
+
+                var role = await _trainingService.GetRoleAsync(
+                    _emp.CurrentEmployee.Username);
+
+                var act = new ActionVM
+                {
+                    Id = request.Id,
+
+                    ActionName = request.ActionName.Trim(),
+
+                    Remarks = request.Remarks?.Trim() ?? string.Empty,
+
+                    By = _emp.CurrentEmployee.EmployeeCode
+                         ?? "system",
+
+                    Role = role
+                };
+
+                var result =
+                    await _actionService.ActionEventAsync(act);
+
+                return Json(new
+                {
+                    success = result.Success,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Server error: " + ex.Message
+                });
+            }
+        }
 
 
     }

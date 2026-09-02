@@ -6,6 +6,7 @@ using System.Text;
 using Training.Data;
 using Training.Models;
 using Training.Models.DataTables;
+using Training.Models.DTO;
 using Training.Services.IServices;
 
 namespace Training.Services
@@ -573,6 +574,136 @@ namespace Training.Services
                 return result;
             }
         }
+
+        #region TYPEAHEAD
+        public async Task<IReadOnlyList<DepartmentLookupModel>> GetDepartmentsAsync(
+            string? coCode,
+            CancellationToken cancellationToken = default)
+        {
+            const string sql = """
+        SELECT DISTINCT
+            ABRV AS Code,
+            DeptName AS Name
+        FROM dbo.TrainingEvent
+        WHERE
+            (@CoCode IS NULL OR CoCode = @CoCode)
+            AND ABRV IS NOT NULL
+            AND LTRIM(RTRIM(ABRV)) <> ''
+        ORDER BY
+            DeptName;
+        """;
+
+            await using var connection =
+                new SqlConnection(_connectionString);
+
+            var command = new CommandDefinition(
+                sql,
+                new
+                {
+                    CoCode = string.IsNullOrWhiteSpace(coCode)
+                        ? null
+                        : coCode.Trim()
+                },
+                cancellationToken: cancellationToken);
+
+            var result =
+                await connection.QueryAsync<DepartmentLookupModel>(command);
+
+            return result.AsList();
+        }
+
+        public async Task<IReadOnlyList<EmployeeLookupDto>>
+      SearchInternalTrainersAsync(
+          string? term,
+          CancellationToken cancellationToken = default)
+        {
+            term = term?.Trim();
+
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                return Array.Empty<EmployeeLookupDto>();
+            }
+
+            const string sql = """
+        SELECT TOP (20)
+            EmployeeCode,
+            FullName
+        FROM home..APP_Employees
+        WHERE
+            EmployeeCode LIKE '%' + @Term + '%'
+            OR FullName LIKE '%' + @Term + '%'
+        ORDER BY
+            FullName;
+        """;
+
+            await using var connection =
+                new SqlConnection(_connectionString);
+
+            var command =
+                new CommandDefinition(
+                    sql,
+                    new
+                    {
+                        Term = term
+                    },
+                    cancellationToken:
+                        cancellationToken);
+
+            var result =
+                await connection.QueryAsync<EmployeeLookupDto>(
+                    command);
+
+            return result.AsList();
+        }
+
+        public async Task<IReadOnlyList<EmployeeLookupDto>> SearchEmployeesAsync(
+    string? term,
+    CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                return Array.Empty<EmployeeLookupDto>();
+            }
+
+            const string sql = """
+        SELECT TOP (20)
+            e.EmployeeCode,
+            e.FullName,
+            d.ABRV,
+            d.DeptName
+        FROM home.dbo.APP_Employees e left join home.dbo.APP_Departments d 
+                on e.DepartmentID=d.DepartmentID
+        WHERE
+            (
+            e.EmployeeCode LIKE @Search
+            OR e.FullName LIKE @Search
+            )
+            AND
+            ResignDate IS NULL
+        ORDER BY
+            e.FullName;
+        """;
+
+            await using var connection =
+                new SqlConnection(_connectionString);
+
+            var command = new CommandDefinition(
+                sql,
+                new
+                {
+                    Search = $"%{term.Trim()}%"
+                },
+                cancellationToken: cancellationToken);
+
+            var result =
+                await connection.QueryAsync<EmployeeLookupDto>(command);
+
+            return result.AsList();
+        }
+
+        #endregion
+
+
 
     }
 }

@@ -9,5 +9,12 @@ namespace Training.Services.IServices
 
         Task<List<History>> GetHistoriesAsync(int id, string docType);
 
+        /// <summary>
+        /// Executes a workflow action for a training event.
+        /// </summary>
+        /// <param name="act">Training event action request.</param>
+        /// <returns>The action result.</returns>
+        Task<ApiResponse> ActionEventAsync(ActionVM act);
+
     }
 }

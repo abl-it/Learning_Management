@@ -1,0 +1,314 @@
+﻿@model Training.Models.DTO.Event.TrainingEventEditDto
+
+@{
+    ViewData["Title"] = "Edit Training Event";
+}
+<style>
+    .training-event-edit-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+        .training-event-edit-container .form-label {
+            margin-bottom: 3px;
+            font-size: 13px;
+        }
+
+        .training-event-edit-container .form-control {
+            font-size: 13px;
+        }
+</style>
+
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <div>
+            <h5 class="mb-0">
+                <i class="bi bi-pencil-square"></i>
+                Edit Training Event
+            </h5>
+
+            <div class="text-muted small">
+                @Model.EventCode
+            </div>
+        </div>
+
+        <a asp-controller="TrainingEvent"
+           asp-action="Detail"
+           asp-route-id="@Model.TrainingEventId"
+           class="btn btn-sm btn-secondary">
+
+            <i class="bi bi-arrow-left"></i>
+            Back
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="row g-2">
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Training Title
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           name="TrainingTitle"
+                           value="@Model.TrainingTitle" 
+                           readonly />
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Company
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.CoCode"
+                           readonly />
+
+                </div>
+
+
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Department
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.ABRV"
+                           readonly />
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Course Code
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.CourseCode"
+                           readonly />
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Training Category
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           value="@Model.TrainingCategoryId"
+                           readonly />
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Start Date
+                    </label>
+
+                    <input type="datetime-local"
+                           class="form-control form-control-sm"
+                           name="EventStartDate"
+                           value="@Model.EventStartDate.ToString("yyyy-MM-ddTHH:mm")" />
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        End Date
+                    </label>
+
+                    <input type="datetime-local"
+                           class="form-control form-control-sm"
+                           name="EventEndDate"
+                           value="@Model.EventEndDate.ToString("yyyy-MM-ddTHH:mm")" />
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Venue
+                    </label>
+
+                    <input type="text"
+                           class="form-control form-control-sm"
+                           name="Venue"
+                           value="@Model.Venue" />
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Budget
+                    </label>
+
+                    <input type="number"
+                           step="0.01"
+                           class="form-control form-control-sm"
+                           name="Budget"
+                           value="@Model.Budget" />
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label">
+                        Training Description
+                    </label>
+
+                    <textarea class="form-control form-control-sm"
+                              name="TrainingDescription"
+                              rows="3">@Model.TrainingDescription</textarea>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <label class="form-label">
+                        Training Objective
+                    </label>
+
+                    <textarea class="form-control form-control-sm"
+                              name="TrainingObjective"
+                              rows="3">@Model.TrainingObjective</textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm mt-2">
+
+        <div class="card-header py-2">
+            <i class="bi bi-people-fill"></i>
+            Participants
+
+            <span class="badge bg-primary float-end">
+                @(Model.Participants?.Count ?? 0)
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-sm table-bordered mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th style="width:45px;" class="text-center">
+                                #
+                            </th>
+
+                            <th style="width:120px;">
+                                Employee Code
+                            </th>
+
+                            <th>
+                                Name
+                            </th>
+
+                            <th style="width:90px;">
+                                ABRV
+                            </th>
+
+                            <th>
+                                Department
+                            </th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.Participants != null &&
+                             Model.Participants.Count > 0)
+                        {
+                            var no = 1;
+
+                            foreach (var participant in Model.Participants)
+                            {
+                                <tr>
+
+                                    <td class="text-center">
+                                        @no
+                                    </td>
+
+                                    <td>
+                                        @participant.EmployeeCode
+                                    </td>
+
+                                    <td>
+                                        @participant.Name
+                                    </td>
+
+                                    <td>
+                                        @participant.ABRV
+                                    </td>
+
+                                    <td>
+                                        @participant.DeptName
+                                    </td>
+
+                                </tr>
+
+                                no++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5"
+                                    class="text-center text-muted py-3">
+
+                                    No participants found.
+
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>

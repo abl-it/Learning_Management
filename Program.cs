@@ -6,6 +6,9 @@ using Training.Services;
 using Training.Services.IServices;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+
 builder.Host.UseSerilog((context, services, configuration) =>
 {
     configuration
@@ -25,6 +28,7 @@ builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("C
 builder.Services.AddControllersWithViews()
     .AddRazorRuntimeCompilation(); // Optional: for development
 builder.Services.AddHttpContextAccessor(); // Register IHttpContextAccessor
+builder.Services.AddHttpClient();
 
 // Add session services
 builder.Services.AddDistributedMemoryCache(); // Adds a default in-memory implementation of IDistributedCache
@@ -49,6 +53,7 @@ builder.Services.AddScoped<ITrainingService, TrainingService>();
 builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IInitialService, InitialService>();
 builder.Services.AddScoped<IActionService, ActionService>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 // Configure anti-forgery
 builder.Services.AddAntiforgery(options =>
@@ -71,7 +76,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Employee/Home");
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
@@ -87,4 +92,19 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
+try
+{
+    Log.Information("Application Starting");
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly.");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
+
+

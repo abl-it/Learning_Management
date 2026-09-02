@@ -25,7 +25,7 @@ namespace Training.Models
 
         public string Color { get; set; }
 
-
+        public string? CategoryName { get; set; }
     }
 
     public class CourseDto

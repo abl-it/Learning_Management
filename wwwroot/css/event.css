@@ -1,0 +1,482 @@
+﻿/* ============================================================
+   TRAINING EVENT TABLE
+   ============================================================ */
+
+#dTable_wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+
+
+
+    /* ============================================================
+   DESKTOP
+   ============================================================ */
+
+    #dTable th,
+    #dTable td {
+        vertical-align: middle;
+        box-sizing: border-box;
+    }
+
+
+/* =========================================================
+   DATATABLE BASE
+   ========================================================= */
+
+#dTable {
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+
+
+    /* =========================================================
+   CONTROL
+   ========================================================= */
+
+    #dTable th.event-control,
+    #dTable td.event-control {
+        width: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+        padding: 0 !important;
+        text-align: center;
+    }
+
+
+    /* =========================================================
+   EVENT CODE
+   ========================================================= */
+
+    #dTable th.event-code-column,
+    #dTable td.event-code-column {
+        width: 100px !important;
+        min-width: 100px !important;
+    }
+
+
+    /* =========================================================
+   TRAINING
+   ========================================================= */
+
+    #dTable th.training-column,
+    #dTable td.training-column {
+        width: 220px !important;
+        min-width: 220px !important;
+    }
+
+
+    /* =========================================================
+   DEPARTMENT
+   ========================================================= */
+
+    #dTable th.department-column,
+    #dTable td.department-column {
+        width: 160px !important;
+        min-width: 160px !important;
+    }
+
+
+    /* =========================================================
+   TRAINER
+   ========================================================= */
+
+    #dTable th.trainer-column,
+    #dTable td.trainer-column {
+        width: 130px !important;
+        min-width: 130px !important;
+    }
+
+
+    /* =========================================================
+   TYPE
+   ========================================================= */
+
+    #dTable th.type-column,
+    #dTable td.type-column {
+        width: 75px !important;
+        min-width: 75px !important;
+    }
+
+
+    /* =========================================================
+   CATEGORY
+   ========================================================= */
+
+    #dTable th.category-column,
+    #dTable td.category-column {
+        width: 130px !important;
+        min-width: 130px !important;
+    }
+
+
+    /* =========================================================
+   START DATE
+   ========================================================= */
+
+    #dTable th.start-date-column,
+    #dTable td.start-date-column {
+        width: 105px !important;
+        min-width: 105px !important;
+    }
+
+
+    /* =========================================================
+   QUOTA
+   ========================================================= */
+
+    #dTable th.quota-column,
+    #dTable td.quota-column {
+        width: 65px !important;
+        min-width: 65px !important;
+    }
+
+
+    /* =========================================================
+   SESSION
+   ========================================================= */
+
+    #dTable th.session-column,
+    #dTable td.session-column {
+        width: 65px !important;
+        min-width: 65px !important;
+    }
+
+
+    /* =========================================================
+   DURATION
+   ========================================================= */
+
+    #dTable th.duration-column,
+    #dTable td.duration-column {
+        width: 85px !important;
+        min-width: 85px !important;
+    }
+
+
+    /* =========================================================
+   STATUS
+   ========================================================= */
+
+    #dTable th.status-column,
+    #dTable td.status-column {
+        width: 150px !important;
+        min-width: 150px !important;
+        white-space: nowrap !important;
+    }
+
+
+    /* =========================================================
+   ACTION
+   ========================================================= */
+
+    #dTable th.action-column,
+    #dTable td.action-column {
+        width: 55px !important;
+        min-width: 55px !important;
+        max-width: 55px !important;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+        /* =========================================================
+   ACTION COLUMN
+   
+
+        #dTable th.action-column,
+        #dTable td.action-column {
+            width: 55px !important;
+            min-width: 55px !important;
+            max-width: 55px !important;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+    #dTable .event-action-btn {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }========================================================= */
+/* ============================================================
+   TRAINING
+   ============================================================ */
+
+.event-training-title {
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.25;
+}
+
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+
+.event-type-badge,
+.event-status-badge {
+    display: inline-block;
+    width: auto !important;
+    white-space: nowrap !important;
+    font-size: 10px;
+    padding: 3px 6px;
+}
+
+
+/* ============================================================
+   MOBILE CONTROL
+   ============================================================ */
+
+.event-expand-icon {
+    display: inline-block;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   MOBILE CHILD
+   ============================================================ */
+
+#dTable tbody tr.event-mobile-child > td {
+    padding: 0 !important;
+    background: #ffffff !important;
+}
+
+
+.event-mobile-detail {
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+}
+
+
+.event-detail-item {
+    display: flex;
+    width: 100%;
+    min-height: 38px;
+    border-bottom: 1px solid #dee2e6;
+    box-sizing: border-box;
+    align-items: center;
+}
+
+
+    .event-detail-item:last-child {
+        border-bottom: none;
+    }
+
+
+.event-detail-label {
+    flex: 0 0 105px;
+    width: 105px;
+    padding: 8px 10px;
+    font-weight: 600;
+    color: #343a40;
+}
+
+
+.event-detail-value {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 10px;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 767.98px) {
+
+    /*
+     * IMPORTANT:
+     *
+     * We don't use DataTables Responsive.
+     * JS manually changes the table to mobile.
+     */
+
+    #dTable {
+        width: 100% !important;
+        table-layout: fixed !important;
+    }
+
+
+        /*
+     * Only 4 columns are visible:
+     *
+     * Control
+     * Event Code
+     * Training
+     * Start Date
+     * Status
+     *
+     * The remaining columns are hidden by JS/CSS.
+     */
+
+
+        #dTable th.event-control,
+        #dTable td.event-control {
+            width: 28px !important;
+        }
+
+
+        #dTable th.event-code-column,
+        #dTable td.event-code-column {
+            width: 92px !important;
+        }
+
+
+        #dTable th.training-column,
+        #dTable td.training-column {
+            width: auto !important;
+        }
+
+
+        #dTable th.start-date-column,
+        #dTable td.start-date-column {
+            width: 90px !important;
+        }
+
+
+        #dTable th.status-column,
+        #dTable td.status-column {
+            width: 72px !important;
+        }
+
+
+        #dTable th,
+        #dTable td {
+            font-size: 12px;
+        }
+
+
+    .event-training-title {
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+
+    /* Hide desktop-only columns */
+
+    #dTable th.department-column,
+    #dTable td.department-column,
+    #dTable th.trainer-column,
+    #dTable td.trainer-column,
+    #dTable th.type-column,
+    #dTable td.type-column,
+    #dTable th.category-column,
+    #dTable td.category-column,
+    #dTable th.quota-column,
+    #dTable td.quota-column,
+    #dTable th.session-column,
+    #dTable td.session-column,
+    #dTable th.duration-column,
+    #dTable td.duration-column {
+        display: none !important;
+    }
+
+
+    /* Search */
+
+    #dTable_wrapper .dataTables_filter {
+        width: 100%;
+        margin-bottom: 8px;
+        text-align: left;
+    }
+
+
+        #dTable_wrapper .dataTables_filter label {
+            width: 100%;
+        }
+
+
+        #dTable_wrapper .dataTables_filter input {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            box-sizing: border-box;
+        }
+
+
+    /* Length */
+
+    #dTable_wrapper .dataTables_length {
+        width: 100%;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+
+    /* Info */
+
+    #dTable_wrapper .dataTables_info {
+        width: 100%;
+        text-align: center;
+        font-size: 12px;
+    }
+
+
+    /* Pagination */
+
+    #dTable_wrapper .dataTables_paginate {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+
+/* ============================================================
+   VERY SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 375px) {
+
+    #dTable th,
+    #dTable td {
+        font-size: 11px;
+    }
+
+
+        #dTable th.event-control,
+        #dTable td.event-control {
+            width: 25px !important;
+        }
+
+
+        #dTable th.event-code-column,
+        #dTable td.event-code-column {
+            width: 85px !important;
+        }
+
+
+        #dTable th.start-date-column,
+        #dTable td.start-date-column {
+            width: 82px !important;
+        }
+
+
+        #dTable th.status-column,
+        #dTable td.status-column {
+            width: 68px !important;
+        }
+
+
+    .event-training-title {
+        font-size: 11px;
+    }
+
+
+    .event-detail-label {
+        flex-basis: 95px;
+        width: 95px;
+    }
+}

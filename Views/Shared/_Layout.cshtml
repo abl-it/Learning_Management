@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Training</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
+    
+    <!--Bootstrap icons-->
+    <link href="~/vendor/bootstrap-icons/css/bootstrap-icons.min.css" rel="stylesheet" />
     <!-- DataTables CSS -->
     <link href="~/css/datatables/datatables.bootstrap5.min.css" rel="stylesheet" />
     <link href="~/css/datatables/responsive.bootstrap5.min.css" rel="stylesheet" />
 
-    @* <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css"> *@
-
+   
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
 
@@ -457,16 +457,16 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="transactionDropdown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-calendar me-1"></i>Transaction
+                            <i class="fa-solid fa-calendar me-1"></i>Training Event
                         </a>
                         <ul class="dropdown-menu text-sm" aria-labelledby="transactionDropdown">
                             <li>
-                                <a class="dropdown-item" asp-controller="Transaction" asp-action="Event" id="eventLink">
+                                <a class="dropdown-item" asp-controller="TrainingEvent" asp-action="Index" id="eventLink">
                                     <i class="fa-solid fa-calendar-days me-2"></i>Training Event
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" asp-controller="Transaction" asp-action="Realization" id="realizationLink">
+                                <a class="dropdown-item" asp-controller="TrainingEvent" asp-action="Realization" id="realizationLink">
                                     <i class="fa-solid fa-calendar-check me-2"></i>Event Realization
                                 </a>
                             </li>
@@ -499,22 +499,7 @@
     <div class="container-fluid py-3 flex-grow-1" id="main-content">
         @RenderBody()
     </div>
-    @* <div class="container-fluid py-3">
-        @RenderBody()
-    </div>
- *@
-    @* <footer class="border-top footer text-muted mt-auto">
-        <div class="container">
-            &copy; 2025-PT.Agung Bumi Lestari -
-            <a asp-area="" asp-controller="Home" asp-action="Index">Training Management</a>
-        </div>
-    </footer> *@
-    @* <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025-PT.Agung Bumi Lestari - <a asp-area="" asp-controller="Home" asp-action="Index">Training Management </a>
-        </div>
-    </footer> *@
-
+  
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/toastr.min.js"></script>
@@ -525,14 +510,12 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     
     <script src="~/js/datatables/jquery.datatables.min.js"></script>
-    <script src="~/js/datatables/jquery.datatables.min.js"></script>
+   
     <script src="~/js/datatables/datatables.responsive.min.js"></script>
     <script src="~/js/datatables/responsive.bootstrap5.min.js"></script>
 
-    @* <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script> *@
+    <script src="~/lib/bootstrap3-typeahead/bootstrap3-typeahead.min.js"></script>
+  
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <!-- Navigation Active States Script -->
@@ -574,8 +557,8 @@
                         $('#planLink').addClass('active');
                     }
                 }
-                 // Handle Transaction controller with different actions
-                else if (currentController === 'Transaction') {
+                 // Handle TrainingEvent controller with different actions
+                else if (currentController === 'TrainingEvent') {
                     $('#transactionDropdown').addClass('active');
 
                     if (currentAction === 'Event') {
