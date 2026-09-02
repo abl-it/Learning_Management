@@ -1,4 +1,5 @@
 ﻿using Training.DTOs.Training;
+using Training.Models;
 using Training.Models.DTO;
 using Training.Models.DTO.Common;
 using Training.Models.DTO.Event;
@@ -40,6 +41,30 @@ namespace Training.Services.IServices
         Task DeleteAsync(
             long trainingEventId,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets workflow history for a training event.
+        /// </summary>
+        /// <param name="trainingEventId">Training event identifier.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Workflow history entries.</returns>
+        Task<List<History>> GetHistoryAsync(
+            long trainingEventId,
+            CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Updates an existing training event and its participants.
+        /// </summary>
+        /// <param name="request">Training event update request.</param>
+        /// <param name="modifiedBy">Employee code of the user modifying the event.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Updated training event identifier.</returns>
+        Task<long> UpdateAsync(
+            TrainingEventEditDto request,
+            string modifiedBy,
+            CancellationToken cancellationToken);
+
+
 
     }
 }

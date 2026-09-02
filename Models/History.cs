@@ -2,7 +2,7 @@
 {
     public class History
     {
-            public int DocId { get; set; }
+            public long DocId { get; set; }
             public int Year { get; set; }
             public int Month { get; set; }
             public string? DocType { get; set; }

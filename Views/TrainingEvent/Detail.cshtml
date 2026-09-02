@@ -21,6 +21,8 @@
                 : "bg-success";
 }
 
+<link href="~/css/detail.css" rel="stylesheet" />
+
 <div class="container px-3">
 
     <!-- =========================================================
@@ -414,10 +416,27 @@
                 Participants
             </span>
 
-            <span class="badge bg-primary">
-                @Model.Participants.Count
-            </span>
 
+            <div class="d-flex align-items-center gap-2">
+
+                <span class="badge bg-primary">
+                    @Model.Participants.Count
+                </span>
+                @if (docStatus == 2)
+                {
+                    <a asp-controller="TrainingEvent"
+                   asp-action="PrintAttendance"
+                   asp-route-id="@Model.TrainingEventId"
+                   target="_blank"
+                   class="btn btn-sm btn-outline-secondary">
+
+                    <i class="bi bi-printer"></i>
+                    Print Attendance
+                </a>
+                }
+                
+
+            </div>
         </div>
 
         <div class="card-body p-0">
@@ -508,12 +527,134 @@
 
     </div>
 
+    <!-- =========================================================
+     WORKFLOW HISTORY
+     ========================================================= -->
+    <div class="card shadow-sm mb-3 workflow-history-card">
+
+        <div class="card-header bg-white">
+            <h6 class="mb-0">
+                <i class="bi bi-clock-history me-1"></i>
+                Workflow History
+            </h6>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.Histories != null && Model.Histories.Any())
+            {
+                <div class="workflow-timeline">
+
+                    @foreach (var history in Model.Histories)
+                    {
+                        var action = history.Action ?? "-";
+
+                        var actionClass =
+                            action.Equals("Reject", StringComparison.OrdinalIgnoreCase)
+                                ? "history-reject"
+                                : action.Equals("Approve", StringComparison.OrdinalIgnoreCase)
+                                    ? "history-approve"
+                                    : action.Equals("Request for Approve", StringComparison.OrdinalIgnoreCase)
+                                        ? "history-request"
+                                        : "history-default";
+
+                        var actionIcon =
+                            action.Equals("Reject", StringComparison.OrdinalIgnoreCase)
+                                ? "bi-x-circle"
+                                : action.Equals("Approve", StringComparison.OrdinalIgnoreCase)
+                                    ? "bi-check-circle"
+                                    : action.Equals("Request for Approve", StringComparison.OrdinalIgnoreCase)
+                                        ? "bi-send"
+                                        : "bi-pencil";
+
+                        <div class="workflow-timeline-item">
+
+                            <!-- Timeline marker -->
+                            <div class="workflow-timeline-marker @actionClass">
+                                <i class="bi @actionIcon"></i>
+                            </div>
+
+                            <!-- Date & User -->
+                            <div class="workflow-history-person">
+
+                                <div class="workflow-history-date">
+                                    @history.Date.ToString("dd MMM yyyy HH:mm")
+                                </div>
+
+                                <div class="workflow-history-user">
+                                    @(string.IsNullOrWhiteSpace(history.ChangeByName)
+                                        ? history.ChangeBy
+                                        : history.ChangeByName)
+                                </div>
+
+                            </div>
+
+                            <!-- History Detail -->
+                            <div class="workflow-history-content">
+
+                                <div class="workflow-history-main">
+
+                                    <!-- Action -->
+                                    <span class="workflow-history-action @actionClass">
+                                        <i class="bi @actionIcon me-1"></i>
+                                        @action
+                                    </span>
+
+                                    <!-- From State -->
+                                    <span class="workflow-state">
+                                        @(string.IsNullOrWhiteSpace(history.State)
+                                            ? "-"
+                                            : history.State)
+                                    </span>
+
+                                    <i class="bi bi-arrow-right workflow-history-arrow"></i>
+
+                                    <!-- To State -->
+                                    <span class="workflow-state workflow-state-next">
+                                        @(string.IsNullOrWhiteSpace(history.NextState)
+                                            ? "-"
+                                            : history.NextState)
+                                    </span>
+
+                                </div>
+
+                                <!-- Remark -->
+                                <div class="workflow-history-remark">
+                                    <strong>Remarks:</strong>
+
+                                    @if (string.IsNullOrWhiteSpace(history.Remark))
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@history.Remark</span>
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-3 workflow-history-empty">
+                    <i class="bi bi-clock-history fs-4 d-block mb-2"></i>
+                    No workflow history available.
+                </div>
+            }
+
+        </div>
+    </div>       
 
     <!-- =========================================================
          AUDIT INFORMATION
          ========================================================= -->
 
-    <div class="card shadow-sm">
+    @* <div class="card shadow-sm">
 
         <div class="card-header py-2">
             <span class="fw-semibold">
@@ -582,13 +723,11 @@
 
         </div>
 
-    </div>
+    </div> *@
 
 </div>
 
-<!-- =============================================================
-     MODAL Action
-     ============================================================= -->
+
    
 
 

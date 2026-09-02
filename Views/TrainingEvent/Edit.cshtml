@@ -3,312 +3,641 @@
 @{
     ViewData["Title"] = "Edit Training Event";
 }
+
 <style>
     .training-event-edit-container {
         max-width: 1000px;
         margin: 0 auto;
     }
 
-        .training-event-edit-container .form-label {
-            margin-bottom: 3px;
-            font-size: 13px;
-        }
+    .training-event-edit-container .form-label {
+        margin-bottom: 3px;
+        font-size: 13px;
+    }
 
-        .training-event-edit-container .form-control {
-            font-size: 13px;
-        }
+    .training-event-edit-container .form-control,
+    .training-event-edit-container .form-select {
+        font-size: 13px;
+    }
+
+    .training-event-edit-container .readonly-field {
+        background-color: #f8f9fa;
+    }
+
+    .training-event-edit-container .table {
+        font-size: 12px;
+    }
+
+    .training-event-edit-container .table th,
+    .training-event-edit-container .table td {
+        vertical-align: middle;
+    }
 </style>
 
-<div class="container">
+<div class="container training-event-edit-container">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <form id="trainingEventEditForm"
+          asp-controller="TrainingEvent"
+          asp-action="Edit"
+          method="post">
 
-        <div>
-            <h5 class="mb-0">
-                <i class="bi bi-pencil-square"></i>
-                Edit Training Event
-            </h5>
+        @Html.AntiForgeryToken()
 
-            <div class="text-muted small">
-                @Model.EventCode
-            </div>
-        </div>
+        <input asp-for="TrainingEventId" type="hidden" />
+        <input asp-for="EventCode" type="hidden" />
+        <input asp-for="CourseId" type="hidden" />
+        <input asp-for="TrainingCategoryId" type="hidden" />
+            <input asp-for="EventType"
+           type="hidden"
+           id="EventType" />
 
-        <a asp-controller="TrainingEvent"
-           asp-action="Detail"
-           asp-route-id="@Model.TrainingEventId"
-           class="btn btn-sm btn-secondary">
+        <div class="d-flex justify-content-between align-items-center mb-3">
 
-            <i class="bi bi-arrow-left"></i>
-            Back
-        </a>
+            <div>
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square me-1"></i>
+                    Edit Training Event
+                </h5>
 
-    </div>
-
-
-    <div class="card shadow-sm">
-
-        <div class="card-body">
-
-            <div class="row g-2">
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Training Title
-                    </label>
-
-                    <input type="text"
-                           class="form-control form-control-sm"
-                           name="TrainingTitle"
-                           value="@Model.TrainingTitle" 
-                           readonly />
-
+                <div class="text-muted small">
+                    @Model.EventCode
                 </div>
-
-
-                <div class="col-md-3">
-
-                    <label class="form-label">
-                        Company
-                    </label>
-
-                    <input type="text"
-                           class="form-control form-control-sm"
-                           value="@Model.CoCode"
-                           readonly />
-
-                </div>
-
-
-                <div class="col-md-3">
-
-                    <label class="form-label">
-                        Department
-                    </label>
-
-                    <input type="text"
-                           class="form-control form-control-sm"
-                           value="@Model.ABRV"
-                           readonly />
-
-                </div>
-
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Course Code
-                    </label>
-
-                    <input type="text"
-                           class="form-control form-control-sm"
-                           value="@Model.CourseCode"
-                           readonly />
-
-                </div>
-
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Training Category
-                    </label>
-
-                    <input type="text"
-                           class="form-control form-control-sm"
-                           value="@Model.TrainingCategoryId"
-                           readonly />
-
-                </div>
-
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Start Date
-                    </label>
-
-                    <input type="datetime-local"
-                           class="form-control form-control-sm"
-                           name="EventStartDate"
-                           value="@Model.EventStartDate.ToString("yyyy-MM-ddTHH:mm")" />
-
-                </div>
-
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        End Date
-                    </label>
-
-                    <input type="datetime-local"
-                           class="form-control form-control-sm"
-                           name="EventEndDate"
-                           value="@Model.EventEndDate.ToString("yyyy-MM-ddTHH:mm")" />
-
-                </div>
-
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Venue
-                    </label>
-
-                    <input type="text"
-                           class="form-control form-control-sm"
-                           name="Venue"
-                           value="@Model.Venue" />
-
-                </div>
-
-
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Budget
-                    </label>
-
-                    <input type="number"
-                           step="0.01"
-                           class="form-control form-control-sm"
-                           name="Budget"
-                           value="@Model.Budget" />
-
-                </div>
-
-
-                <div class="col-12">
-
-                    <label class="form-label">
-                        Training Description
-                    </label>
-
-                    <textarea class="form-control form-control-sm"
-                              name="TrainingDescription"
-                              rows="3">@Model.TrainingDescription</textarea>
-
-                </div>
-
-
-                <div class="col-12">
-
-                    <label class="form-label">
-                        Training Objective
-                    </label>
-
-                    <textarea class="form-control form-control-sm"
-                              name="TrainingObjective"
-                              rows="3">@Model.TrainingObjective</textarea>
-
-                </div>
-
             </div>
 
+            <a asp-controller="TrainingEvent"
+               asp-action="Detail"
+               asp-route-id="@Model.TrainingEventId"
+               class="btn btn-sm btn-secondary">
+
+                <i class="bi bi-arrow-left me-1"></i>
+                Back
+
+            </a>
+
         </div>
 
-    </div>
-
-    <div class="card shadow-sm mt-2">
-
-        <div class="card-header py-2">
-            <i class="bi bi-people-fill"></i>
-            Participants
-
-            <span class="badge bg-primary float-end">
-                @(Model.Participants?.Count ?? 0)
-            </span>
+        <div asp-validation-summary="ModelOnly"
+             class="alert alert-danger py-2 small">
         </div>
 
-        <div class="card-body p-0">
+        <!-- EVENT INFORMATION -->
+        <div class="card shadow-sm">
 
-            <div class="table-responsive">
+            <div class="card-header py-2">
+                <i class="bi bi-calendar-event me-1"></i>
+                Event Information
+            </div>
 
-                <table class="table table-sm table-bordered mb-0">
+            <div class="card-body">
 
-                    <thead class="table-light">
+                <!-- Course / Title / Category -->
+                <div class="row g-2">
 
-                        <tr>
-                            <th style="width:45px;" class="text-center">
-                                #
-                            </th>
+                    <div class="col-md-3">
 
-                            <th style="width:120px;">
-                                Employee Code
-                            </th>
+                        <label class="form-label">
+                            Course Code
+                        </label>
 
-                            <th>
-                                Name
-                            </th>
+                        <input type="text"
+                               class="form-control form-control-sm readonly-field"
+                               value="@Model.CourseCode"
+                               readonly />
 
-                            <th style="width:90px;">
-                                ABRV
-                            </th>
+                    </div>
 
-                            <th>
-                                Department
-                            </th>
-                        </tr>
+                    <div class="col-md-6">
 
-                    </thead>
+                        <label asp-for="TrainingTitle"
+                               class="form-label">
+                            Training Title
+                        </label>
 
-                    <tbody>
+                        <input asp-for="TrainingTitle"
+                               class="form-control form-control-sm readonly-field"
+                               readonly />
 
-                        @if (Model.Participants != null &&
-                             Model.Participants.Count > 0)
-                        {
-                            var no = 1;
+                    </div>
 
-                            foreach (var participant in Model.Participants)
-                            {
-                                <tr>
+                    <div class="col-md-3">
 
-                                    <td class="text-center">
-                                        @no
-                                    </td>
+                        <label class="form-label">
+                            Training Category
+                        </label>
 
-                                    <td>
-                                        @participant.EmployeeCode
-                                    </td>
+                        <input type="text"
+                               class="form-control form-control-sm readonly-field"
+                               value="@Model.TrainingCategoryId"
+                               readonly />
 
-                                    <td>
-                                        @participant.Name
-                                    </td>
+                    </div>
 
-                                    <td>
-                                        @participant.ABRV
-                                    </td>
+                </div>
 
-                                    <td>
-                                        @participant.DeptName
-                                    </td>
+                <!-- Company / Department / Trainer Type -->
+                <div class="row g-2 mt-1">
 
-                                </tr>
+                    <div class="col-md-3">
 
-                                no++;
-                            }
-                        }
-                        else
-                        {
+                        <label asp-for="CoCode"
+                               class="form-label">
+                            Company
+                        </label>
+
+                        <input asp-for="CoCode"
+                               class="form-control form-control-sm readonly-field"
+                               readonly />
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Department
+                        </label>
+
+                        <input type="text"
+                               class="form-control form-control-sm readonly-field"
+                               value="@Model.DeptName"
+                               readonly />
+
+                        <input asp-for="ABRV"
+                               type="hidden" />
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label for="TrainerType"
+                               class="form-label">
+                            Trainer Type
+                        </label>
+
+                        <select id="TrainerType"
+                                class="form-select form-select-sm">
+
+                            <option value="Internal">
+                                Internal
+                            </option>
+
+                            <option value="External">
+                                External
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label for="TrainerSearch"
+                               class="form-label">
+                            Trainer
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="text"
+                               id="TrainerSearch"
+                               class="form-control form-control-sm"
+                               placeholder="Search employee..."
+                               autocomplete="off"
+                               value="@Model.TrainerName" />
+
+                        <input asp-for="TrainerId"
+                               type="hidden"
+                               id="TrainerId" />
+
+                        <input asp-for="TrainerName"
+                               type="hidden"
+                               id="TrainerName" />
+
+                    </div>
+
+                </div>
+
+                <!-- Session / Duration / Quota / Dates -->
+                <div class="row g-2 mt-1">
+
+                    <div class="col-md-2">
+
+                        <label asp-for="SessionCount"
+                               class="form-label">
+                            # Session
+                        </label>
+
+                        <input asp-for="SessionCount"
+                               type="number"
+                               min="1"
+                               class="form-control form-control-sm" />
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label asp-for="DurationHours"
+                               class="form-label">
+                            Hours / Session
+                        </label>
+
+                        <div class="input-group input-group-sm">
+
+                            <input asp-for="DurationHours"
+                                   type="number"
+                                   min="0"
+                                   step="0.5"
+                                   class="form-control" />
+
+                            <span class="input-group-text">
+                                hrs
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label asp-for="ParticipantQuota"
+                               class="form-label">
+                            # Participant
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input asp-for="ParticipantQuota"
+                               type="number"
+                               min="1"
+                               class="form-control form-control-sm"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label asp-for="EventStartDate"
+                               class="form-label">
+                            Start Date
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input asp-for="EventStartDate"
+                               type="datetime-local"
+                               class="form-control form-control-sm"
+                               value="@Model.EventStartDate.ToString("yyyy-MM-ddTHH:mm")"
+                               required />
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label asp-for="EventEndDate"
+                               class="form-label">
+                            End Date
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input asp-for="EventEndDate"
+                               type="datetime-local"
+                               class="form-control form-control-sm"
+                               value="@Model.EventEndDate.ToString("yyyy-MM-ddTHH:mm")"
+                               required />
+
+                    </div>
+
+                </div>
+
+                <!-- Venue / Budget -->
+                <div class="row g-2 mt-1">
+
+                    <div class="col-md-8">
+
+                        <label asp-for="Venue"
+                               class="form-label">
+                            Venue
+                        </label>
+
+                        <input asp-for="Venue"
+                               class="form-control form-control-sm" />
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label asp-for="Budget"
+                               class="form-label">
+                            Budget
+                        </label>
+
+                        <input asp-for="Budget"
+                               type="number"
+                               min="0"
+                               step="0.01"
+                               class="form-control form-control-sm" />
+
+                    </div>
+
+                </div>
+
+                <!-- Description -->
+                <div class="row mt-2">
+
+                    <div class="col-12">
+
+                        <label asp-for="TrainingDescription"
+                               class="form-label">
+                            Training Description
+                        </label>
+
+                        <textarea asp-for="TrainingDescription"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+
+                    </div>
+
+                </div>
+
+                <!-- Objective -->
+                <div class="row mt-2">
+
+                    <div class="col-12">
+
+                        <label asp-for="TrainingObjective"
+                               class="form-label">
+                            Training Objective
+                        </label>
+
+                        <textarea asp-for="TrainingObjective"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- PARTICIPANTS -->
+        <div class="card shadow-sm mt-2">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <span>
+                    <i class="bi bi-person-check me-1"></i>
+                    Planned Participants
+                </span>
+
+                <div>
+
+                    <span id="participantCount"
+                          class="badge bg-primary me-2">
+                        @(Model.Participants?.Count ?? 0)
+                    </span>
+
+                    <button type="button"
+                            id="btnAddParticipant"
+                            class="btn btn-sm btn-primary">
+
+                        <i class="bi bi-person-plus me-1"></i>
+                        Add Participant
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table id="participantTable"
+                           class="table table-sm table-hover mb-0">
+
+                        <thead>
+
                             <tr>
-                                <td colspan="5"
-                                    class="text-center text-muted py-3">
 
-                                    No participants found.
+                                <th style="width:45px;">
+                                    #
+                                </th>
 
-                                </td>
+                                <th style="width:120px;">
+                                    Employee Code
+                                </th>
+
+                                <th>
+                                    Name
+                                </th>
+
+                                <th style="width:90px;">
+                                    ABRV
+                                </th>
+
+                                <th>
+                                    Department
+                                </th>
+
+                                <th style="width:70px;"
+                                    class="text-center">
+                                    Action
+                                </th>
+
                             </tr>
-                        }
 
-                    </tbody>
+                        </thead>
 
-                </table>
+                        <tbody id="participantTableBody">
+                        </tbody>
+
+                    </table>
+
+                    <div id="participantEmpty"
+                         class="text-center text-muted py-3 d-none">
+                        No participants added.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ACTION -->
+        <div class="d-flex justify-content-end gap-2 mt-3 mb-4">
+
+            <a asp-controller="TrainingEvent"
+               asp-action="Detail"
+               asp-route-id="@Model.TrainingEventId"
+               class="btn btn-sm btn-outline-secondary">
+
+                <i class="bi bi-x-lg me-1"></i>
+                Cancel
+
+            </a>
+
+            <button type="submit"
+                    id="btnSaveEvent"
+                    class="btn btn-sm btn-success">
+
+                <i class="bi bi-check-lg me-1"></i>
+                Save Changes
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- PARTICIPANT MODAL -->
+<div class="modal fade"
+     id="participantModal"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-1"></i>
+                    Add Participant
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="mb-3">
+
+                    <label for="ParticipantSearch"
+                           class="form-label">
+
+                        Employee
+                        <span class="text-danger">*</span>
+
+                    </label>
+
+                    <input type="text"
+                           id="ParticipantSearch"
+                           class="form-control form-control-sm"
+                           placeholder="Search employee code or name..."
+                           autocomplete="off" />
+
+                    <input type="hidden"
+                           id="ParticipantEmployeeCode" />
+
+                    <input type="hidden"
+                           id="ParticipantName" />
+
+                    <input type="hidden"
+                           id="ParticipantDepartment" />
+
+                    <input type="hidden"
+                           id="ParticipantDepartmentName" />
+
+                </div>
+
+                <div id="participantSelectedInfo"
+                     class="alert alert-light border d-none">
+
+                    <div>
+                        <strong>Employee:</strong>
+                        <span id="participantSelectedCode"></span>
+                        -
+                        <span id="participantSelectedName"></span>
+                    </div>
+
+                    <div>
+                        <strong>Department:</strong>
+                        <span id="participantSelectedDepartment"></span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        data-bs-dismiss="modal">
+
+                    Cancel
+
+                </button>
+
+                <button type="button"
+                        id="btnConfirmParticipant"
+                        class="btn btn-sm btn-primary"
+                        disabled>
+
+                    <i class="bi bi-plus-lg me-1"></i>
+                    Add
+
+                </button>
 
             </div>
 
         </div>
 
     </div>
+
 </div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        window.trainingEventEditUrls = {
+            searchEmployees: '@Url.Action("SearchEmployees", "Home")',
+            detail: '@Url.Action("Detail", "TrainingEvent")'
+        };
+
+        window.trainingEventEditInitial = {
+
+            eventType: @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                    Model.EventType ?? ""
+                )
+            ),
+
+            trainerId: @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                    Model.TrainerId ?? ""
+                )
+            ),
+
+            trainerName: @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                    Model.TrainerName ?? ""
+                )
+            ),
+
+            participants: @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(
+                    Model.Participants
+                )
+            )
+        };
+
+    </script>
+
+    <script src="~/lib/bootstrap3-typeahead/bootstrap3-typeahead.min.js"></script>
+
+    <script src="~/js/training-event-edit.js"
+            asp-append-version="true"></script>
+}

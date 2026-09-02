@@ -40,7 +40,7 @@ namespace Training.Services
             }
         }
 
-        public async Task<List<History>> GetHistoriesAsync(int id, string docType)
+        public async Task<List<History>> GetHistoriesAsync(long id, string docType)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -98,15 +98,27 @@ namespace Training.Services
                     parameters,
                     commandType: CommandType.StoredProcedure);
 
+                var message = act.ActionName switch
+                {
+                    "Request for Approve"
+                        => "Training event submitted successfully.",
+
+                    "Approve"
+                        => "Training event approved successfully.",
+
+                    "Reject"
+                        => "Training event rejected successfully.",
+
+                    _
+                        => "Training event action completed successfully."
+                };
                 return new ApiResponse
                 {
-                    Success = result > 0,
-                    Message = $"USP_Approve result = {result}",
-                    Data = new
-                    {
-                        Result = result
-                    }
+                    Success = result == 1,
+                    Message = message,
+                    Data = new { Result = result }
                 };
+
                 //return new ApiResponse
                 //{
                 //    Success = result > 0,

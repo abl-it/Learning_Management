@@ -78,6 +78,8 @@
         /// Determines which workflow action should be displayed on the detail page.
         /// </summary>
         public string? AvailableAction { get; set; }
+
+        public List<History> Histories { get; set; } = [];
     }
 
    

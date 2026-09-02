@@ -444,6 +444,136 @@ namespace Training.Controllers
             }
         }
 
+        /// <summary>
+        /// Updates an existing training event.
+        /// </summary>
+        /// <param name="model">Training event edit model.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Redirects to the training event detail page after successful update.</returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(
+            TrainingEventEditDto model,
+            CancellationToken cancellationToken)
+        {
+            if (model is null || model.TrainingEventId <= 0)
+            {
+                return BadRequest();
+            }
+
+            var username = _emp.CurrentEmployee?.Username;
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return Unauthorized();
+            }
+
+            try
+            {
+                // -----------------------------------------------------
+                // Server-side permission check
+                // -----------------------------------------------------
+
+                var detail = await _eventService.GetDetailAsync(
+                    model.TrainingEventId,
+                    username,
+                    cancellationToken);
+
+                if (detail is null)
+                {
+                    return NotFound();
+                }
+
+                if (!detail.CanEdit)
+                {
+                    return Forbid();
+                }
+
+                // -----------------------------------------------------
+                // Model validation
+                // -----------------------------------------------------
+
+                if (!ModelState.IsValid)
+                {
+                    return View(model);
+                }
+
+                var modifiedBy =
+                    _emp.CurrentEmployee?.EmployeeCode;
+
+                if (string.IsNullOrWhiteSpace(modifiedBy))
+                {
+                    return Unauthorized();
+                }
+
+                // -----------------------------------------------------
+                // Update
+                // -----------------------------------------------------
+
+                await _eventService.UpdateAsync(
+                    model,
+                    modifiedBy,
+                    cancellationToken);
+
+                TempData["SuccessMessage"] =
+                    $"Training event {detail.EventCode} berhasil diperbarui.";
+
+                return RedirectToAction(
+                    nameof(Detail),
+                    new
+                    {
+                        id = model.TrainingEventId
+                    });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Invalid training event update request. " +
+                    "TrainingEventId: {TrainingEventId}",
+                    model.TrainingEventId);
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    ex.Message);
+
+                return View(model);
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Database error while updating training event. " +
+                    "TrainingEventId: {TrainingEventId}",
+                    model.TrainingEventId);
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    ex.Message);
+
+                return View(model);
+            }
+            catch (OperationCanceledException)
+                when (cancellationToken.IsCancellationRequested)
+            {
+                return BadRequest();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unexpected error while updating training event. " +
+                    "TrainingEventId: {TrainingEventId}",
+                    model.TrainingEventId);
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "An unexpected error occurred while updating the training event.");
+
+                return View(model);
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(

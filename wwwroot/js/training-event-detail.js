@@ -145,89 +145,8 @@ $(function () {
     });
 
 
-    // =========================================================
-    // APPROVE
-    // =========================================================
-
-    $("#btnApproveEvent").on("click", function () {
-
-        if (!trainingEventDetail.canAction) {
-            return;
-        }
-
-        const confirmed =
-            window.confirm(
-                "Are you sure you want to approve this training event?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        /*
-         * Approve API akan kita implementasikan
-         * setelah Edit/Delete selesai.
-         */
-
-        console.log(
-            "[TrainingEvent] Approve requested:",
-            trainingEventDetail.id
-        );
-
-    });
-
-
-    // =========================================================
-    // OPEN REJECT MODAL
-    // =========================================================
-
-    $("#btnRejectEvent").on("click", function () {
-
-        if (!trainingEventDetail.canAction) {
-            return;
-        }
-
-        const actionModalElement =
-            document.getElementById("eventActionModal");
-
-        if (actionModalElement) {
-
-            const actionModal =
-                bootstrap.Modal.getInstance(
-                    actionModalElement
-                );
-
-            if (actionModal) {
-                actionModal.hide();
-            }
-        }
-
-        $("#rejectReason")
-            .val("")
-            .removeClass("is-invalid");
-
-        const rejectModalElement =
-            document.getElementById("rejectEventModal");
-
-        if (!rejectModalElement) {
-
-            console.error(
-                "[TrainingEvent] Reject modal not found."
-            );
-
-            return;
-        }
-
-        const rejectModal =
-            bootstrap.Modal.getOrCreateInstance(
-                rejectModalElement
-            );
-
-        rejectModal.show();
-
-    });
-
-
+    
+  
     // =========================================================
     // REJECT REASON VALIDATION
     // =========================================================
@@ -247,49 +166,7 @@ $(function () {
     });
 
 
-    // =========================================================
-    // CONFIRM REJECT
-    // =========================================================
-
-    $("#btnConfirmReject").on("click", function () {
-
-        if (!trainingEventDetail.canAction) {
-            return;
-        }
-
-        const reason =
-            $.trim(
-                $("#rejectReason").val()
-            );
-
-        if (!reason) {
-
-            $("#rejectReason")
-                .addClass("is-invalid")
-                .focus();
-
-            return;
-        }
-
-        $("#rejectReason")
-            .removeClass("is-invalid");
-
-        /*
-         * Reject API akan kita implementasikan
-         * setelah Edit/Delete selesai.
-         */
-
-        console.log(
-            "[TrainingEvent] Reject requested:",
-            {
-                id: trainingEventDetail.id,
-                reason: reason
-            }
-        );
-
-    });
-
-
+    
     //=========================================================
     //POST
     //========================================================

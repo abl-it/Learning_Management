@@ -7,7 +7,7 @@ namespace Training.Services.IServices
     {
         Task<ApiResponse> ActionPlanningAsync(ActionVM act);
 
-        Task<List<History>> GetHistoriesAsync(int id, string docType);
+        Task<List<History>> GetHistoriesAsync(long id, string docType);
 
         /// <summary>
         /// Executes a workflow action for a training event.

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using Training.DTOs.Training;
+using Training.Models;
 using Training.Models.DTO;
 using Training.Models.DTO.Common;
 using Training.Models.DTO.Event;
@@ -432,7 +433,7 @@ namespace Training.Services
             long trainingEventId,
             string username,
             CancellationToken cancellationToken)
-                {
+        {
                     if (trainingEventId <= 0)
                     {
                         throw new ArgumentException(
@@ -482,9 +483,13 @@ namespace Training.Services
             eventDetail.AvailableAction = GetAvailableAction(
                     eventDetail.Status,
                     eventDetail.CanAction);
+            eventDetail.Histories =
+                await GetHistoryAsync(
+                    trainingEventId,
+                    cancellationToken);
 
             return eventDetail;
-                }
+        }
 
         public async Task<TrainingEventDetailDto?> GetByIdAsync(
             long trainingEventId,
@@ -595,6 +600,223 @@ namespace Training.Services
             return null;
         }
 
+        public async Task<List<History>> GetHistoryAsync(
+            long trainingEventId,
+            CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_connectionString);
+
+            var parameters = new DynamicParameters();
+
+            parameters.Add(
+                "@docType",
+                "EVENT",
+                DbType.String);
+
+            parameters.Add(
+                "@id",
+                trainingEventId,
+                DbType.Int64);
+
+            var result = await connection.QueryAsync<History>(
+                "USP_GetHistory",
+                parameters,
+                commandType: CommandType.StoredProcedure);
+
+            return result.ToList();
+        }
+
+
+        public async Task<long> UpdateAsync(
+            TrainingEventEditDto request,
+            string modifiedBy,
+            CancellationToken cancellationToken)
+        {
+            if (request is null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
+            if (request.TrainingEventId <= 0)
+            {
+                throw new ArgumentException(
+                    "Invalid training event identifier.",
+                    nameof(request.TrainingEventId));
+            }
+
+            if (string.IsNullOrWhiteSpace(modifiedBy))
+            {
+                throw new ArgumentException(
+                    "Modified by is required.",
+                    nameof(modifiedBy));
+            }
+
+            if (request.EventEndDate < request.EventStartDate)
+            {
+                throw new ArgumentException(
+                    "End date cannot be earlier than start date.");
+            }
+
+            if (request.ParticipantQuota <= 0)
+            {
+                throw new ArgumentException(
+                    "Participant quota must be greater than zero.");
+            }
+
+            var participants =
+                request.Participants ?? [];
+
+            if (participants.Count == 0)
+            {
+                throw new ArgumentException(
+                    "At least one participant is required.");
+            }
+
+            if (participants.Count > request.ParticipantQuota)
+            {
+                throw new ArgumentException(
+                    "Participant count cannot exceed participant quota.");
+            }
+
+            var participantTable =
+                BuildParticipantTable(participants);
+
+            var parameters = new DynamicParameters();
+
+            parameters.Add(
+                "@TrainingEventId",
+                request.TrainingEventId,
+                DbType.Int64);
+
+            parameters.Add(
+                "@CourseId",
+                request.CourseId,
+                DbType.Int32);
+
+            parameters.Add(
+                "@TrainingCategoryId",
+                request.TrainingCategoryId,
+                DbType.Int32);
+
+            parameters.Add(
+                "@TrainingTitle",
+                request.TrainingTitle,
+                DbType.String);
+
+            parameters.Add(
+                "@TrainingDescription",
+                request.TrainingDescription,
+                DbType.String);
+
+            parameters.Add(
+                "@TrainingObjective",
+                request.TrainingObjective,
+                DbType.String);
+
+            parameters.Add(
+                "@CoCode",
+                request.CoCode,
+                DbType.String);
+
+            parameters.Add(
+                "@ABRV",
+                request.ABRV,
+                DbType.String);
+
+            parameters.Add(
+                "@DeptName",
+                request.DeptName,
+                DbType.String);
+
+            parameters.Add(
+                "@EventType",
+                request.EventType,
+                DbType.String);
+
+            parameters.Add(
+                "@TrainerId",
+                request.TrainerId,
+                DbType.String);
+
+            parameters.Add(
+                "@TrainerName",
+                request.TrainerName,
+                DbType.String);
+
+            parameters.Add(
+                "@ParticipantQuota",
+                request.ParticipantQuota,
+                DbType.Int32);
+
+            parameters.Add(
+                "@Budget",
+                request.Budget,
+                DbType.Decimal);
+
+            parameters.Add(
+                "@Venue",
+                request.Venue,
+                DbType.String);
+
+            parameters.Add(
+                "@EventStartDate",
+                request.EventStartDate,
+                DbType.DateTime2);
+
+            parameters.Add(
+                "@EventEndDate",
+                request.EventEndDate,
+                DbType.DateTime2);
+
+            parameters.Add(
+                "@SessionCount",
+                request.SessionCount,
+                DbType.Int32);
+
+            parameters.Add(
+                "@DurationHours",
+                request.DurationHours,
+                DbType.Decimal);
+
+            parameters.Add(
+                "@ModifiedBy",
+                modifiedBy,
+                DbType.String);
+
+            parameters.Add(
+                "@Participants",
+                participantTable.AsTableValuedParameter(
+                    "dbo.TrainingEventParticipantType"));
+
+            await using var connection =
+                new SqlConnection(_connectionString);
+
+            await connection.OpenAsync(cancellationToken);
+
+            var command = new CommandDefinition(
+                commandText: "dbo.usp_TrainingEvent_Update",
+                parameters: parameters,
+                commandType: CommandType.StoredProcedure,
+                cancellationToken: cancellationToken);
+
+            try
+            {
+                var result =
+                    await connection.QuerySingleAsync<long>(command);
+
+                return result;
+            }
+            catch (SqlException ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to update training event {TrainingEventId} by {ModifiedBy}.",
+                    request.TrainingEventId,
+                    modifiedBy);
+
+                throw;
+            }
+        }
 
 
 
