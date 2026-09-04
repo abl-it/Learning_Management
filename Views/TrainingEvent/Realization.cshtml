@@ -1,0 +1,644 @@
+﻿@using Training.Models.DTO.Event.Realization
+
+@model TrainingEventRealizationDetailDto
+
+@{
+    ViewData["Title"] = "Entry Realization";
+
+    var isPosted = Model.IsPosted;
+
+    var isComplete = string.Equals(Model.EventStatus, "Complete", StringComparison.OrdinalIgnoreCase);
+
+    var isRejected = string.Equals(Model.EventStatus, "Realization Rejected", StringComparison.OrdinalIgnoreCase);
+
+    var statusClass =
+        isComplete
+            ? "bg-dark"
+            : isRejected
+                ? "bg-danger"
+                : isPosted
+                    ? "bg-info text-dark"
+                    : "bg-warning text-dark";
+
+    var statusLabel =
+        isComplete
+            ? "Complete"
+            : isRejected
+                ? "Rejected by HRD - Please Revise"
+                : isPosted
+                    ? "Posted - Waiting HRD Confirmation"
+                    : "Draft";
+}
+
+<link href="~/css/detail.css" rel="stylesheet" />
+<link href="~/css/realization.css" rel="stylesheet" />
+
+<form id="realizationForm">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="container px-3 px-md-4 training-event-detail-container">
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+
+        <div>
+
+            <h4 class="mb-0">
+                <i class="bi bi-clipboard-check"></i>
+                Entry Realization
+            </h4>
+
+            <div class="text-muted small">
+                @Model.EventCode &mdash; @Model.TrainingTitle
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-1">
+
+            <span class="badge @statusClass align-self-center" id="realizationStatusBadge">
+                @statusLabel
+            </span>
+
+            @if (Model.CanComplete)
+            {
+                <button type="button" class="btn btn-sm btn-success" id="btnCompleteRealization">
+                    <i class="bi bi-patch-check"></i>
+                    Mark as Complete
+                </button>
+            }
+
+            @if (Model.CanReject)
+            {
+                <button type="button" class="btn btn-sm btn-danger" id="btnRejectRealization">
+                    <i class="bi bi-x-lg"></i>
+                    Reject
+                </button>
+            }
+
+            <button type="button" class="btn btn-sm btn-secondary" id="btnBackToDetail">
+                <i class="bi bi-arrow-left"></i>
+                Back
+            </button>
+
+        </div>
+
+    </div>
+
+
+    @if (Model.CanComplete || Model.CanReject)
+    {
+        <div class="alert alert-warning d-flex align-items-center gap-2 py-2">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+                This realization has been posted and is waiting for HRD review.
+                Review the attendance and attachments below, then click
+                <strong>Mark as Complete</strong> if everything is correct, or
+                <strong>Reject</strong> to send it back to the creator for correction.
+            </div>
+        </div>
+    }
+
+
+    @if (isRejected)
+    {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                HRD rejected this realization and sent it back for correction.
+                See the reason in the Workflow History below,
+                fix the data below, then post it again.
+            </div>
+        </div>
+    }
+
+
+    @if (isPosted)
+    {
+        <div class="alert alert-success d-flex align-items-center gap-2 py-2">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>
+                Realization was posted to HRD by <strong>@Model.PostedBy</strong>
+                on <strong>@(Model.PostedDate?.ToString("dd/MM/yyyy HH:mm"))</strong>.
+                This form is now read-only.
+            </div>
+        </div>
+    }
+
+
+    <!-- =========================================================
+         WORKFLOW HISTORY (Approve/Reject/Post to HRD/Complete, etc.)
+         Same markup/data as the Detail page's history card, shown here
+         too so a rejection reason is visible without navigating away.
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2 workflow-history-card">
+
+        <div class="card-header py-2 d-flex justify-content-between align-items-center"
+             role="button"
+             data-bs-toggle="collapse"
+             data-bs-target="#workflowHistoryBody"
+             aria-expanded="true"
+             aria-controls="workflowHistoryBody"
+             style="cursor: pointer;">
+
+            <span>
+                <i class="bi bi-clock-history me-1"></i>
+                Workflow History
+            </span>
+
+            <i class="bi bi-chevron-up" id="workflowHistoryChevron"></i>
+
+        </div>
+
+        <div class="collapse show" id="workflowHistoryBody">
+
+        <div class="card-body">
+
+            @if (Model.Histories != null && Model.Histories.Any())
+            {
+                <div class="workflow-timeline">
+
+                    @foreach (var history in Model.Histories)
+                    {
+                        var action = history.Action ?? "-";
+
+                        var actionClass =
+                            action.Equals("Reject", StringComparison.OrdinalIgnoreCase)
+                                ? "history-reject"
+                                : action.Equals("Approve", StringComparison.OrdinalIgnoreCase)
+                                    ? "history-approve"
+                                    : action.Equals("Complete", StringComparison.OrdinalIgnoreCase)
+                                        ? "history-approve"
+                                        : action.Equals("Request for Approve", StringComparison.OrdinalIgnoreCase)
+                                            ? "history-request"
+                                            : "history-default";
+
+                        var actionIcon =
+                            action.Equals("Reject", StringComparison.OrdinalIgnoreCase)
+                                ? "bi-x-lg"
+                                : action.Equals("Approve", StringComparison.OrdinalIgnoreCase)
+                                    ? "bi-check-lg"
+                                    : action.Equals("Complete", StringComparison.OrdinalIgnoreCase)
+                                        ? "bi-patch-check"
+                                        : action.Equals("Request for Approve", StringComparison.OrdinalIgnoreCase)
+                                            ? "bi-send"
+                                            : action.Equals("Post to HRD", StringComparison.OrdinalIgnoreCase)
+                                                ? "bi-send-check"
+                                                : "bi-arrow-right";
+
+                        <div class="workflow-timeline-item">
+
+                            <div class="workflow-timeline-marker @actionClass">
+                                <i class="bi @actionIcon"></i>
+                            </div>
+
+                            <div class="workflow-history-person">
+
+                                <div class="workflow-history-date">
+                                    @history.Date.ToString("dd MMM yyyy HH:mm")
+                                </div>
+
+                                <div class="workflow-history-user">
+                                    @(string.IsNullOrWhiteSpace(history.ChangeByName) ? history.ChangeBy : history.ChangeByName)
+                                </div>
+
+                            </div>
+
+                            <div class="workflow-history-content">
+
+                                <div class="workflow-history-main">
+
+                                    <span class="workflow-history-action @actionClass">
+                                        <i class="bi @actionIcon"></i>
+                                        @action
+                                    </span>
+
+                                    <span class="workflow-state">
+                                        @(history.State ?? "-")
+                                    </span>
+
+                                    <i class="bi bi-arrow-right workflow-history-arrow"></i>
+
+                                    <span class="workflow-state workflow-state-next">
+                                        @(history.NextState ?? "-")
+                                    </span>
+
+                                </div>
+
+                                <div class="workflow-history-remark">
+                                    <strong>Remarks:</strong>
+                                    @if (string.IsNullOrWhiteSpace(history.Remark))
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@history.Remark</span>
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-clock-history fs-5 d-block mb-2"></i>
+                    No workflow history available.
+                </div>
+            }
+
+        </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         EVENT INFORMATION (read-only)
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2">
+
+        <div class="card-header py-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Event Information
+        </div>
+
+        <div class="card-body py-2">
+
+            <div class="row g-2 small">
+
+                <div class="col-md-3">
+                    <div class="text-muted">Training Title</div>
+                    <div class="fw-semibold">@Model.TrainingTitle</div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="text-muted">Trainer</div>
+                    <div class="fw-semibold">@(Model.TrainerName ?? "-")</div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="text-muted">Department</div>
+                    <div class="fw-semibold">@(Model.DeptName ?? "-")</div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="text-muted">Venue</div>
+                    <div class="fw-semibold">@(Model.Venue ?? "-")</div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="text-muted">Scheduled Date</div>
+                    <div class="fw-semibold">
+                        @Model.EventStartDate.ToString("dd/MM/yyyy") - @Model.EventEndDate.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="text-muted">Participant Quota</div>
+                    <div class="fw-semibold">@Model.ParticipantQuota</div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         REALIZATION DATE / TIME
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2">
+
+        <div class="card-header py-2">
+            <i class="bi bi-calendar-event me-1"></i>
+            Realization Date &amp; Time
+        </div>
+
+        <div class="card-body py-2">
+
+            <div class="row g-2">
+
+                <div class="col-md-3">
+                    <label class="form-label">Realization Date <span class="text-danger">*</span></label>
+                    <input type="date"
+                           id="RealizationDate"
+                           class="form-control form-control-sm"
+                           value="@(Model.RealizationDate?.ToString("yyyy-MM-dd") ?? Model.EventStartDate.ToString("yyyy-MM-dd"))"
+                           @(isPosted ? "disabled" : "") />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                    <input type="time"
+                           id="StartTime"
+                           class="form-control form-control-sm"
+                           value="@(Model.StartTime?.ToString(@"hh\:mm") ?? Model.EventStartDate.ToString("HH:mm"))"
+                           @(isPosted ? "disabled" : "") />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">End Time <span class="text-danger">*</span></label>
+                    <input type="time"
+                           id="EndTime"
+                           class="form-control form-control-sm"
+                           value="@(Model.EndTime?.ToString(@"hh\:mm") ?? Model.EventEndDate.ToString("HH:mm"))"
+                           @(isPosted ? "disabled" : "") />
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label">Notes</label>
+                    <input type="text"
+                           id="RealizationNotes"
+                           class="form-control form-control-sm"
+                           maxlength="1000"
+                           value="@Model.Notes"
+                           @(isPosted ? "disabled" : "") />
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         PARTICIPANTS / ATTENDANCE
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-2">
+
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+
+            <span>
+                <i class="bi bi-people me-1"></i>
+                Attendance
+                <span class="badge bg-primary ms-1" id="participantCountBadge">@Model.Participants.Count</span>
+            </span>
+
+            @if (!isPosted)
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddParticipant">
+                    <i class="bi bi-person-plus"></i>
+                    Add Participant
+                </button>
+            }
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-sm table-hover align-middle mb-0" id="participantsTable">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:40px;">No</th>
+                            <th>Name</th>
+                            <th style="width:160px;">Department</th>
+                            <th style="width:90px;" class="text-center">Present</th>
+                            <th>Remarks</th>
+                            @if (!isPosted)
+                            {
+                                <th style="width:50px;"></th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody id="participantsTableBody">
+                        <!-- rows rendered by JS from initial data -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         ATTACHMENTS
+         ========================================================= -->
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-header py-2">
+            <i class="bi bi-paperclip me-1"></i>
+            Attachments
+        </div>
+
+        <div class="card-body py-2">
+
+            @if (!isPosted)
+            {
+                <div class="row g-2 align-items-end mb-3">
+
+                    <div class="col-md-3">
+                        <label class="form-label">Document Type</label>
+                        <select id="AttachmentDocumentType" class="form-select form-select-sm">
+                            <option value="Attendance">Scanned Attendance Sheet</option>
+                            <option value="Other">Other Document</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">File(s)</label>
+                        <input type="file" id="AttachmentFiles" class="form-control form-control-sm" multiple
+                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-sm btn-primary w-100" id="btnUploadAttachment">
+                            <i class="bi bi-upload"></i>
+                            Upload
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="form-text mb-2">
+                    Allowed types: PDF, JPG, PNG, DOC(X), XLS(X). Max 20 MB per file.
+                </div>
+            }
+
+            <div class="table-responsive">
+
+                <table class="table table-sm align-middle mb-0" id="attachmentsTable">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>File</th>
+                            <th style="width:150px;">Type</th>
+                            <th style="width:100px;">Size</th>
+                            <th style="width:160px;">Uploaded</th>
+                            <th style="width:90px;"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="attachmentsTableBody">
+                        <!-- rows rendered by JS from initial data -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         FOOTER ACTIONS
+         ========================================================= -->
+
+    @if (!isPosted)
+    {
+        <div class="d-flex justify-content-end gap-2 mb-4">
+
+            <button type="button" class="btn btn-outline-secondary" id="btnSaveDraft">
+                <i class="bi bi-save"></i>
+                Save Draft
+            </button>
+
+            <button type="button" class="btn btn-success" id="btnPostToHrd">
+                <i class="bi bi-send-check"></i>
+                Post to HRD
+            </button>
+
+        </div>
+    }
+
+</div>
+
+
+<!-- =============================================================
+     ADD PARTICIPANT MODAL
+     ============================================================= -->
+
+<div class="modal fade" id="realizationParticipantModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-1"></i>
+                    Add Participant
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="mb-3">
+
+                    <label for="RealizationParticipantSearch" class="form-label">
+                        Employee <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="text"
+                           id="RealizationParticipantSearch"
+                           class="form-control form-control-sm"
+                           placeholder="Search employee code or name..."
+                           autocomplete="off" />
+
+                    <input type="hidden" id="RealizationParticipantEmployeeCode" />
+                    <input type="hidden" id="RealizationParticipantName" />
+                    <input type="hidden" id="RealizationParticipantDepartment" />
+                    <input type="hidden" id="RealizationParticipantDepartmentName" />
+
+                </div>
+
+                <div id="realizationParticipantSelectedInfo" class="alert alert-light border d-none">
+
+                    <div class="small">
+
+                        <div>
+                            <strong>Employee:</strong>
+                            <span id="realizationParticipantSelectedCode"></span>
+                            -
+                            <span id="realizationParticipantSelectedName"></span>
+                        </div>
+
+                        <div>
+                            <strong>Department:</strong>
+                            <span id="realizationParticipantSelectedDepartment"></span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button" id="btnConfirmRealizationParticipant" class="btn btn-sm btn-primary" disabled>
+                    <i class="bi bi-plus-lg me-1"></i>
+                    Add
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Initial data for JS, embedded as JSON to avoid Razor/JS escaping issues -->
+<script id="realizationInitialData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
+
+
+@section Scripts {
+
+    <script>
+        window.trainingEventRealizationUrls = {
+            backPage: '@Url.Action("Realization", "TrainingEvent", new { id = (string)null })',
+            searchEmployees: '@Url.Action("SearchEmployees", "TrainingEvent")',
+            saveDraft: '@Url.Action("SaveRealization", "TrainingEvent")',
+            postToHrd: '@Url.Action("PostRealizationToHrd", "TrainingEvent")',
+            completeRealization: '@Url.Action("CompleteRealization", "TrainingEvent")',
+            rejectRealization: '@Url.Action("RejectRealization", "TrainingEvent")',
+            uploadAttachment: '@Url.Action("UploadRealizationAttachment", "TrainingEvent")',
+            deleteAttachment: '@Url.Action("DeleteRealizationAttachment", "TrainingEvent")',
+            downloadAttachment: '@Url.Action("DownloadRealizationAttachment", "TrainingEvent")'
+        };
+
+        window.trainingEventRealizationTrainingEventId = @Model.TrainingEventId;
+        window.trainingEventRealizationIsPosted = @(isPosted ? "true" : "false");
+    </script>
+
+    <script src="~/lib/bootstrap3-typeahead/bootstrap3-typeahead.min.js"></script>
+
+    <script src="~/js/training-event-realization.js" asp-append-version="true"></script>
+
+}

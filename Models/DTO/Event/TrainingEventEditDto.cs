@@ -12,6 +12,8 @@
 
         public int TrainingCategoryId { get; set; }
 
+        public string? TrainingCategory { get; set; }
+
         public string TrainingTitle { get; set; } = string.Empty;
 
         public string? TrainingDescription { get; set; }

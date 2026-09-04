@@ -32,7 +32,7 @@ namespace Training.Middleware
 
             if (_env.IsDevelopment())
             {
-                context.Session.SetString("Username", "ekoteguh");
+                context.Session.SetString("Username", "vikri");
                 await _next(context);
                 return;
             }

@@ -48,6 +48,8 @@
                         <option value="Approved">Approved</option>
                         <option value="Canceled">Canceled</option>
                         <option value="Rejected">Rejected</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Complete">Complete</option>
                     </select>
                 </div>
                 <div class="col-xl-1 col-lg-1 col-md-6 col-sm-6 col-12">
@@ -93,6 +95,8 @@
             getDepartments: '@Url.Action("GetDepartments", "Home", new { type = "EVENT" })',
 
             detail: '@Url.Action("Detail", "TrainingEvent")',
+
+            realization: '@Url.Action("Realization", "TrainingEvent")',
 
             edit: '@Url.Action("Edit", "TrainingEvent")',
 

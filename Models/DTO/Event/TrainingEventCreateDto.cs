@@ -24,6 +24,8 @@
 
         public string? TrainerName { get; set; }
 
+        public decimal? Quota { get; set; }
+        
         public decimal? Budget { get; set; }
 
         public string? Venue { get; set; }

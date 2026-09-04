@@ -2,43 +2,117 @@
     ViewData["Title"] = "Add Training Event";
 }
 
-<div class="container px-3 px-md-4">
+<style>
+    .training-event-create-container {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .training-event-create-container .form-label {
+        margin-bottom: 3px;
+        font-size: 13px;
+    }
+
+    .training-event-create-container .form-control,
+    .training-event-create-container .form-select {
+        font-size: 13px;
+    }
+
+    .training-event-create-container .form-text {
+        font-size: 11px;
+    }
+
+    #participantTable th,
+    #participantTable td {
+        font-size: 13px;
+        vertical-align: middle;
+    }
+
+    #participantTable th {
+        white-space: nowrap;
+    }
+</style>
+
+<div class="container px-3 px-md-4 training-event-create-container">
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
 
     <div class="d-flex align-items-center mb-3">
+
         <i class="bi bi-people-fill fs-4 me-2"></i>
-        <h4 class="mb-0">Add Training Event</h4>
+
+        <h4 class="mb-0">
+            Add Training Event
+        </h4>
+
     </div>
+
+
+    <!-- =========================================================
+         FORM
+         ========================================================= -->
 
     <form id="trainingEventForm"
           asp-controller="TrainingEvent"
           asp-action="Create"
-          method="post">
+          method="post"
+          autocomplete="off">
 
         @Html.AntiForgeryToken()
 
+
+        <!-- =====================================================
+             EVENT INFORMATION
+             ===================================================== -->
+
         <div class="card shadow-sm">
 
-            <div class="card-header">
+            <div class="card-header py-2">
+
                 <i class="bi bi-calendar-plus me-1"></i>
+
                 Event Information
+
             </div>
+
 
             <div class="card-body">
 
-                <!-- Hidden -->
+                <!-- =================================================
+                     HIDDEN VALUES
+                     ================================================= -->
+
                 <input type="hidden"
                        id="CourseId"
                        name="CourseId" />
 
+                <input type="hidden"
+                       id="CategoryId"
+                       name="CategoryId" />
+
+                <input type="hidden"
+                       id="DeptName"
+                       name="DeptName" />
+
+
+                <!-- =================================================
+                     ROW 1
+                     Course | Training Title | Category
+                     ================================================= -->
+
                 <div class="row g-3">
 
                     <!-- COURSE -->
-                    <div class="col-12 col-lg-5">
+                    <div class="col-md-5">
 
                         <label for="courseSearch"
                                class="form-label">
+
                             Course
                             <span class="text-danger">*</span>
+
                         </label>
 
                         <input type="text"
@@ -56,10 +130,13 @@
 
 
                     <!-- TRAINING TITLE -->
-                    <div class="col-12 col-lg-4">
+                    <div class="col-md-4">
 
-                        <label class="form-label">
+                        <label for="TrainingTitle"
+                               class="form-label">
+
                             Training Title
+
                         </label>
 
                         <input type="text"
@@ -72,318 +149,490 @@
 
 
                     <!-- CATEGORY -->
-                    <div class="col-12 col-lg-3">
+                    <div class="col-md-3">
 
-                        <label class="form-label">
-                            Category
+                        <label for="CategoryName"
+                               class="form-label">
+
+                            Training Category
+
                         </label>
 
                         <input type="text"
                                id="CategoryName"
                                class="form-control form-control-sm"
                                readonly />
-                        <input type="hidden"
-                               id="CategoryId"
-                               name="TrainingCategoryId">
+
                     </div>
 
-                 <!-- Company -->
+                </div>
+
+
+                <!-- =================================================
+                     ROW 2
+                     Company | Department | Trainer Type | Trainer
+                     ================================================= -->
+
+                <div class="row g-3 mt-0">
+
+                    <!-- COMPANY -->
                     <div class="col-md-3">
-                        <label for="CoCode" class="form-label">
-                            Company <span class="text-danger">*</span>
+
+                        <label for="CoCode"
+                               class="form-label">
+
+                            Company
+                            <span class="text-danger">*</span>
+
                         </label>
 
                         <select id="CoCode"
                                 name="CoCode"
                                 class="form-select form-select-sm"
                                 required>
-                            <option value="">Loading...</option>
+
+                            <option value="">
+                                -- Select Company --
+                            </option>
+
                         </select>
+
                     </div>
 
-                    <!-- Department -->
+
+                    <!-- DEPARTMENT -->
                     <div class="col-md-3">
-                        <label for="ABRV" class="form-label">
-                            Department <span class="text-danger">*</span>
+
+                        <label for="ABRV"
+                               class="form-label">
+
+                            Department
+                            <span class="text-danger">*</span>
+
                         </label>
 
                         <select id="ABRV"
                                 name="ABRV"
                                 class="form-select form-select-sm"
                                 required>
-                            <option value="">Select Department</option>
+
+                            <option value="">
+                                -- Select Department --
+                            </option>
+
                         </select>
+
                     </div>
 
-                    <!-- Type -->
+
+                    <!-- TRAINER TYPE -->
                     <div class="col-md-2">
-                        <label for="TrainerType" class="form-label">
+
+                        <label for="TrainerType"
+                               class="form-label">
+
                             Trainer Type
+
                         </label>
 
                         <select id="TrainerType"
-                                name="TrainerType"
                                 class="form-select form-select-sm">
-                            <option value="Internal">Internal</option>
-                            <option value="External">External</option>
+
+                            <option value="Internal">
+                                Internal
+                            </option>
+
+                            <option value="External">
+                                External
+                            </option>
+
                         </select>
+
                     </div>
 
-                    <!--Trainer-->
-                    <div class="col-md-3">
-                        <label for="TrainerSearch" class="form-label">
-                            Trainer <span class="text-danger">*</span>
+
+                    <!-- TRAINER -->
+                    <div class="col-md-4">
+
+                        <label for="TrainerSearch"
+                               class="form-label">
+
+                            Trainer
+                            <span class="text-danger">*</span>
+
                         </label>
 
                         <input type="text"
                                id="TrainerSearch"
                                class="form-control form-control-sm"
-                               placeholder="Search employee..."
+                               placeholder="Search trainer..."
                                autocomplete="off"
                                required />
 
                         <input type="hidden"
                                id="TrainerEmployeeCode"
-                               name="TrainerEmployeeCode" />
+                               name="TrainerId" />
 
                         <input type="hidden"
                                id="TrainerName"
                                name="TrainerName" />
+
                     </div>
 
-                    <!-- #Participant -->
-                    @* <div class="col-md-1"> 
-                        <label for="Quota" class="form-label">
-                            #Participant <span class="text-danger">*</span>
+                </div>
+
+
+                <!-- =================================================
+                     ROW 3
+                     Session | Duration | Quota | Start | End
+                     ================================================= -->
+
+                <div class="row g-3 mt-0">
+
+                    <!-- SESSION -->
+                    <div class="col-md-2">
+
+                        <label for="SessionNo"
+                               class="form-label">
+
+                            Session#
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <input type="number"
+                               id="SessionNo"
+                               name="SessionCount"
+                               class="form-control form-control-sm"
+                               min="1"
+                               required />
+
+                    </div>
+
+
+                    <!-- DURATION -->
+                    <div class="col-md-2">
+
+                        <label for="HoursPerSession"
+                               class="form-label">
+
+                            Duration (Hours)
+
+                        </label>
+
+                        <div class="input-group input-group-sm">
+
+                            <input type="number"
+                                   id="HoursPerSession"
+                                   name="DurationHours"
+                                   class="form-control"
+                                   min="0"
+                                   step="0.5" />
+
+                            <span class="input-group-text">
+                                hrs
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- QUOTA -->
+                    <div class="col-md-2">
+
+                        <label for="Quota"
+                               class="form-label">
+
+                            Quota
+                            <span class="text-danger">*</span>
+
                         </label>
 
                         <input type="number"
                                id="Quota"
-                               name="Quota"
+                               name="ParticipantQuota"
                                class="form-control form-control-sm"
                                min="1"
-                               value="1"
-                               required>
+                               required />
+
                     </div>
-                    *@
-        </div>
 
 
-                <div class="row g-3 mt-1">
+                    <!-- START DATE -->
+                    <div class="col-md-3">
 
-            <!-- Session -->
-            <div class="col-md-1">
-                <label for="SessionNo" class="form-label">
-                    #Sess
-                    <span class="text-danger">*</span>
-                </label>
+                        <label for="StartDate"
+                               class="form-label">
 
-                <input type="number"
-                       id="SessionNo"
-                       name="SessionNo"
-                       class="form-control form-control-sm"
-                       min="1"
-                       value="1"
-                       required>
-            </div>
+                            Start Date
+                            <span class="text-danger">*</span>
 
+                        </label>
 
-            <!-- Hours -->
-            <div class="col-md-2">
-                <label for="HoursPerSession" class="form-label">
-                    Hours / Session
-                </label>
+                        <input type="datetime-local"
+                               id="StartDate"
+                               name="EventStartDate"
+                               class="form-control form-control-sm"
+                               required />
 
-                        <div class="input-group input-group-sm hours-session">
-                            <input type="number"
-                                   id="HoursPerSession"
-                                   name="HoursPerSession"
-                                   class="form-control"
-                                   min="1"
-                                   step="0.5">
-
-                            <span class="input-group-text">hrs</span>
-                        </div>
-            </div>
+                    </div>
 
 
-            <!-- Start Date -->
-            <div class="col-md-2">
-                <label for="StartDate" class="form-label">
-                    Start Date <span class="text-danger">*</span>
-                </label>
+                    <!-- END DATE -->
+                    <div class="col-md-3">
 
-                <input type="datetime-local"
-                       id="StartDate"
-                       name="StartDate"
-                       class="form-control form-control-sm"
-                       required>
-            </div>
+                        <label for="EndDate"
+                               class="form-label">
 
+                            End Date
+                            <span class="text-danger">*</span>
 
-            <!-- End Date -->
-            <div class="col-md-2">
-                <label for="EndDate" class="form-label">
-                    End Date <span class="text-danger">*</span>
-                </label>
+                        </label>
 
-                <input type="datetime-local"
-                       id="EndDate"
-                       name="EndDate"
-                       class="form-control form-control-sm"
-                       required>
-            </div>
-
-
-            <!-- Venue -->
-            <div class="col-md-3">
-                <label for="Venue" class="form-label">
-                    Venue
-                </label>
-
-                <input type="text"
-                       id="Venue"
-                       name="Venue"
-                       class="form-control form-control-sm">
-            </div>
-
-
-            <!-- Budget -->
-            <div class="col-md-2">
-                <label for="Budget" class="form-label">
-                    Budget
-                </label>
-
-                <input type="number"
-                       id="Budget"
-                       name="Budget"
-                       class="form-control form-control-sm"
-                       min="0"
-                       step="0.01">
-            </div>
-
-        </div>
-
-
-            <!-- Description -->
-            <div class="row mt-3">
-                <div class="col-12">
-
-                    <label for="Description" class="form-label">
-                        Description
-                    </label>
-
-                    <textarea id="Description"
-                              name="Description"
-                              class="form-control form-control-sm"
-                              rows="3"></textarea>
-
-                </div>
-            </div>
-
-
-            <!-- Objective -->
-            <div class="row mt-3">
-                <div class="col-12">
-
-                    <label for="Objective" class="form-label">
-                        Objective
-                    </label>
-
-                    <textarea id="Objective"
-                              name="Objective"
-                              class="form-control"
-                              rows="3"></textarea>
-
-                </div>
-
-            </div>
-    
-            <!-- PARTICIPANTS -->
-            <div class="card shadow-sm mt-3">
-
-                <div class="card-header d-flex justify-content-between align-items-center">
-
-                    <span>
-                        <i class="bi bi-person-check me-1"></i>
-                        Planned Participants
-                    </span>
-
-                    <button type="button"
-                            id="btnAddParticipant"
-                            class="btn btn-sm btn-primary">
-
-                        <i class="bi bi-person-plus me-1"></i>
-                        Add Participant
-
-                    </button>
-
-                </div>
-
-                <div class="card-body p-0">
-
-                    <div class="table-responsive">
-
-                        <table id="participantTable"
-                               class="table table-sm table-hover mb-0">
-
-                                <thead>
-                                    <tr>
-                                        <th style="width: 50px;">#</th>
-                                        <th>Employee Code</th>
-                                        <th>Name</th>
-                                        <th>Department</th>
-                                        <th style="width: 80px;">Action</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody id="participantTableBody">
-                                </tbody>
-
-                        </table>
-                            <div id="participantEmpty"
-                                 class="text-center text-muted py-3">
-                                No participants added.
-                            </div>
+                        <input type="datetime-local"
+                               id="EndDate"
+                               name="EventEndDate"
+                               class="form-control form-control-sm"
+                               required />
 
                     </div>
 
                 </div>
+
+
+                <!-- =================================================
+                     ROW 4
+                     Venue | Budget
+                     ================================================= -->
+
+                <div class="row g-3 mt-0">
+
+                    <!-- VENUE -->
+                    <div class="col-md-8">
+
+                        <label for="Venue"
+                               class="form-label">
+
+                            Venue
+
+                        </label>
+
+                        <input type="text"
+                               id="Venue"
+                               name="Venue"
+                               class="form-control form-control-sm" />
+
+                    </div>
+
+
+                    <!-- BUDGET -->
+                    <div class="col-md-4">
+
+                        <label for="Budget"
+                               class="form-label">
+
+                            Budget
+
+                        </label>
+
+                        <input type="number"
+                               id="Budget"
+                               name="Budget"
+                               class="form-control form-control-sm"
+                               min="0"
+                               step="1000"
+                               value="0" />
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ROW 5
+                     Training Description
+                     ================================================= -->
+
+                <div class="row g-3 mt-0">
+
+                    <div class="col-12">
+
+                        <label for="Description"
+                               class="form-label">
+
+                            Training Description
+
+                        </label>
+
+                        <textarea id="Description"
+                                  name="TrainingDescription"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ROW 6
+                     Training Objective
+                     ================================================= -->
+
+                <div class="row g-3 mt-0">
+
+                    <div class="col-12">
+
+                        <label for="Objective"
+                               class="form-label">
+
+                            Training Objective
+
+                        </label>
+
+                        <textarea id="Objective"
+                                  name="TrainingObjective"
+                                  class="form-control form-control-sm"
+                                  rows="3"></textarea>
+
+                    </div>
+
+                </div>
+
             </div>
 
-            <!-- ACTION -->
-            <div class="d-flex justify-content-end gap-2 mt-3 mb-4">
+        </div>
+
+
+        <!-- =========================================================
+             PARTICIPANTS
+             ========================================================= -->
+
+        <div class="card shadow-sm mt-2">
+
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <i class="bi bi-person-check me-1"></i>
+
+                    Planned Participants
+
+                </div>
+
 
                 <button type="button"
-                        id="btnCancel"
-                        class="btn btn-sm btn-outline-secondary">
+                        id="btnAddParticipant"
+                        class="btn btn-sm btn-primary">
 
-                    <i class="bi bi-x-lg me-1"></i>
-                    Cancel
+                    <i class="bi bi-person-plus me-1"></i>
 
-                </button>
-
-                <button type="button"
-                        id="btnSaveEvent"
-                        class="btn btn-sm btn-success">
-
-                    <i class="bi bi-check-lg me-1"></i>
-                    Save Event
+                    Add Participant
 
                 </button>
 
             </div>
 
+
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table id="participantTable"
+                           class="table table-sm table-hover mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th style="width:50px;"
+                                    class="text-center">
+                                    #
+                                </th>
+
+                                <th style="width:130px;">
+                                    Employee Code
+                                </th>
+
+                                <th>
+                                    Name
+                                </th>
+
+                                <th style="width:100px;">
+                                    ABRV
+                                </th>
+
+                                <th>
+                                    Department
+                                </th>
+
+                                <th style="width:80px;"
+                                    class="text-center">
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="participantTableBody">
+                        </tbody>
+
+                    </table>
+
+
+                    <div id="participantEmpty"
+                         class="text-center text-muted py-3">
+
+                        No participants added.
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
+
+
+        <!-- =========================================================
+             ACTION
+             ========================================================= -->
+
+        <div class="d-flex justify-content-end gap-2 mt-3 mb-4">
+
+            <button type="button"
+                    id="btnCancel"
+                    class="btn btn-sm btn-outline-secondary">
+
+                <i class="bi bi-x-lg me-1"></i>
+
+                Cancel
+
+            </button>
+
+
+            <button type="button"
+                    id="btnSaveEvent"
+                    class="btn btn-sm btn-success">
+
+                <i class="bi bi-check-lg me-1"></i>
+
+                Save Event
+
+            </button>
+
         </div>
+
     </form>
 
 </div>
 
 
-<!-- =========================================================
+<!-- =============================================================
      PARTICIPANT MODAL
-========================================================= -->
+============================================================= -->
 
 <div class="modal fade"
      id="participantModal"
@@ -397,8 +646,11 @@
             <div class="modal-header">
 
                 <h5 class="modal-title">
+
                     <i class="bi bi-person-plus me-1"></i>
+
                     Add Participant
+
                 </h5>
 
                 <button type="button"
@@ -408,38 +660,64 @@
 
             </div>
 
+
             <div class="modal-body">
 
-                    <div class="mb-3">
-                        <label for="ParticipantSearch" class="form-label">
-                            Employee <span class="text-danger">*</span>
-                        </label>
+                <div class="mb-3">
 
-                        <input type="text"
-                               id="ParticipantSearch"
-                               class="form-control form-control-sm"
-                               placeholder="Search employee code or name..."
-                               autocomplete="off" />
+                    <label for="ParticipantSearch"
+                           class="form-label">
 
-                        <input type="hidden"
-                               id="ParticipantEmployeeCode" />
+                        Employee
+                        <span class="text-danger">*</span>
 
-                        <input type="hidden"
-                               id="ParticipantName" />
+                    </label>
 
-                        <input type="hidden"
-                               id="ParticipantDepartment" />
+                    <input type="text"
+                           id="ParticipantSearch"
+                           class="form-control form-control-sm"
+                           placeholder="Search employee code or name..."
+                           autocomplete="off" />
 
-                        <input type="hidden"
-                               id="ParticipantDepartmentName" />
-                    </div>
 
-                <div id="selectedEmployee"
+                    <input type="hidden"
+                           id="ParticipantEmployeeCode" />
+
+                    <input type="hidden"
+                           id="ParticipantName" />
+
+                    <input type="hidden"
+                           id="ParticipantDepartment" />
+
+                    <input type="hidden"
+                           id="ParticipantDepartmentName" />
+
+                </div>
+
+
+                <div id="participantSelectedInfo"
                      class="alert alert-light border d-none">
+
+                    <div class="small">
+
+                        <div>
+                            <strong>Employee:</strong>
+                            <span id="participantSelectedCode"></span>
+                            -
+                            <span id="participantSelectedName"></span>
+                        </div>
+
+                        <div>
+                            <strong>Department:</strong>
+                            <span id="participantSelectedDepartment"></span>
+                        </div>
+
+                    </div>
 
                 </div>
 
             </div>
+
 
             <div class="modal-footer">
 
@@ -451,11 +729,14 @@
 
                 </button>
 
+
                 <button type="button"
                         id="btnConfirmParticipant"
-                        class="btn btn-sm btn-primary">
+                        class="btn btn-sm btn-primary"
+                        disabled>
 
                     <i class="bi bi-plus-lg me-1"></i>
+
                     Add
 
                 </button>
@@ -472,26 +753,34 @@
 @section Scripts {
 
     <script>
+
         window.trainingEventCreateUrls = {
-            getCourses: '@Url.Action("GetCourses", "TrainingEvent")',
 
-            getCompanies: '@Url.Action("GetCompanies", "Home", new { type = "EVENT" })',
+            getCourses:
+                '@Url.Action("GetCourses", "TrainingEvent")',
 
-            getDepartments: '@Url.Action("GetDepartments", "Home", new { type = "EVENT" })',
+            getCompanies:
+                '@Url.Action("GetCompanies", "Home", new { type = "EVENT" })',
 
-            searchEmployees: '@Url.Action("SearchEmployees", "Home")',
+            getDepartments:
+                '@Url.Action("GetDepartments", "Home", new { type = "EVENT" })',
 
-            save: '@Url.Action("Create", "TrainingEvent")',
+            searchEmployees:
+                '@Url.Action("SearchEmployees", "Home")',
 
-            index: '@Url.Action("Index", "TrainingEvent")'
+            save:
+                '@Url.Action("Create", "TrainingEvent")',
+
+            index:
+                '@Url.Action("Index", "TrainingEvent")'
+
         };
 
-        console.log(
-            'Training Event Create URLs:',
-            window.trainingEventCreateUrls
-        );
     </script>
+
     <script src="~/lib/bootstrap3-typeahead/bootstrap3-typeahead.min.js"></script>
-        <script src="~/js/training-event-create.js" asp-append-version="true"></script>
-   
+
+    <script src="~/js/training-event-create.js"
+            asp-append-version="true"></script>
+
 }

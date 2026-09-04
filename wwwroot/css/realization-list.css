@@ -1,0 +1,12 @@
+﻿.realization-card:last-child {
+    border-bottom: none !important;
+}
+
+.realization-card:active {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+#realizationTable td,
+#realizationCards .realization-card {
+    font-size: 13px;
+}

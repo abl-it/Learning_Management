@@ -1,9 +1,18 @@
+using QuestPDF.Infrastructure;
 using Serilog;
 using Training.Data;
 using Training.Filters;
 using Training.Middleware;
 using Training.Services;
 using Training.Services.IServices;
+
+/*
+ * QuestPDF requires its license type to be declared once at application
+ * startup. Community is free for organizations with less than
+ * USD 1M annual gross revenue - see https://www.questpdf.com/license/.
+ * Change this if your organization requires a commercial license.
+ */
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +63,9 @@ builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IInitialService, InitialService>();
 builder.Services.AddScoped<IActionService, ActionService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IAttendanceFormService, AttendanceFormService>();
+builder.Services.AddScoped<IRealizationService, RealizationService>();
+
 
 // Configure anti-forgery
 builder.Services.AddAntiforgery(options =>
@@ -66,7 +78,7 @@ builder.Services.AddAntiforgery(options =>
 var app = builder.Build();
 
 Log.Information("======================================");
-Log.Information("ESS Application Started");
+Log.Information("Training Application Started");
 Log.Information("======================================");
 
 

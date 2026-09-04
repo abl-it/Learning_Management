@@ -1,0 +1,24 @@
+﻿.training-event-detail-container .form-label {
+    margin-bottom: 3px;
+    font-size: 13px;
+}
+
+.training-event-detail-container .form-control,
+.training-event-detail-container .form-select {
+    font-size: 13px;
+}
+
+#participantsTable td,
+#attachmentsTable td {
+    font-size: 13px;
+}
+
+#participantsTable .form-check-input {
+    width: 1.1em;
+    height: 1.1em;
+}
+
+.realization-walkin-badge {
+    font-size: 10px;
+    vertical-align: middle;
+}

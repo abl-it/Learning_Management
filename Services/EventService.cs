@@ -306,6 +306,11 @@ namespace Training.Services
                 DbType.String);
 
             parameters.Add(
+                "@ParticipantQuota",
+                request.Quota,
+                DbType.Int32);
+
+            parameters.Add(
                 "@Budget",
                 request.Budget,
                 DbType.Decimal);

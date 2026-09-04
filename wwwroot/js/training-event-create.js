@@ -824,6 +824,17 @@
         });
     }
 
+    function showWarning(message, title = 'Validation') {
+
+        Swal.fire({
+            icon: 'warning',
+            title: title,
+            text: message,
+            confirmButtonText: 'OK'
+        });
+
+    }
+
     function initParticipant() {
 
         console.log('[CREATE] Initializing participants.');
@@ -833,6 +844,32 @@
         $('#btnAddParticipant')
             .off('click.trainingParticipant')
             .on('click.trainingParticipant', function () {
+
+                const quota =
+                    Number($('#Quota').val()) || 0;
+
+                const participantCount =
+                    TrainingEventCreate.state.participants.length;
+
+                if (quota <= 0) {
+
+                    showWarning(
+                        'Please enter participant quota first.',
+                        'Participant Quota'
+                    );
+                    return;
+                }
+
+                if (participantCount >= quota) {
+
+                    showWarning(
+                        'Participant quota has been reached. ' +
+                        'Please increase the quota before adding another participant.',
+                        'Participant Quota'
+                    );
+
+                    return;
+                }
 
                 openParticipantModal();
 
@@ -845,6 +882,18 @@
                 addParticipant();
 
             });
+
+        /*
+         * Monitor perubahan quota.
+         */
+        $('#Quota')
+            .off('change.trainingQuota')
+            .on('change.trainingQuota', function () {
+
+                validateQuotaChange();
+
+            });     
+
     }
 
     function initParticipantTypeahead() {
@@ -976,7 +1025,89 @@
         });
     }
 
-    
+    function validateQuotaChange() {
+
+        const $quota =
+            $('#Quota');
+
+        const quota =
+            Number($quota.val()) || 0;
+
+        const participantCount =
+            TrainingEventCreate.state.participants.length;
+
+        if (quota <= 0) {
+
+            return;
+        }
+
+        if (quota < participantCount) {
+
+            showWarning(
+                'Participant quota cannot be less than ' +
+                'the number of participants already added.',
+                'Participant Quota'
+            );
+
+            /*
+             * Kembalikan ke quota minimum
+             * yang masih memenuhi participant existing.
+             */
+            $quota.val(participantCount);
+
+            return;
+        }
+
+        updateAddParticipantButton();
+    }
+
+    function updateAddParticipantButton() {
+
+        const $button =
+            $('#btnAddParticipant');
+
+        if (!$button.length) {
+            return;
+        }
+
+        const quota =
+            Number($('#Quota').val()) || 0;
+
+        const participantCount =
+            TrainingEventCreate.state.participants.length;
+
+        const reached =
+            quota <= 0 ||
+            participantCount >= quota;
+
+        $button.prop(
+            'disabled',
+            reached
+        );
+
+        if (quota <= 0) {
+
+            $button.attr(
+                'title',
+                'Please enter participant quota first.'
+            );
+
+        } else if (participantCount >= quota) {
+
+            $button.attr(
+                'title',
+                'Participant quota has been reached.'
+            );
+
+        } else {
+
+            $button.attr(
+                'title',
+                'Add participant'
+            );
+
+        }
+    }
 
     function openParticipantModal() {
 
@@ -1030,38 +1161,108 @@
 
     function addParticipant() {
 
-        const employeeCode =
-            $('#ParticipantEmployeeCode').val();
+        const participants =
+            TrainingEventCreate.state.participants;
 
-        const fullName =
-            $('#ParticipantName').val();
+        const quota =
+            Number($('#Quota').val()) || 0;
 
-        const departmentCode =
-            $('#ParticipantDepartment').val();
+        /*
+         * =====================================================
+         * VALIDATE QUOTA
+         * =====================================================
+         */
 
-        const departmentName =
-            $('#ParticipantDepartmentName').val();
+        if (quota <= 0) {
 
-        if (!employeeCode) {
+            showWarning(
+                'Please enter participant quota first.',
+                'Participant Quota'
+            );
+
             return;
         }
 
-        const participants =
-            TrainingEventCreate.state.participants;
+        if (participants.length >= quota) {
+
+            showWarning(
+                'Participant quota has been reached. ' +
+                'Please increase the quota before adding another participant.',
+                'Participant Quota'
+            );
+
+            updateAddParticipantButton();
+
+            return;
+        }
+
+        /*
+         * =====================================================
+         * GET SELECTED EMPLOYEE
+         * =====================================================
+         */
+
+        const employeeCode =
+            $('#ParticipantEmployeeCode')
+                .val()
+                ?.trim();
+
+        const fullName =
+            $('#ParticipantName')
+                .val()
+                ?.trim();
+
+        const departmentCode =
+            $('#ParticipantDepartment')
+                .val()
+                ?.trim();
+
+        const departmentName =
+            $('#ParticipantDepartmentName')
+                .val()
+                ?.trim();
+
+        if (!employeeCode) {
+
+            showWarning(
+                'Please select an employee.',
+                'Employee'
+            );
+
+            return;
+        }
+
+        /*
+         * =====================================================
+         * DUPLICATE CHECK
+         * =====================================================
+         */
 
         const exists =
             participants.some(function (item) {
 
-                return item.employeeCode === employeeCode;
+                return (
+                    item.employeeCode?.toLowerCase() ===
+                    employeeCode.toLowerCase()
+                );
 
             });
 
         if (exists) {
 
-            alert('This employee has already been added.');
+            showWarning(
+                'This employee has already been added.',
+                'Employee'
+            );
 
             return;
         }
+
+        /*
+         * =====================================================
+         * ADD PARTICIPANT
+         * =====================================================
+         */
 
         const participant = {
 
@@ -1072,6 +1273,7 @@
             departmentCode: departmentCode,
 
             departmentName: departmentName
+
         };
 
         participants.push(participant);
@@ -1088,17 +1290,32 @@
 
         renderParticipants();
 
+        /*
+         * Update Add button after participant added.
+         */
+        updateAddParticipantButton();
+
+        /*
+         * Close modal.
+         */
         const modalElement =
-            document.getElementById('participantModal');
+            document.getElementById(
+                'participantModal'
+            );
 
         const modal =
-            bootstrap.Modal.getInstance(modalElement);
+            bootstrap.Modal.getInstance(
+                modalElement
+            );
 
         if (modal) {
+
             modal.hide();
+
         }
 
         resetParticipantModal();
+
     }
 
     function renderParticipants() {
@@ -1117,16 +1334,6 @@
         const $empty =
             $('#participantEmpty');
 
-        console.log(
-            '[CREATE] participantTableBody:',
-            $tbody.length
-        );
-
-        console.log(
-            '[CREATE] participantEmpty:',
-            $empty.length
-        );
-
         if (!$tbody.length) {
 
             console.error(
@@ -1138,11 +1345,19 @@
 
         $tbody.empty();
 
+        /*
+         * =====================================================
+         * EMPTY
+         * =====================================================
+         */
+
         if (participants.length === 0) {
 
             if ($empty.length) {
                 $empty.removeClass('d-none');
             }
+
+            updateAddParticipantButton();
 
             return;
         }
@@ -1151,53 +1366,123 @@
             $empty.addClass('d-none');
         }
 
+
+        /*
+         * =====================================================
+         * RENDER PARTICIPANTS
+         * =====================================================
+         */
+
         $.each(
             participants,
             function (index, participant) {
 
                 const $row = $('<tr>');
 
+
+                /*
+                 * #
+                 */
                 $('<td>')
+                    .addClass('text-center')
                     .text(index + 1)
                     .appendTo($row);
 
+
+                /*
+                 * Employee Code
+                 */
                 $('<td>')
-                    .text(participant.employeeCode)
+                    .text(
+                        participant.employeeCode || '-'
+                    )
                     .appendTo($row);
 
+
+                /*
+                 * Name
+                 */
                 $('<td>')
-                    .text(participant.fullName)
+                    .text(
+                        participant.fullName ||
+                        participant.name ||
+                        '-'
+                    )
                     .appendTo($row);
 
+
+                /*
+                 * ABRV
+                 *
+                 * departmentCode = ABRV
+                 */
+                $('<td>')
+                    .text(
+                        participant.departmentCode || '-'
+                    )
+                    .appendTo($row);
+
+
+                /*
+                 * Department
+                 *
+                 * departmentName = Department Name
+                 */
                 $('<td>')
                     .text(
                         participant.departmentName || '-'
                     )
                     .appendTo($row);
 
+
+                /*
+                 * Remove
+                 */
                 const $remove =
                     $('<button>', {
+
                         type: 'button',
-                        class: 'btn btn-outline-danger btn-sm',
-                        title: 'Remove participant'
+
+                        class:
+                            'btn btn-outline-danger btn-sm',
+
+                        title:
+                            'Remove participant'
+
                     })
                         .html(
                             '<i class="bi bi-trash"></i>'
                         )
-                        .on('click', function () {
+                        .on(
+                            'click',
+                            function () {
 
-                            removeParticipant(index);
+                                removeParticipant(index);
 
-                        });
+                            }
+                        );
+
 
                 $('<td>')
                     .addClass('text-center')
                     .append($remove)
                     .appendTo($row);
 
+
                 $tbody.append($row);
+
             }
         );
+
+
+        /*
+         * =====================================================
+         * UPDATE ADD BUTTON
+         * =====================================================
+         */
+
+        updateAddParticipantButton();
+
 
         console.log(
             '[CREATE] Participant table rendered:',
@@ -1224,6 +1509,9 @@
         );
 
         renderParticipants();
+
+        //updateAddParticipantButton();
+
     }
 
     function buildCreateRequest() {
@@ -1293,7 +1581,12 @@
             budget:
                 $('#Budget').val()
                     ? Number($('#Budget').val())
-                    : null,
+                    : 0,
+
+            quota:
+                $('#Quota').val()
+                    ? Number($('#Quota').val())
+                    : 1,
 
             venue:
                 $('#Venue').val()?.trim() || null,
@@ -1341,43 +1634,91 @@
     function validateCreateForm() {
 
         if (!$('#CourseId').val()) {
-            alert('Please select a course.');
+            showWarning('Please select a course.', 'Course');
             return false;
         }
 
        
         if (!$('#CoCode').val()) {
-            alert('Please select a company.');
+            showWarning('Please select a company.','Company');
             return false;
         }
 
         if (!$('#ABRV').val()) {
-            alert('Please select a department.');
+            showWarning('Please select a department.','Department Code');
             return false;
         }
 
         if (!$('#TrainingTitle').val()?.trim()) {
-            alert('Training title is required.');
+            showWarning('Training title is required.','Training Title');
             return false;
         }
 
         if (!$('#SessionNo').val()) {
-            alert('Session count is required.');
+            showWarning('Session count is required.','Session Number');
             return false;
         }
 
+        if (!$('#Quota').val()) {
+            showWarning('Participant quota is required.','Participant Quota');
+            return false;
+        }   
+
         if (!$('#StartDate').val()) {
-            alert('Start date is required.');
+            showWarning('Start date is required.','Start Date');
             return false;
         }
 
         if (!$('#EndDate').val()) {
-            alert('End date is required.');
+            showWarning('End date is required.','End Date');
             return false;
         }
 
+        const startDate = $('#StartDate').val();
+        const endDate = $('#EndDate').val();
+
+        if (startDate && endDate) {
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (end < start) {
+
+                showWarning(
+                    'End date must be greater than or equal to start date.',
+                    'Invalid Date'
+                );
+
+                return false;
+            }
+        }
+
         if (TrainingEventCreate.state.participants.length === 0) {
-            alert('Please add at least one participant.');
+            showWarning('Please add at least one participant.','Participant');
+            return false;
+        }
+
+        const quota =
+            Number($('#Quota').val()) || 0;
+
+        const participantCount =
+            TrainingEventCreate.state.participants.length;
+
+        if (quota <= 0) {
+
+            showWarning(
+                'Participant quota must be greater than zero.','Participant Quota'
+            );
+
+            return false;
+        }
+
+        if (participantCount > quota) {
+
+            showWarning(
+                'Number of participants cannot exceed the participant quota.','Participant Quota'
+            );
+
             return false;
         }
 
@@ -1387,14 +1728,14 @@
         if (trainerType === 'Internal') {
 
             if (!$('#TrainerEmployeeCode').val()) {
-                alert('Please select an internal trainer.');
+                showWarning('Please select an internal trainer.','Internal Trainer');
                 return false;
             }
 
         } else {
 
             if (!$('#TrainerSearch').val()?.trim()) {
-                alert('External trainer name is required.');
+                showWarning('External trainer name is required.','External Trainer');
                 return false;
             }
         }
@@ -1417,6 +1758,11 @@
 
         const request = buildCreateRequest();
 
+        console.log('========== CREATE DEBUG ==========');
+        console.log('request =', request);
+        console.log('json =', JSON.stringify(request));
+        console.log('==================================');
+
         console.log('[TrainingEvent] Create request:', request);
 
         const token =
@@ -1424,7 +1770,7 @@
                 .val();
 
         if (!token) {
-            alert('Anti-forgery token was not found.');
+            showWarning('Anti-forgery token was not found.','Error');
             return;
         }
 
@@ -1468,16 +1814,7 @@
 
             const event = response.data;
 
-            //alert(
-            //    `Training event ${event.eventCode} ` +
-            //    `created successfully.`
-            //);
-            //Swal.fire({
-            //    title: 'Create Training Event',
-            //    text: `Training event ${event.eventCode} created successfully.`,
-            //    icon: 'success',
-            //    confirmButtonText: 'OK'
-            //});
+            
             Swal.fire({
                 title: "Create Training Event",
                 text: `Training event ${event.eventCode} created successfully.`,

@@ -673,7 +673,7 @@ $(document).ready(function () {
 
                 className: "action-column text-center",
 
-                width: "55px",
+                width: "90px",
 
                 render: function (data, type, row) {
 
@@ -681,16 +681,48 @@ $(document).ready(function () {
                         return '';
                     }
 
-                    const url =
+                    const detailUrl =
                         `${urls.detail}?id=${row.trainingEventId}`;
 
-                    return `
-                                <a href="${url}"
+                    let buttons = `
+                                <a href="${detailUrl}"
                                    class="btn btn-sm btn-primary"
                                    title="Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             `;
+
+                    const realizationStatuses = [
+                        "Approved",
+                        "Realization Submitted",
+                        "Realization Rejected",
+                        "Complete"
+                    ];
+
+                    if (realizationStatuses.indexOf(row.status) !== -1) {
+
+                        const realizationUrl =
+                            `${urls.realization}?id=${row.trainingEventId}`;
+
+                        const realizationTitle =
+                            row.status === "Realization Submitted"
+                                ? "View Realization"
+                                : row.status === "Realization Rejected"
+                                    ? "Revise Realization"
+                                    : row.status === "Complete"
+                                        ? "View Realization (Complete)"
+                                        : "Entry Realization";
+
+                        buttons += `
+                                <a href="${realizationUrl}"
+                                   class="btn btn-sm btn-outline-primary ms-1"
+                                   title="${realizationTitle}">
+                                    <i class="bi bi-clipboard-check"></i>
+                                </a>
+                            `;
+                    }
+
+                    return buttons;
                 }
             }
         ]
