@@ -4,6 +4,8 @@ using Training.Data;
 using Training.Filters;
 using Training.Middleware;
 using Training.Services;
+using Training.Services.Implementations;
+using Training.Services.Interfaces;
 using Training.Services.IServices;
 
 /*
@@ -59,13 +61,16 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ITrainingService, TrainingService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+
 builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IInitialService, InitialService>();
 builder.Services.AddScoped<IActionService, ActionService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAttendanceFormService, AttendanceFormService>();
 builder.Services.AddScoped<IRealizationService, RealizationService>();
-
+builder.Services.AddScoped<ITrainingInquiryService, TrainingInquiryService>();
+builder.Services.AddScoped<ITrainingCourseService, TrainingCourseService>();
 
 // Configure anti-forgery
 builder.Services.AddAntiforgery(options =>
@@ -103,6 +108,13 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "training",
+    pattern: "training/{action}/{id?}",
+    defaults: new { controller = "TrainingCourse" }
+);
+
 
 try
 {

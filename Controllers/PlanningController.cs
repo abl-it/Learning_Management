@@ -45,6 +45,7 @@ namespace Training.Controllers
         }
 
         #region Needs
+        [RoleAuthorize("tc", "gm", "director")]
         public async Task<IActionResult> Needs()
         {
             var _co = _emp.CurrentEmployee.CoCode;
@@ -78,6 +79,7 @@ namespace Training.Controllers
             return View(viewModel);
         }
         [HttpPost]
+        [RoleAuthorize("tc", "gm", "director")]
         public async Task<IActionResult> GetNeeds()
         {
 
@@ -148,6 +150,7 @@ namespace Training.Controllers
         }
 
         [HttpPost]
+        [RoleAuthorize("tc", "gm", "director")]
         public async Task<IActionResult> SaveTrainingNeeds([FromBody] SaveTrainingNeedsRequest request)
         {
             try

@@ -437,7 +437,7 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="trainingDropdown" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-building-columns me-1"></i>Training
+                            <i class="fa-solid fa-building-columns me-1"></i>Training Planning
                         </a>
                         <ul class="dropdown-menu text-sm" aria-labelledby="trainingDropdown">
                             <li>
@@ -474,17 +474,27 @@
                     </li>
 
                     <!---->
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Privacy" id="privacyLink">
-                            <i class="fas fa-shield-alt me-1"></i>Privacy
-                        </a>
-                    </li>
-
+                   
                     <!-- Reports -->
                     <li class="nav-item">
                         <a class="nav-link" asp-controller="Reports" asp-action="Index" id="reportsLink">
                             <i class="fas fa-chart-bar me-1"></i>Reports
                         </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="importDropdown"
+                           role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-cloud-upload"></i> Upload Data
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="importDropdown">
+                            
+                            <li><a class="dropdown-item" href="@Url.Action("ImportCourse", "Import")">Master Course</a></li>
+                            <li><a class="dropdown-item" href="/training/import-category">Master Category</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/training/import-event">Training Event</a></li>
+                            <li><a class="dropdown-item" href="/training/import-participant">Participant</a></li>
+                        </ul>
                     </li>
 
                     
@@ -561,9 +571,9 @@
                 else if (currentController === 'TrainingEvent') {
                     $('#transactionDropdown').addClass('active');
 
-                    if (currentAction === 'Event') {
+                    if (currentAction === 'Index') {
                         $('#eventLink').addClass('active');
-                    } else if (currentAction === 'Actual') {
+                    } else if (currentAction === 'Realization') {
                         $('#realizationLink').addClass('active');
                     }
                 }

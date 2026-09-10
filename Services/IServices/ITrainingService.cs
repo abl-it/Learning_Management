@@ -35,7 +35,7 @@ namespace Training.Services.IServices
 
         //Access
         Task<List<Actions>> GetActionsAsync(string workflow, string strategy, int id);
-        Task<List<Department>> GetDepartmentsByAccessAsync(string workflow, string employeeCode);
+        Task<List<Department>> GetDepartmentsByAccessAsync(string workflow, string employeeCode, string? coCode = null);
         Task<List<Company>> GetCompaniesByAccessAsync(string workflow, string employeeCode);
 
         Task<string> GetRoleAsync(string username);

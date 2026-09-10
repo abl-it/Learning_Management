@@ -3,6 +3,8 @@ using System.Diagnostics;
 using Training.Filters;
 using Training.Models;
 using Training.Models.DTO;
+using Training.Models.ViewModels;
+using Training.Services.Interfaces;
 using Training.Services.IServices;
 
 namespace Training.Controllers
@@ -13,20 +15,62 @@ namespace Training.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly ITrainingService _trainingService;
         private readonly ICurrentUserService _emp;
+        private readonly IDashboardService _dashboardService;
 
-        public HomeController(ILogger<HomeController> logger, ITrainingService trainingService, ICurrentUserService emp)
+        public HomeController(ILogger<HomeController> logger,
+            ITrainingService trainingService,
+            ICurrentUserService emp,
+            IDashboardService dashboardService)
         {
             _logger = logger;
             _trainingService = trainingService;
             _emp = emp;
+            _dashboardService = dashboardService;
         }
 
-        public IActionResult Index()
+        /// <summary>
+        /// Dashboard home page dengan analytics
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Index(
+            string dateRange = "ThisMonth",
+            string companies = "",
+            string depts = "",
+            string categories = "")
         {
-            return View();
+            try
+            {
+                // Get current username from session
+                var username = HttpContext.Session.GetString("Username");
+                if (string.IsNullOrEmpty(username))
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                // Get dashboard metrics from service
+                var dashboardViewModel = await _dashboardService.GetDashboardMetricsAsync(
+                    username,
+                    dateRange,
+                    companies,
+                    depts,
+                    categories);
+
+                return View(dashboardViewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading dashboard for {Username}", HttpContext.Session.GetString("Username"));
+
+                // Return empty dashboard on error
+                return View(new DashboardViewModel
+                {
+                    CurrentUsername = HttpContext.Session.GetString("Username") ?? "",
+                    PeriodDisplay = "Unable to load"
+                });
+            }
         }
 
-        public IActionResult Privacy()
+        public IActionResult NotAuthorized()
         {
             return View();
         }
@@ -98,8 +142,9 @@ namespace Training.Controllers
                     });
             }
         }
+
         [HttpGet]
-        public async Task<IActionResult> GetDepartments(string type)
+        public async Task<IActionResult> GetDepartments(string type, string? coCode = null)
         {
             try
             {
@@ -130,7 +175,8 @@ namespace Training.Controllers
                     await _trainingService
                         .GetDepartmentsByAccessAsync(
                             type,
-                            employeeCode);
+                            employeeCode,
+                            coCode);
 
                 var result = departments
                     .Select(x => new SelectOptionDto
@@ -158,33 +204,6 @@ namespace Training.Controllers
                     });
             }
         }
-        //[HttpGet]
-        //public async Task<IActionResult> GetDepartments(string type )
-        //{
-        //    var _departments = await _trainingService.GetDepartmentsByAccessAsync(type, _emp.CurrentEmployee.EmployeeCode);
-        //    var result = _departments
-        //        .Select(x => new SelectOptionDto
-        //        {
-        //            Value = x.ABRV,
-        //            Text = x.DeptName
-        //        })
-        //        .ToList();
-        //    return Json(result);
-        //}
-
-        //[HttpGet]
-        //public async Task<IActionResult> GetCompanies(string type)
-        //{
-        //    var _companies = await _trainingService.GetCompaniesByAccessAsync(type, _emp.CurrentEmployee.EmployeeCode);
-        //    var result = _companies
-        //        .Select(x => new SelectOptionDto
-        //        {
-        //            Value = x.CoCode,
-        //            Text = x.CompanyName
-        //        })
-        //        .ToList();
-        //    return Json(result);
-        //}
 
         [HttpGet]
         public async Task<IActionResult> SearchEmployees(

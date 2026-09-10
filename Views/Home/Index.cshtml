@@ -1,8 +1,589 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "Training Analytics Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Dashboard Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>
+        <i class="bi bi-graph-up"></i>
+        Training Analytics Dashboard
+    </h1>
 </div>
+
+<!-- User & Period Info -->
+<div class="text-muted small mb-3">
+    <span>Period: <strong>@Model.PeriodDisplay</strong></span>
+    <span class="ms-3">| User: <strong>@Model.CurrentUsername</strong></span>
+    <span class="ms-3">| Last Updated: <strong>@DateTime.Now.ToString("dd MMM yyyy HH:mm:ss")</strong></span>
+</div>
+
+<!-- Filter Section -->
+<form method="get" action="/Home/Index" class="row g-2 mb-3 align-items-end">
+    <!-- Time Period Filter -->
+    <div class="col-md-2">
+        <label for="dateRange" class="form-label">📈 Time Period</label>
+        <select class="form-select form-select-sm" id="dateRange" name="dateRange">
+            @foreach (var option in Model.DateRangeOptions ?? new List<Training.Models.Dtos.FilterOptionDto>())
+            {
+                if (option.Selected)
+                {
+                    <option value="@option.Value" selected="selected">@option.Text</option>
+                }
+                else
+                {
+                    <option value="@option.Value">@option.Text</option>
+                }
+            }
+        </select>
+    </div>
+
+    <!-- Company Filter (default: ABL, no "All Companies" option) -->
+    <div class="col-md-2">
+        <label for="companies" class="form-label">🏢 Company</label>
+        <select class="form-select form-select-sm" id="companies" name="companies">
+            @{
+                var companyList = Model.CompanyOptions ?? new List<Training.Models.Dtos.FilterOptionDto>();
+                var hasSelectedCompany = !string.IsNullOrEmpty(Model.SelectedCompanies);
+            }
+            @foreach (var company in companyList)
+            {
+                var isSelected = hasSelectedCompany
+                    ? Model.SelectedCompanies.Contains(company.Value)
+                    : company.Value == "ABL";
+
+                if (isSelected)
+                {
+                    <option value="@company.Value" selected="selected">@company.Text</option>
+                }
+                else
+                {
+                    <option value="@company.Value">@company.Text</option>
+                }
+            }
+        </select>
+    </div>
+
+    <!-- Department Filter -->
+    <div class="col-md-2">
+        <label for="depts" class="form-label">📋 Department</label>
+        @{
+            var fullAccessRoles = new[] { "tc", "gm", "director" };
+            var hasFullDeptAccess = !string.IsNullOrEmpty(Model.CurrentUserRole)
+                && fullAccessRoles.Contains(Model.CurrentUserRole.ToLower());
+        }
+        <select class="form-select form-select-sm" id="depts" name="depts" data-full-access="@(hasFullDeptAccess.ToString().ToLower())">
+            @if (hasFullDeptAccess)
+            {
+                <option value="">-- All Departments --</option>
+            }
+            @foreach (var dept in Model.DepartmentOptions ?? new List<Training.Models.Dtos.FilterOptionDto>())
+            {
+                if (Model.SelectedDepartments != null && Model.SelectedDepartments.Contains(dept.Value))
+                {
+                    <option value="@dept.Value" selected="selected">@dept.Text</option>
+                }
+                else
+                {
+                    <option value="@dept.Value">@dept.Text</option>
+                }
+            }
+        </select>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="col-md-2">
+        <label for="categories" class="form-label">🏷️ Category</label>
+        <select class="form-select form-select-sm" id="categories" name="categories">
+            <option value="">-- All Categories --</option>
+            @foreach (var category in Model.CategoryOptions ?? new List<Training.Models.Dtos.FilterOptionDto>())
+            {
+                if (Model.SelectedCategories != null && Model.SelectedCategories.Contains(category.Value))
+                {
+                    <option value="@category.Value" selected="selected">@category.Text</option>
+                }
+                else
+                {
+                    <option value="@category.Value">@category.Text</option>
+                }
+            }
+        </select>
+    </div>
+
+    <!-- Apply & Reset Buttons (same row) -->
+    <div class="col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-funnel"></i> Apply Filters
+        </button>
+        <a href="/Home/Index" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-clockwise"></i> Reset
+        </a>
+    </div>
+</form>
+
+<script>
+    // Cascading: when Company changes, reload Department options for that company
+    // using the existing /Home/GetDepartments endpoint (already used elsewhere in the app).
+    (function() {
+        var companySelect = document.getElementById('companies');
+        var deptSelect = document.getElementById('depts');
+        if (!companySelect || !deptSelect) return;
+
+        var hasFullAccess = deptSelect.getAttribute('data-full-access') === 'true';
+
+        companySelect.addEventListener('change', function() {
+            var coCode = this.value;
+
+            deptSelect.innerHTML = '<option value="">Loading...</option>';
+            deptSelect.disabled = true;
+
+            fetch('/Home/GetDepartments?type=EVENT&coCode=' + encodeURIComponent(coCode))
+                .then(function(res) {
+                    if (!res.ok) throw new Error('Request failed');
+                    return res.json();
+                })
+                .then(function(data) {
+                    deptSelect.innerHTML = '';
+
+                    if (hasFullAccess) {
+                        var allOpt = document.createElement('option');
+                        allOpt.value = '';
+                        allOpt.textContent = '-- All Departments --';
+                        deptSelect.appendChild(allOpt);
+                    }
+
+                    (data || []).forEach(function(item) {
+                        var value = item.value !== undefined ? item.value : item.Value;
+                        var text = item.text !== undefined ? item.text : item.Text;
+                        var opt = document.createElement('option');
+                        opt.value = value;
+                        opt.textContent = text;
+                        deptSelect.appendChild(opt);
+                    });
+
+                    deptSelect.disabled = false;
+                })
+                .catch(function() {
+                    deptSelect.innerHTML = '<option value="">-- Failed to load departments --</option>';
+                    deptSelect.disabled = false;
+                });
+        });
+    })();
+</script>
+
+<hr class="mb-3" />
+
+<!-- KPI Cards Section -->
+<div class="row mb-4">
+    <!-- Attendance Rate -->
+    <div class="col-md-4 col-lg-2-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-2 small">Attendance Rate</p>
+                        <h3 class="mb-1">@Model.AttendanceMetrics.AttendanceRate.ToString("F1")%</h3>
+                        <p class="text-muted small">@Model.AttendanceMetrics.AttendeeCount / @Model.AttendanceMetrics.TotalParticipants attended</p>
+                    </div>
+                    <i class="bi bi-person-check text-success" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Rate -->
+    <div class="col-md-4 col-lg-2-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-2 small">Completion Rate</p>
+                        <h3 class="mb-1">@Model.CompletionMetrics.CompletionRate.ToString("F1")%</h3>
+                        <p class="text-muted small">@Model.CompletionMetrics.CompletedCount / @Model.CompletionMetrics.PlannedCount completed</p>
+                    </div>
+                    <i class="bi bi-check-circle text-info" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Training Hours -->
+    <div class="col-md-4 col-lg-2-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-2 small">Total Training Hours</p>
+                        <h3 class="mb-1">@Model.TrainingHoursByDepartment.Sum(x => x.TotalHours).ToString("F1")</h3>
+                        <p class="text-muted small">@Model.TrainingHoursByDepartment.Count departments</p>
+                    </div>
+                    <i class="bi bi-clock-history text-warning" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals -->
+    <div class="col-md-4 col-lg-2-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-2 small">Pending Approvals</p>
+                        <h3 class="mb-1">@Model.PendingDocuments.Count</h3>
+                        <p class="text-muted small">Awaiting action</p>
+                    </div>
+                    <i class="bi bi-hourglass-split text-danger" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avg Department Performance -->
+    <div class="col-md-4 col-lg-2-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted mb-2 small">Avg Department Performance</p>
+                        <h3 class="mb-1">@(Model.TrainingHoursByDepartment.Count > 0 ? Model.TrainingHoursByDepartment.Count : 0).0</h3>
+                        <p class="text-muted small">Tracked this period</p>
+                    </div>
+                    <i class="bi bi-building text-primary" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="mb-3" />
+
+<!-- Charts & Tables Section -->
+<div class="row">
+    <!-- Attendance Trend Chart -->
+    <div class="col-lg-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up"></i>
+                    Attendance Trend
+                </h6>
+            </div>
+            <div class="card-body" style="min-height: 300px;">
+                @if (Model.AttendanceTrendChart?.Labels?.Count > 0)
+                {
+                    <canvas id="attendanceTrendChart"></canvas>
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No data available</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Training Hours by Department Chart -->
+    <div class="col-lg-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-bar-chart"></i>
+                    Training Hours by Department
+                </h6>
+            </div>
+            <div class="card-body" style="min-height: 300px;">
+                @if (Model.TrainingHoursByDeptChart?.Labels?.Count > 0)
+                {
+                    <canvas id="trainingHoursChart"></canvas>
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No data available</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Events by Category Chart -->
+    <div class="col-lg-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-tag"></i>
+                    Training Events by Category
+                </h6>
+            </div>
+            <div class="card-body" style="min-height: 300px;">
+                @if (Model.EventsByCategoryChart?.Labels?.Count > 0)
+                {
+                    <canvas id="eventsByCategoryChart"></canvas>
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No data available</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Performance Chart -->
+    <div class="col-lg-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-building"></i>
+                    Department Performance
+                </h6>
+            </div>
+            <div class="card-body" style="min-height: 300px;">
+                @if (Model.DepartmentPerformanceChart?.Labels?.Count > 0)
+                {
+                    <canvas id="departmentPerformanceChart"></canvas>
+                }
+                else
+                {
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No data available</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Training Hours by Department Table -->
+    <div class="col-lg-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-table"></i>
+                    Training Hours by Department
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (Model.TrainingHoursByDepartment?.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Department</th>
+                                    <th class="text-end">Hours</th>
+                                    <th class="text-end">Events</th>
+                                    <th class="text-end">Participants</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var dept in Model.TrainingHoursByDepartment)
+                                {
+                                    <tr>
+                                        <td>@dept.DepartmentCode - @dept.DepartmentName</td>
+                                        <td class="text-end">@dept.TotalHours.ToString("F1")</td>
+                                        <td class="text-end">@dept.EventCount</td>
+                                        <td class="text-end">@dept.ParticipantCount</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center">No data available</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Documents -->
+    <div class="col-lg-6 mb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history"></i>
+                    Pending Documents (Awaiting Action)
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (Model.PendingDocuments?.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Document Type</th>
+                                    <th>Number</th>
+                                    <th>Department</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in Model.PendingDocuments.Take(10))
+                                {
+                                    <tr>
+                                        <td>@doc.DocumentType</td>
+                                        <td>@doc.DocumentNumber</td>
+                                        <td>@doc.DepartmentCode</td>
+                                        <td><span class="badge bg-warning text-dark">@doc.Status</span></td>
+                                        <td>@doc.CreatedDate.ToString("dd MMM yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center">No pending documents</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+@{
+    string Json(object? o) => System.Text.Json.JsonSerializer.Serialize(o);
+}
+
+<!-- Chart Data (Razor serialized to JSON) -->
+<script id="chartData" type="application/json">
+    {
+        "attendanceTrend": {
+            "hasData": @((Model.AttendanceTrendChart?.Labels?.Count > 0).ToString().ToLower()),
+            "labels": @Html.Raw(Json(Model.AttendanceTrendChart?.Labels ?? new List<string>())),
+            "label": "@(Model.AttendanceTrendChart?.Datasets?.FirstOrDefault()?.Label ?? "")",
+            "data": @Html.Raw(Json(Model.AttendanceTrendChart?.Datasets?.FirstOrDefault()?.Data ?? new List<decimal>())),
+            "borderColor": "@(Model.AttendanceTrendChart?.Datasets?.FirstOrDefault()?.BorderColor ?? "#0d6efd")",
+            "backgroundColor": "@(Model.AttendanceTrendChart?.Datasets?.FirstOrDefault()?.BackgroundColor ?? "rgba(13,110,253,0.1)")"
+        },
+        "trainingHours": {
+            "hasData": @((Model.TrainingHoursByDeptChart?.Labels?.Count > 0).ToString().ToLower()),
+            "labels": @Html.Raw(Json(Model.TrainingHoursByDeptChart?.Labels ?? new List<string>())),
+            "label": "@(Model.TrainingHoursByDeptChart?.Datasets?.FirstOrDefault()?.Label ?? "")",
+            "data": @Html.Raw(Json(Model.TrainingHoursByDeptChart?.Datasets?.FirstOrDefault()?.Data ?? new List<decimal>())),
+            "backgroundColor": "@(Model.TrainingHoursByDeptChart?.Datasets?.FirstOrDefault()?.BackgroundColor ?? "rgba(75,192,192,0.6)")",
+            "borderColor": "@(Model.TrainingHoursByDeptChart?.Datasets?.FirstOrDefault()?.BorderColor ?? "#20c997")"
+        },
+        "eventsByCategory": {
+            "hasData": @((Model.EventsByCategoryChart?.Labels?.Count > 0).ToString().ToLower()),
+            "labels": @Html.Raw(Json(Model.EventsByCategoryChart?.Labels ?? new List<string>())),
+            "label": "@(Model.EventsByCategoryChart?.Datasets?.FirstOrDefault()?.Label ?? "")",
+            "data": @Html.Raw(Json(Model.EventsByCategoryChart?.Datasets?.FirstOrDefault()?.Data ?? new List<decimal>())),
+            "backgroundColor": "@(Model.EventsByCategoryChart?.Datasets?.FirstOrDefault()?.BackgroundColor ?? "rgba(153,102,255,0.6)")",
+            "borderColor": "@(Model.EventsByCategoryChart?.Datasets?.FirstOrDefault()?.BorderColor ?? "#9966ff")"
+        },
+        "deptPerformance": {
+            "hasData": @((Model.DepartmentPerformanceChart?.Labels?.Count > 0).ToString().ToLower()),
+            "labels": @Html.Raw(Json(Model.DepartmentPerformanceChart?.Labels ?? new List<string>())),
+            "label": "@(Model.DepartmentPerformanceChart?.Datasets?.FirstOrDefault()?.Label ?? "")",
+            "data": @Html.Raw(Json(Model.DepartmentPerformanceChart?.Datasets?.FirstOrDefault()?.Data ?? new List<decimal>())),
+            "backgroundColor": "@(Model.DepartmentPerformanceChart?.Datasets?.FirstOrDefault()?.BackgroundColor ?? "rgba(255,159,64,0.6)")",
+            "borderColor": "@(Model.DepartmentPerformanceChart?.Datasets?.FirstOrDefault()?.BorderColor ?? "#ff9f40")"
+        }
+    }
+</script>
+
+@section Scripts {
+    <script>
+        (function() {
+            var raw = document.getElementById('chartData').textContent;
+            var d = JSON.parse(raw);
+
+            function noData(canvasId) {
+                var el = document.getElementById(canvasId);
+                if (!el) return;
+                var parent = el.parentElement;
+                parent.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-inbox" style="font-size:2rem"></i><p class="mt-2">No data available</p></div>';
+            }
+
+            // 1. Attendance Trend
+            if (d.attendanceTrend.hasData) {
+                new Chart(document.getElementById('attendanceTrendChart'), {
+                    type: 'line',
+                    data: {
+                        labels: d.attendanceTrend.labels,
+                        datasets: [{
+                            label: d.attendanceTrend.label,
+                            data: d.attendanceTrend.data,
+                            borderColor: d.attendanceTrend.borderColor,
+                            backgroundColor: d.attendanceTrend.backgroundColor,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                });
+            } else { noData('attendanceTrendChart'); }
+
+            // 2. Training Hours by Department
+            if (d.trainingHours.hasData) {
+                new Chart(document.getElementById('trainingHoursChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: d.trainingHours.labels,
+                        datasets: [{
+                            label: d.trainingHours.label,
+                            data: d.trainingHours.data,
+                            backgroundColor: d.trainingHours.backgroundColor,
+                            borderColor: d.trainingHours.borderColor
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                });
+            } else { noData('trainingHoursChart'); }
+
+            // 3. Events by Category
+            if (d.eventsByCategory.hasData) {
+                new Chart(document.getElementById('eventsByCategoryChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: d.eventsByCategory.labels,
+                        datasets: [{
+                            label: d.eventsByCategory.label,
+                            data: d.eventsByCategory.data,
+                            backgroundColor: d.eventsByCategory.backgroundColor,
+                            borderColor: d.eventsByCategory.borderColor
+                        }]
+                    },
+                    options: { responsive: true, indexAxis: 'y' }
+                });
+            } else { noData('eventsByCategoryChart'); }
+
+            // 4. Department Performance
+            if (d.deptPerformance.hasData) {
+                new Chart(document.getElementById('departmentPerformanceChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: d.deptPerformance.labels,
+                        datasets: [{
+                            label: d.deptPerformance.label,
+                            data: d.deptPerformance.data,
+                            backgroundColor: d.deptPerformance.backgroundColor,
+                            borderColor: d.deptPerformance.borderColor
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            } else { noData('departmentPerformanceChart'); }
+
+        })();
+    </script>
+}

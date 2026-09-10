@@ -1,0 +1,205 @@
+﻿@{
+    ViewData["Title"] = "Training Inquiry";
+}
+
+<link href="~/css/event.css" rel="stylesheet" />
+<link href="~/css/reports-index.css" rel="stylesheet" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<div class="container-fluid">
+
+    <div class="row justify-content-between align-items-center mb-3">
+        <div class="col-12 col-md-auto">
+            <h4 class="mb-0 fw-medium">
+                <i class="fa-solid fa-chart-bar me-2"></i>Training Inquiry
+            </h4>
+            <div class="text-muted small">
+                Realized training hours and attendance, by department or by person.
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         FILTERS
+         ========================================================= -->
+
+    <div class="card card-compact mb-2">
+
+        <div class="card-body py-2">
+
+            <div class="row g-2 align-items-end">
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label small mb-1">Company</label>
+                    <select id="filterCoCode" class="form-select form-select-sm">
+                        <option value="">All Companies</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <label class="form-label small mb-1">Department</label>
+                    <select id="filterABRV" class="form-select form-select-sm">
+                        <option value="">All Departments</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Start Date</label>
+                    <input type="date" id="filterStartDate" class="form-control form-control-sm">
+                </div>
+
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">End Date</label>
+                    <input type="date" id="filterEndDate" class="form-control form-control-sm">
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <button type="button" class="btn btn-sm btn-primary w-100" id="btnApplyFilter">
+                        <i class="bi bi-funnel"></i>
+                        Apply
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         SUMMARY CARDS
+         ========================================================= -->
+
+    <div class="row g-2 mb-2">
+
+        <div class="col-4">
+            <div class="card card-compact text-center py-2">
+                <div class="text-muted small" id="summaryLabel1">Departments</div>
+                <div class="fs-4 fw-semibold" id="summaryTotalEvents">-</div>
+            </div>
+        </div>
+
+        <div class="col-4">
+            <div class="card card-compact text-center py-2">
+                <div class="text-muted small" id="summaryLabel2">Total Participants</div>
+                <div class="fs-4 fw-semibold" id="summaryTotalParticipants">-</div>
+            </div>
+        </div>
+
+        <div class="col-4">
+            <div class="card card-compact text-center py-2">
+                <div class="text-muted small">Total Hours</div>
+                <div class="fs-4 fw-semibold" id="summaryTotalHours">-</div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         TABS
+         ========================================================= -->
+
+    <div class="card card-compact">
+
+        <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+            <ul class="nav nav-tabs card-header-tabs" id="inquiryTabs">
+
+                <li class="nav-item">
+                    <button class="nav-link active" id="tabByDepartment" data-tab="department">
+                        <i class="bi bi-building me-1"></i>By Department
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link" id="tabByPerson" data-tab="person">
+                        <i class="bi bi-person me-1"></i>By Person
+                    </button>
+                </li>
+
+            </ul>
+
+            <button type="button" class="btn btn-sm btn-outline-success" id="btnExportExcel">
+                <i class="bi bi-file-earmark-excel"></i>
+                Export to Excel
+            </button>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="text-center text-muted py-4 d-none" id="inquiryLoading">
+                <div class="spinner-border spinner-border-sm me-2"></div>
+                Loading...
+            </div>
+
+            <div class="text-center text-muted py-5 d-none" id="inquiryNoResults">
+                <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                No data for the selected filters.
+            </div>
+
+            <!-- BY DEPARTMENT -->
+            <div class="table-responsive" id="panelByDepartment">
+
+                <table class="table table-striped table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Company</th>
+                            <th>Department</th>
+                            <th class="text-end">Total Events</th>
+                            <th class="text-end">Total Participants</th>
+                            <th class="text-end">Total Hours</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tableByDepartmentBody"></tbody>
+
+                </table>
+
+            </div>
+
+            <!-- BY PERSON -->
+            <div class="table-responsive d-none" id="panelByPerson">
+
+                <table class="table table-striped table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Employee Code</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Role</th>
+                            <th class="text-end">Total Trainings</th>
+                            <th class="text-end">Total Hours</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="tableByPersonBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        window.reportsUrls = {
+            companies: '@Url.Action("GetInquiryCompanies", "Reports")',
+            departments: '@Url.Action("GetInquiryDepartments", "Reports")',
+            byDepartment: '@Url.Action("GetInquiryByDepartment", "Reports")',
+            byPerson: '@Url.Action("GetInquiryByPerson", "Reports")'
+        };
+    </script>
+
+    <script src="~/js/reports-index.js" asp-append-version="true"></script>
+}

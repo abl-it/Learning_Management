@@ -1,12 +1,16 @@
 ﻿using Training.Models.DataTables;
 using Training.Models.ViewModels;
 using Training.Services;
+using Training.Filters;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Training.Services.IServices;
 
 namespace Training.Controllers
 {
+    [ServiceFilter(typeof(ProfileAttribute))]
+    [RoleAuthorize("tc", "gm", "director")]
     public class EmployeeController : Controller
     {
         private readonly IEmployeeService _employeeService;

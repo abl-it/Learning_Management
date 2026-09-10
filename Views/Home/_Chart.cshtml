@@ -1,0 +1,19 @@
+@model ChartDataDto
+
+@if (Model != null && Model.Labels != null && Model.Labels.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <canvas id="chart_@Model.Title.Replace(" ", "_").Replace("(", "").Replace(")", "")" style="max-height: 300px; position: relative;"></canvas>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center text-muted py-4">
+            <i class="bi bi-graph-up fs-1 opacity-25"></i>
+            <p class="mb-0 mt-2">No data available</p>
+        </div>
+    </div>
+}

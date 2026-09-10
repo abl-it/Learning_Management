@@ -13,6 +13,7 @@ using Training.Services.IServices;
 namespace Training.Controllers
 {
     [ServiceFilter(typeof(ProfileAttribute))]
+    [RoleAuthorize("tc", "gm", "director")]
     public class MasterController : Controller
     {
         private readonly ICategoryService _categoryService;

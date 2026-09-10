@@ -1010,10 +1010,12 @@ $(document).ready(function () {
                     );
 
                     // ================================================
-                    // RESTORE SAVED COMPANY
+                    // RESTORE SAVED COMPANY (fallback to default ABL)
                     // ================================================
 
-                    restoreCompanyFilterState();
+                    if (!restoreCompanyFilterState()) {
+                        applyDefaultCompanyIfNeeded();
+                    }
 
 
                     // ================================================
@@ -1028,14 +1030,9 @@ $(document).ready(function () {
 
                 // ================================================
                 // MULTIPLE COMPANIES
+                // (no blank "All Company" option - a specific
+                // company must always be selected)
                 // ================================================
-
-                ddl.append(
-                    $("<option>", {
-                        value: "",
-                        text: "All Company"
-                    })
-                );
 
 
                 $.each(
@@ -1059,10 +1056,12 @@ $(document).ready(function () {
                 );
 
                 // ================================================
-                // RESTORE SAVED COMPANY
+                // RESTORE SAVED COMPANY (fallback to default ABL)
                 // ================================================
 
-                restoreCompanyFilterState();
+                if (!restoreCompanyFilterState()) {
+                    applyDefaultCompanyIfNeeded();
+                }
 
 
                 // ================================================
@@ -1108,8 +1107,14 @@ $(document).ready(function () {
 
         ddl.empty();
 
+        const selectedCoCode = $("#companyFilter").val() || "";
+
+        const departmentsUrl = selectedCoCode
+            ? urls.getDepartments + (urls.getDepartments.indexOf("?") === -1 ? "?" : "&") + "coCode=" + encodeURIComponent(selectedCoCode)
+            : urls.getDepartments;
+
         $.ajax({
-            url: urls.getDepartments,
+            url: departmentsUrl,
             type: "GET",
             dataType: "json",
 
@@ -1545,6 +1550,35 @@ $(document).ready(function () {
         console.log(
             "[TrainingEvent] Company restored:",
             state.company
+        );
+
+        return true;
+    }
+
+
+    // =========================================================
+    // DEFAULT COMPANY (ABL)
+    //
+    // Only applied when there is no previously saved filter to
+    // restore, and only when 'ABL' is actually among the options
+    // the current user is allowed to see.
+    // =========================================================
+
+    function applyDefaultCompanyIfNeeded() {
+
+        const $company = $("#companyFilter");
+
+        const ablExists =
+            $company.find("option[value='ABL']").length > 0;
+
+        if (!ablExists) {
+            return false;
+        }
+
+        $company.val("ABL");
+
+        console.log(
+            "[TrainingEvent] Company defaulted to ABL"
         );
 
         return true;

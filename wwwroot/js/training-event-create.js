@@ -72,7 +72,13 @@
                 return;
             }
 
-            const url = self.urls.getDepartments;
+            const selectedCoCode = $('#CoCode').val() || '';
+
+            const url = self.urls.getDepartments +
+                (selectedCoCode
+                    ? (self.urls.getDepartments.indexOf('?') === -1 ? '?' : '&') +
+                      'coCode=' + encodeURIComponent(selectedCoCode)
+                    : '');
 
             console.log(
                 'Loading departments from:',
@@ -303,14 +309,10 @@
 
                     // =====================================================
                     // LEBIH DARI 1 COMPANY
+                    // (tidak ada opsi kosong "Select Company" - harus
+                    // pilih company yang nyata; default ke ABL kalau ada)
                     // =====================================================
-                    $company
-                        .empty()
-                        .append(
-                            $('<option>')
-                                .val('')
-                                .text('Select Company')
-                        );
+                    $company.empty();
 
                     $.each(response, function (_, item) {
 
@@ -323,6 +325,24 @@
                     });
 
                     $company.prop('disabled', false);
+
+                    const hasAbl = response.some(function (item) {
+                        return item.value === 'ABL';
+                    });
+
+                    if (hasAbl) {
+
+                        $company.val('ABL');
+
+                        console.log(
+                            '[CREATE] Company defaulted to ABL'
+                        );
+                    }
+
+                    // Load department for whichever company ended up
+                    // selected (ABL default, or the browser's natural
+                    // first-option selection if ABL isn't available).
+                    self.loadDepartments();
                 },
 
                 error: function (xhr, status, error) {

@@ -516,17 +516,19 @@ namespace Training.Services
             }
         }
 
-        public async Task<List<Department>> GetDepartmentsByAccessAsync(string workflow, string employeeCode)
+        public async Task<List<Department>> GetDepartmentsByAccessAsync(string workflow, string employeeCode, string? coCode = null)
         {
             using(var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
                 var query = @"SELECT *                               
                                 FROM dbo.fc_GetDepartmentsByAccess(@employeeCode, @docType)
+                                WHERE (@coCode IS NULL OR CoCode = @coCode)
                                 Order By DeptName;";
                 var parameters = new DynamicParameters();
                 parameters.Add("@employeeCode", employeeCode);
                 parameters.Add("@docType", workflow);
+                parameters.Add("@coCode", string.IsNullOrWhiteSpace(coCode) ? null : coCode);
                 var result = await connection.QueryAsync<Department>(
                     query,
                     parameters,

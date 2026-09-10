@@ -1,0 +1,97 @@
+@model List<PendingDocumentDto>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-light border-bottom">
+        <h6 class="mb-0">
+            <i class="bi bi-inbox text-warning"></i> Pending Documents (Awaiting Action)
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="25%">Document Type</th>
+                            <th width="20%">Department</th>
+                            <th width="30%">Status</th>
+                            <th width="15%" class="text-center">Days Pending</th>
+                            <th width="10%" class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in Model.OrderByDescending(d => d.CreatedDate).Take(10))
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@doc.DocumentType</strong>
+                                    <br>
+                                    <small class="text-muted">@doc.DocumentNumber</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">@doc.DepartmentCode</span>
+                                </td>
+                                <td>
+                                    @if (doc.Status == "Draft")
+                                    {
+                                        <span class="badge bg-secondary">@doc.Status</span>
+                                    }
+                                    else if (doc.Status == "Submitted")
+                                    {
+                                        <span class="badge bg-warning text-dark">@doc.Status</span>
+                                    }
+                                    else if (doc.Status == "Pending Approval")
+                                    {
+                                        <span class="badge bg-info">@doc.Status</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">@doc.Status</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (doc.DaysPending > 7)
+                                    {
+                                        <span class="badge bg-danger">@doc.DaysPending days</span>
+                                    }
+                                    else if (doc.DaysPending > 3)
+                                    {
+                                        <span class="badge bg-warning text-dark">@doc.DaysPending days</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">@doc.DaysPending days</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Review">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-check-circle fs-1 text-success opacity-50"></i>
+                <p class="mb-0 mt-2">
+                    <strong>Great!</strong> No pending documents.
+                </p>
+            </div>
+        }
+    </div>
+    @if (Model != null && Model.Count > 10)
+    {
+        <div class="card-footer bg-light">
+            <small class="text-muted">
+                Showing 10 of @Model.Count pending documents.
+                <a href="#" class="link-primary">View all →</a>
+            </small>
+        </div>
+    }
+</div>
