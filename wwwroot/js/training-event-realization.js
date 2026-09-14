@@ -88,6 +88,7 @@
                     abrv: p.abrv,
                     deptName: p.deptName,
                     attendanceStatus: p.attendanceStatus || 'ABSENT',
+                    score: (p.score === null || p.score === undefined) ? null : p.score,
                     remarks: p.remarks || '',
                     isWalkIn: !!p.isWalkIn
                 };
@@ -131,7 +132,7 @@
 
             if (this.state.participants.length === 0) {
                 $body.append(
-                    '<tr><td colspan="' + (isPosted ? 5 : 6) +
+                    '<tr><td colspan="' + (isPosted ? 6 : 7) +
                     '" class="text-center text-muted py-3">No participants yet.</td></tr>'
                 );
 
@@ -166,6 +167,7 @@
                     '<td>' + escapeHtml(p.name) + walkInBadge + '</td>' +
                     '<td>' + escapeHtml(p.deptName || '-') + '</td>' +
                     '<td class="text-center"><input type="checkbox" class="form-check-input participant-present-checkbox" data-index="' + index + '" ' + checked + ' ' + disabledAttr + ' /></td>' +
+                    '<td><input type="number" min="0" max="100" step="1" class="form-control form-control-sm text-center participant-score-input" data-index="' + index + '" ' + disabledAttr + ' /></td>' +
                     '<td><input type="text" class="form-control form-control-sm participant-remarks-input" data-index="' + index + '" ' + disabledAttr + ' /></td>' +
                     removeCell +
                     '</tr>';
@@ -173,6 +175,9 @@
                 $body.append(rowHtml);
 
                 $body.find('tr[data-index="' + index + '"] .participant-remarks-input').val(p.remarks || '');
+                $body.find('tr[data-index="' + index + '"] .participant-score-input').val(
+                    (p.score === null || p.score === undefined) ? '' : p.score
+                );
             });
 
             $('#participantCountBadge').text(this.state.participants.length);
@@ -238,6 +243,12 @@
                 self.state.participants[index].remarks = $(this).val();
             });
 
+            $('#participantsTableBody').on('input', '.participant-score-input', function () {
+                const index = $(this).data('index');
+                const raw = $(this).val();
+                self.state.participants[index].score = raw === '' ? null : parseInt(raw, 10);
+            });
+
             $('#participantsTableBody').on('click', '.btn-remove-participant', function () {
                 const index = $(this).data('index');
                 self.state.participants.splice(index, 1);
@@ -285,6 +296,7 @@
                     abrv: $('#RealizationParticipantDepartment').val(),
                     deptName: $('#RealizationParticipantDepartmentName').val(),
                     attendanceStatus: 'PRESENT',
+                    score: null,
                     remarks: '',
                     isWalkIn: true
                 });
@@ -425,6 +437,7 @@
                         plannedParticipantId: p.plannedParticipantId,
                         employeeCode: p.employeeCode,
                         attendanceStatus: p.attendanceStatus,
+                        score: p.score,
                         remarks: p.remarks
                     };
                 })

@@ -20,13 +20,6 @@
         .Distinct()
         .OrderBy(s => s)
         .ToList();
-
-    var departments = Model
-        .Select(m => m.DeptName)
-        .Where(d => !string.IsNullOrWhiteSpace(d))
-        .Distinct()
-        .OrderBy(d => d)
-        .ToList();
 }
 
 <link href="~/css/event.css" rel="stylesheet" />
@@ -57,29 +50,31 @@
 
                 <div class="row g-2">
 
-                    <div class="col-12 col-md-5">
+                    <div class="col-12 col-md-4">
                         <input type="text"
                                id="realizationSearchInput"
                                class="form-control form-control-sm"
                                placeholder="Search event code or title...">
                     </div>
 
-                    <div class="col-6 col-md-4">
-                        <select id="realizationStatusFilter" class="form-select form-select-sm">
-                            <option value="">All Statuses</option>
-                            @foreach (var status in statuses)
-                            {
-                                <option value="@status">@status</option>
-                            }
+                    <div class="col-6 col-md-3">
+                        <select id="realizationCompanyFilter" class="form-select form-select-sm">
+                            <option value="">All Company</option>
                         </select>
                     </div>
 
                     <div class="col-6 col-md-3">
                         <select id="realizationDeptFilter" class="form-select form-select-sm">
-                            <option value="">All Departments</option>
-                            @foreach (var dept in departments)
+                            <option value="">All Department</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 col-md-2">
+                        <select id="realizationStatusFilter" class="form-select form-select-sm">
+                            <option value="">All Statuses</option>
+                            @foreach (var status in statuses)
                             {
-                                <option value="@dept">@dept</option>
+                                <option value="@status">@status</option>
                             }
                         </select>
                     </div>
@@ -130,7 +125,8 @@
                                 <tr class="realization-row"
                                     data-search="@($"{item.EventCode} {item.TrainingTitle}".ToLowerInvariant())"
                                     data-status="@item.Status"
-                                    data-dept="@item.DeptName">
+                                    data-cocode="@item.CoCode?.Trim()"
+                                    data-abrv="@item.ABRV?.Trim()">
                                     <td>@item.EventCode</td>
                                     <td>@item.TrainingTitle</td>
                                     <td>@(item.DeptName ?? "-")</td>
@@ -172,7 +168,8 @@
                         <div class="realization-row realization-card p-3 border-bottom"
                              data-search="@($"{item.EventCode} {item.TrainingTitle}".ToLowerInvariant())"
                              data-status="@item.Status"
-                             data-dept="@item.DeptName">
+                             data-cocode="@item.CoCode?.Trim()"
+                             data-abrv="@item.ABRV?.Trim()">
 
                             <div class="d-flex justify-content-between align-items-start mb-1">
                                 <div class="fw-semibold">@item.EventCode</div>
@@ -225,5 +222,11 @@
 </div>
 
 @section Scripts {
+    <script>
+        const realizationFilterUrls = {
+            getCompanies: '@Url.Action("GetCompanies", "Home", new { type = "EVENT" })',
+            getDepartments: '@Url.Action("GetDepartments", "Home", new { type = "EVENT" })'
+        };
+    </script>
     <script src="~/js/realization-list.js" asp-append-version="true"></script>
 }

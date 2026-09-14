@@ -29,10 +29,11 @@
     /// One attendance row as submitted from the Realization page.
     /// </summary>
     /// <remarks>
-    /// Only EmployeeCode, PlannedParticipantId, AttendanceStatus and Remarks
-    /// are persisted - dbo.TrainingEventActualParticipant does not store a
-    /// denormalized Name/ABRV/DeptName. Display names are resolved from the
-    /// employee master when the page is loaded, not from this payload.
+    /// Only EmployeeCode, PlannedParticipantId, AttendanceStatus, Score and
+    /// Remarks are persisted - dbo.TrainingEventActualParticipant does not
+    /// store a denormalized Name/ABRV/DeptName. Display names are resolved
+    /// from the employee master when the page is loaded, not from this
+    /// payload.
     /// </remarks>
     public sealed class TrainingEventRealizationParticipantSaveDto
     {
@@ -43,6 +44,9 @@
 
         /// <summary>PRESENT, PARTIAL, or ABSENT.</summary>
         public string AttendanceStatus { get; set; } = "ABSENT";
+
+        /// <summary>Evaluation score, 0-100. <see langword="null"/> when not scored.</summary>
+        public int? Score { get; set; }
 
         public string? Remarks { get; set; }
     }

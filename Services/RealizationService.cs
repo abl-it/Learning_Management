@@ -202,6 +202,7 @@ namespace Training.Services
             table.Columns.Add("PlannedParticipantId", typeof(long));
             table.Columns.Add("AttendanceStatus", typeof(string));
             table.Columns.Add("Remarks", typeof(string));
+            table.Columns.Add("Score", typeof(int));
 
             foreach (var participant in participants)
             {
@@ -210,13 +211,22 @@ namespace Training.Services
                     throw new ArgumentException("Participant employee code is required.");
                 }
 
+                if (participant.Score is < 0 or > 100)
+                {
+                    throw new ArgumentException(
+                        $"Score for {participant.EmployeeCode} must be between 0 and 100.");
+                }
+
                 table.Rows.Add(
                     participant.EmployeeCode.Trim(),
                     participant.PlannedParticipantId.HasValue
                         ? participant.PlannedParticipantId.Value
                         : (object)DBNull.Value,
                     NormalizeAttendanceStatus(participant.AttendanceStatus),
-                    (object?)participant.Remarks?.Trim() ?? DBNull.Value);
+                    (object?)participant.Remarks?.Trim() ?? DBNull.Value,
+                    participant.Score.HasValue
+                        ? participant.Score.Value
+                        : (object)DBNull.Value);
             }
 
             return table;

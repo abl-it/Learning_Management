@@ -19,6 +19,16 @@ namespace Training.Controllers
             return View();
         }
 
-        // Future: ImportCategory(), ImportEvent(), ImportParticipant() akan ditambah
+        /// <summary>
+        /// Import Training Event + Participant page (satu file Excel, sheet Events + Participants)
+        /// Hanya authorized roles: tc, gm, director
+        /// </summary>
+        [RoleAuthorize("tc", "gm", "director")]
+        public IActionResult ImportEvent()
+        {
+            return View();
+        }
+
+        // Future: ImportCategory() akan ditambah
     }
 }

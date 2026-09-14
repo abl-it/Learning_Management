@@ -229,5 +229,17 @@ namespace Training.Controllers
         }
 
         #endregion
+
+
+        public IActionResult LogOut()
+        {
+
+            // Clear the session
+            HttpContext.Session.Clear();
+            Response.Cookies.Delete(".Portal.Session");
+            Response.Cookies.Delete(".AspNetCore.Session");
+            return Redirect("/Home");
+
+        }
     }
 }

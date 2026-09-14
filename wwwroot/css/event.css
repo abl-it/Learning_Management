@@ -173,34 +173,13 @@
 
     #dTable th.action-column,
     #dTable td.action-column {
-        width: 55px !important;
-        min-width: 55px !important;
-        max-width: 55px !important;
+        width: 90px !important;
+        min-width: 90px !important;
+        max-width: 90px !important;
         text-align: center;
         white-space: nowrap;
     }
 
-        /* =========================================================
-   ACTION COLUMN
-   
-
-        #dTable th.action-column,
-        #dTable td.action-column {
-            width: 55px !important;
-            min-width: 55px !important;
-            max-width: 55px !important;
-            text-align: center;
-            white-space: nowrap;
-        }
-
-    #dTable .event-action-btn {
-        width: 34px;
-        height: 34px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }========================================================= */
 /* ============================================================
    TRAINING
    ============================================================ */

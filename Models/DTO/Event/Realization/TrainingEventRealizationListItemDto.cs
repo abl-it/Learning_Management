@@ -15,6 +15,10 @@
 
         public string? DeptName { get; set; }
 
+        public string? CoCode { get; set; }
+
+        public string? ABRV { get; set; }
+
         public string? TrainerName { get; set; }
 
         public DateTime EventStartDate { get; set; }

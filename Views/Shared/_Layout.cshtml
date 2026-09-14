@@ -383,7 +383,7 @@
     <!-- Navbar tetap sama -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-2">
         <div class="container-fluid">
-            <a class="navbar-brand text-sm" href="/">
+            <a class="navbar-brand text-sm" asp-controller="Home" asp-action="Index">
                 <i class="fas fa-graduation-cap me-2"></i>Training Management
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -482,18 +482,29 @@
                         </a>
                     </li>
 
+                    <!-- Import Data-->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="importDropdown"
-                           role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-cloud-upload"></i> Upload Data
+                        <a class="nav-link dropdown-toggle" href="#" id="importDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-cloud-upload me-1"></i>Import Data
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="importDropdown">
-                            
-                            <li><a class="dropdown-item" href="@Url.Action("ImportCourse", "Import")">Master Course</a></li>
-                            <li><a class="dropdown-item" href="/training/import-category">Master Category</a></li>
+                        <ul class="dropdown-menu text-sm" aria-labelledby="importDropdown">
+                            <li>
+                                <a class="dropdown-item" asp-controller="Import" asp-action="ImportCourse" id="importCourseLink">
+                                    <i class="bi bi-book me-2"></i>Master Course
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Import" asp-action="ImportCategory" id="importCategoryLink">
+                                    <i class="bi bi-bookmark me-2"></i>Master Category
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/training/import-event">Training Event</a></li>
-                            <li><a class="dropdown-item" href="/training/import-participant">Participant</a></li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="Import" asp-action="ImportEvent" id="importEventLink">
+                                    <i class="bi bi-calendar-check me-2"></i>Training Event &amp; Participant
+                                </a>
+                            </li>
                         </ul>
                     </li>
 
@@ -541,20 +552,16 @@
                 // Remove all active classes first
                 $('.navbar-nav .nav-link, .dropdown-menu .dropdown-item').removeClass('active');
 
-                // Handle Master controller with different actions
-                if (currentController === 'Master') {
-                    $('#masterDropdown').addClass('active');
+                // Handle Import controller with different actions
+                if (currentController === 'Import') {
+                    $('#importDropdown').addClass('active');
 
-                    if (currentAction === 'Categories') {
-                        $('#categoryLink').addClass('active');
-                    } else if (currentAction === 'Course') {
-                        $('#courseLink').addClass('active');
-                    }else if (currentAction === 'Groups') {
-                        $('#groupLink').addClass('active');
-                    }else if (currentAction === 'Units') {
-                        $('#unitLink').addClass('active');
-                    }else if (currentAction === 'Initial') {
-                        $('#initLink').addClass('active');
+                    if (currentAction === 'ImportCourse') {
+                        $('#importCourseLink').addClass('active');
+                    } else if (currentAction === 'ImportCategory') {
+                        $('#importCategoryLink').addClass('active');
+                    }else if (currentAction === 'ImportEvent') {
+                        $('#importEventLink').addClass('active');
                     }
                 }
                 // Handle Transaction controller with different actions
@@ -575,6 +582,22 @@
                         $('#eventLink').addClass('active');
                     } else if (currentAction === 'Realization') {
                         $('#realizationLink').addClass('active');
+                    }
+                }
+                // Handle Master controller with different actions
+                if (currentController === 'Master') {
+                    $('#masterDropdown').addClass('active');
+
+                    if (currentAction === 'Categories') {
+                        $('#categoryLink').addClass('active');
+                    } else if (currentAction === 'Course') {
+                        $('#courseLink').addClass('active');
+                    }else if (currentAction === 'Groups') {
+                        $('#groupLink').addClass('active');
+                    }else if (currentAction === 'Units') {
+                        $('#unitLink').addClass('active');
+                    }else if (currentAction === 'Initial') {
+                        $('#initLink').addClass('active');
                     }
                 }
                 // Handle other controllers

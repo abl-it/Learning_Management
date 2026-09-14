@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Drawing.Charts;
 using QuestPDF.Infrastructure;
 using Serilog;
 using Training.Data;
@@ -8,6 +9,7 @@ using Training.Services.Implementations;
 using Training.Services.Interfaces;
 using Training.Services.IServices;
 
+
 /*
  * QuestPDF requires its license type to be declared once at application
  * startup. Community is free for organizations with less than
@@ -15,6 +17,7 @@ using Training.Services.IServices;
  * Change this if your organization requires a commercial license.
  */
 QuestPDF.Settings.License = LicenseType.Community;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +74,9 @@ builder.Services.AddScoped<IAttendanceFormService, AttendanceFormService>();
 builder.Services.AddScoped<IRealizationService, RealizationService>();
 builder.Services.AddScoped<ITrainingInquiryService, TrainingInquiryService>();
 builder.Services.AddScoped<ITrainingCourseService, TrainingCourseService>();
+
+builder.Services.AddScoped<IEventImportService, EventImportService>();
+
 
 // Configure anti-forgery
 builder.Services.AddAntiforgery(options =>

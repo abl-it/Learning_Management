@@ -30,6 +30,9 @@
         /// <summary>PRESENT, PARTIAL, or ABSENT.</summary>
         public string AttendanceStatus { get; set; } = "ABSENT";
 
+        /// <summary>Evaluation score, 0-100. <see langword="null"/> when not yet scored.</summary>
+        public int? Score { get; set; }
+
         public string? Remarks { get; set; }
 
         public bool IsWalkIn { get; set; }
