@@ -328,7 +328,7 @@ namespace Training.Services
                         COUNT(DISTINCT tap.EmployeeCode) AS ParticipantCount
                     FROM dbo.TrainingEventRealization ter
                     INNER JOIN dbo.TrainingEvent te ON ter.TrainingEventId = te.TrainingEventId
-                    INNER JOIN dbo.TrainingEventActualParticipant tap ON ter.TrainingEventId = te.TrainingEventId
+                    INNER JOIN dbo.TrainingEventActualParticipant tap ON tap.TrainingEventId = ter.TrainingEventId
                     INNER JOIN home.dbo.APP_Departments d ON tap.EmployeeCode IN (
                         SELECT EmployeeCode FROM home.dbo.APP_Employees WHERE DepartmentID = d.DepartmentID
                     )
@@ -628,19 +628,23 @@ namespace Training.Services
             var chart = new ChartDataDto { ChartType = "bar", Title = "Training Events by Category" };
             try
             {
+                var (startDate, endDate) = GetDateRangeValues(dateRange);   // ⬅️ tambahan
+
                 var query = @"
-                    SELECT 
-                        mc.CategoryName,
-                        COUNT(DISTINCT ter.TrainingEventRealizationId) AS EventCount
-                    FROM dbo.TrainingEventRealization ter
-                    INNER JOIN dbo.TrainingEvent te ON ter.TrainingEventId = te.TrainingEventId
-                    INNER JOIN dbo.Master_TrainingCategories mc ON te.TrainingCategoryId = mc.CategoryId
-                    WHERE ter.Status = 'Posted'
-                      AND te.CoCode IN ({0})
-                      AND te.ABRV IN ({1})
-                    GROUP BY mc.CategoryName
-                    ORDER BY EventCount DESC
-                ";
+            SELECT 
+                mc.CategoryName,
+                COUNT(DISTINCT ter.TrainingEventRealizationId) AS EventCount
+            FROM dbo.TrainingEventRealization ter
+            INNER JOIN dbo.TrainingEvent te ON ter.TrainingEventId = te.TrainingEventId
+            INNER JOIN dbo.Master_TrainingCategories mc ON te.TrainingCategoryId = mc.CategoryId
+            WHERE ter.Status = 'Posted'
+              AND ter.RealizationDate >= @StartDate
+              AND ter.RealizationDate < @EndDate
+              AND te.CoCode IN ({0})
+              AND te.ABRV IN ({1})
+            GROUP BY mc.CategoryName
+            ORDER BY EventCount DESC
+        ";
 
                 // Build company filter
                 if (!string.IsNullOrEmpty(companyCodes))
@@ -669,9 +673,14 @@ namespace Training.Services
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     connection.Open();
+
+                    var parameters = new DynamicParameters();     
+                    parameters.Add("@StartDate", startDate);      
+                    parameters.Add("@EndDate", endDate);          
+
                     var results = (await connection.QueryAsync<dynamic>(
                         query,
-                        null,
+                        parameters,   // ⬅️ sebelumnya: null
                         commandType: System.Data.CommandType.Text)).ToList();
 
                     chart.Labels = results.Select(r => (string)r.CategoryName).ToList();
@@ -692,7 +701,6 @@ namespace Training.Services
 
             return chart;
         }
-
         public async Task<ChartDataDto> GetDepartmentPerformanceChartAsync(string dateRange, string companyCodes, string departmentIds, string categoryIds)
         {
             var chart = new ChartDataDto { ChartType = "bar", Title = "Department Performance (Attendance Rate)" };

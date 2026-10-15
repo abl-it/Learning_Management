@@ -93,7 +93,7 @@
     </div>
 
     <!-- Category Filter -->
-    <div class="col-md-2">
+    <div class="col-md-2 d-none">
         <label for="categories" class="form-label">🏷️ Category</label>
         <select class="form-select form-select-sm" id="categories" name="categories">
             <option value="">-- All Categories --</option>
@@ -267,15 +267,12 @@
 <!-- Charts & Tables Section -->
 <div class="row">
     <!-- Attendance Trend Chart -->
-    <div class="col-lg-6 mb-3">
+    <div class="col-lg-3 col-md-6 mb-3">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0">
-                    <i class="bi bi-graph-up"></i>
-                    Attendance Trend
-                </h6>
+                <h6 class="mb-0"><i class="bi bi-graph-up"></i> Attendance Trend</h6>
             </div>
-            <div class="card-body" style="height: 220px; position: relative;">
+            <div class="card-body" style="height: 180px; position: relative;">
                 @if (Model.AttendanceTrendChart?.Labels?.Count > 0)
                 {
                     <canvas id="attendanceTrendChart"></canvas>
@@ -283,8 +280,8 @@
                 else
                 {
                     <div class="text-center text-muted">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="mt-2">No data available</p>
+                        <i class="bi bi-inbox" style="font-size: 1.5rem;"></i>
+                        <p class="mt-2 small">No data available</p>
                     </div>
                 }
             </div>
@@ -292,15 +289,12 @@
     </div>
 
     <!-- Training Hours by Department Chart -->
-    <div class="col-lg-6 mb-3">
+    <div class="col-lg-3 col-md-6 mb-3">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0">
-                    <i class="bi bi-bar-chart"></i>
-                    Training Hours by Department
-                </h6>
+                <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Training Hours by Department</h6>
             </div>
-            <div class="card-body" style="height: 220px; position: relative;">
+            <div class="card-body" style="height: 180px; position: relative;">
                 @if (Model.TrainingHoursByDeptChart?.Labels?.Count > 0)
                 {
                     <canvas id="trainingHoursChart"></canvas>
@@ -308,26 +302,21 @@
                 else
                 {
                     <div class="text-center text-muted">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="mt-2">No data available</p>
+                        <i class="bi bi-inbox" style="font-size: 1.5rem;"></i>
+                        <p class="mt-2 small">No data available</p>
                     </div>
                 }
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
     <!-- Events by Category Chart -->
-    <div class="col-lg-6 mb-3">
+    <div class="col-lg-3 col-md-6 mb-3">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0">
-                    <i class="bi bi-tag"></i>
-                    Training Events by Category
-                </h6>
+                <h6 class="mb-0"><i class="bi bi-tag"></i> Training Events by Category</h6>
             </div>
-            <div class="card-body" style="height: 220px; position: relative;">
+            <div class="card-body" style="height: 180px; position: relative;">
                 @if (Model.EventsByCategoryChart?.Labels?.Count > 0)
                 {
                     <canvas id="eventsByCategoryChart"></canvas>
@@ -335,8 +324,8 @@
                 else
                 {
                     <div class="text-center text-muted">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="mt-2">No data available</p>
+                        <i class="bi bi-inbox" style="font-size: 1.5rem;"></i>
+                        <p class="mt-2 small">No data available</p>
                     </div>
                 }
             </div>
@@ -344,15 +333,12 @@
     </div>
 
     <!-- Department Performance Chart -->
-    <div class="col-lg-6 mb-3">
+    <div class="col-lg-3 col-md-6 mb-3">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0">
-                    <i class="bi bi-building"></i>
-                    Department Performance
-                </h6>
+                <h6 class="mb-0"><i class="bi bi-building"></i> Department Performance</h6>
             </div>
-            <div class="card-body" style="height: 220px; position: relative;">
+            <div class="card-body" style="height: 180px; position: relative;">
                 @if (Model.DepartmentPerformanceChart?.Labels?.Count > 0)
                 {
                     <canvas id="departmentPerformanceChart"></canvas>
@@ -360,14 +346,15 @@
                 else
                 {
                     <div class="text-center text-muted">
-                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="mt-2">No data available</p>
+                        <i class="bi bi-inbox" style="font-size: 1.5rem;"></i>
+                        <p class="mt-2 small">No data available</p>
                     </div>
                 }
             </div>
         </div>
     </div>
 </div>
+
 
 <div class="row">
     <!-- Training Hours by Department Table -->
