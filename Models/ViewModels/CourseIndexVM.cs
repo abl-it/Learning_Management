@@ -7,6 +7,9 @@ namespace Training.Models.ViewModels
         public List<SelectListItem> Categories { get; set; } = new();
         public int? SelectedCategory { get; set; }
 
+        /// <summary>true = boleh Add/Edit (tc). false = view only.</summary>
+        public bool CanEdit { get; set; }
+
         
 
 

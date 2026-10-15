@@ -41,6 +41,14 @@ namespace Training.Filters
                     return;
                 }
 
+                // Action ditandai [AllowAllRoles] -> cukup login, tidak cek role
+                if (context.ActionDescriptor.EndpointMetadata.OfType<AllowAllRolesAttribute>().Any())
+                {
+                    logger?.LogWarning("✅ [AllowAllRoles] - Continue to action");
+                    await next();
+                    return;
+                }
+
                 // Get TrainingService dari DI container
                 var trainingService = context.HttpContext.RequestServices.GetService(typeof(ITrainingService)) as ITrainingService;
 

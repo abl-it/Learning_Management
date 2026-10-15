@@ -244,13 +244,21 @@ namespace Training.Controllers
 
         #region Course
 
+        private static readonly string[] CourseEditRoles = { "tc" };
+
         [HttpGet]
+        [AllowAllRoles]
         public async Task<IActionResult> Course(CancellationToken cancellationToken)
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
 
+            // Master Course: semua user login boleh lihat, hanya CourseEditRoles yang boleh Add/Edit
+            var username = HttpContext.Session.GetString("Username");
+            var role = string.IsNullOrEmpty(username) ? null : await _trainingService.GetRoleAsync(username);
+
             var viewModel = new CourseIndexVM
             {
+                CanEdit = !string.IsNullOrEmpty(role) && CourseEditRoles.Contains(role),
                 Categories = categories
                     .Select(c => new SelectListItem
                     {
@@ -285,6 +293,7 @@ namespace Training.Controllers
             }
         }
         [HttpPost]
+        [AllowAllRoles]
         public async Task<IActionResult> GetCourses(CancellationToken cancellationToken)
         {
 
@@ -302,6 +311,7 @@ namespace Training.Controllers
         }
 
         [HttpPost]
+        [RoleAuthorize("tc")]
         public async Task<IActionResult> CreateCourse(CourseDto model)
         {
 
@@ -356,6 +366,7 @@ namespace Training.Controllers
         }
 
         [HttpPost]
+        [RoleAuthorize("tc")]
         public async Task<IActionResult> UpdateCourse(CourseDto model)
         {
 
