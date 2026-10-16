@@ -9,6 +9,10 @@ public sealed class TrainingEventDto
 
     public int CourseId { get; set; }
 
+    public int? PlanDetailId { get; set; }
+
+    public string? PlanCode { get; set; }
+
     public string? CoCode { get; set; }
 
     public string? Abrv { get; set; }

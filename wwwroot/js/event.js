@@ -148,7 +148,29 @@ $(document).ready(function () {
     // CUSTOM MOBILE DETAIL
     // =========================================================
 
+    function renderPlan(planCode, planDetailId) {
+
+        if (!planCode) {
+            return '<span class="text-muted">Unplanned</span>';
+        }
+
+        const suffix =
+            planDetailId
+                ? ' <small class="text-muted">#' +
+                  escapeHtml(planDetailId) + '</small>'
+                : '';
+
+        return '<span class="fw-semibold">' +
+               escapeHtml(planCode) + '</span>' + suffix;
+    }
+
     function formatMobileDetail(row) {
+
+        const planCode =
+            getValue(row, "planCode");
+
+        const planDetailId =
+            getValue(row, "planDetailId");
 
         const department =
             getValue(row, "deptName");
@@ -174,6 +196,15 @@ $(document).ready(function () {
 
         return `
             <div class="event-mobile-detail">
+
+                <div class="event-detail-item">
+                    <div class="event-detail-label">
+                        Plan
+                    </div>
+                    <div class="event-detail-value">
+                        ${renderPlan(planCode, planDetailId)}
+                    </div>
+                </div>
 
                 <div class="event-detail-item">
                     <div class="event-detail-label">
@@ -323,7 +354,7 @@ $(document).ready(function () {
 
 
         order: [
-            [7, "asc"]
+            [8, "asc"]
         ],
 
 
@@ -455,6 +486,31 @@ $(document).ready(function () {
 
                 className:
                     "event-code-column"
+            },
+
+
+            // -------------------------------------------------
+            // PLAN
+            // -------------------------------------------------
+
+            {
+                data: "planCode",
+
+                name: "PlanCode",
+
+                title: "Plan",
+
+                className:
+                    "plan-column text-nowrap",
+
+                render: function (data, type, row) {
+
+                    if (type !== "display") {
+                        return data || "";
+                    }
+
+                    return renderPlan(data, row.planDetailId);
+                }
             },
 
 

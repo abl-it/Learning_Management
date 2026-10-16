@@ -188,7 +188,35 @@
                      COURSE
                      ================================================= -->
 
-                <div class="col-md-5">
+                <div class="col-md-3">
+
+                    <label class="form-label">
+                        Training Plan
+                    </label>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.PlanCode))
+                    {
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                            <input type="text"
+                                   class="form-control form-control-sm fw-semibold"
+                                   value="@Model.PlanCode@(Model.PlanDetailId.HasValue ? " / #" + Model.PlanDetailId : "")"
+                                   title="Event ini berasal dari Training Plan"
+                                   readonly />
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="text"
+                               class="form-control form-control-sm text-muted"
+                               value="Unplanned"
+                               readonly />
+                    }
+
+                </div>
+
+
+                <div class="col-md-3">
 
                     <label class="form-label">
                         Course
@@ -206,7 +234,7 @@
                      TRAINING TITLE
                      ================================================= -->
 
-                <div class="col-md-4">
+                <div class="col-md-3">
 
                     <label class="form-label">
                         Training Title

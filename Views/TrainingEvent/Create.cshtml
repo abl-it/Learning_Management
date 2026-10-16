@@ -96,11 +96,49 @@
                        id="DeptName"
                        name="DeptName" />
 
+                <input type="hidden"
+                       id="PlanCode"
+                       name="PlanCode" />
+
 
                 <!-- =================================================
                      ROW 1
                      Course | Training Title | Category
                      ================================================= -->
+
+                <!-- =================================================
+                     TRAINING PLAN (optional)
+                     Plan tahun berjalan, department sesuai akses user.
+                     Kosong = unplanned event.
+                     ================================================= -->
+
+                <div class="row g-3 mb-1">
+
+                    <div class="col-12">
+
+                        <label for="PlanDetailId"
+                               class="form-label">
+
+                            Training Plan
+                            <span class="text-muted">(optional)</span>
+
+                        </label>
+
+                        <select id="PlanDetailId"
+                                name="PlanDetailId"
+                                class="form-select form-select-sm">
+
+                            <option value="">-- Unplanned (no training plan) --</option>
+
+                        </select>
+
+                        <div class="form-text" id="planHelp">
+                            Select Company and Department to load the training plan of the current year.
+                        </div>
+
+                    </div>
+
+                </div>
 
                 <div class="row g-3">
 
@@ -768,6 +806,9 @@
 
             getCourses:
                 '@Url.Action("GetCourses", "TrainingEvent")',
+
+            getPlanOptions:
+                '@Url.Action("GetPlanOptions", "TrainingEvent")',
 
             getCompanies:
                 '@Url.Action("GetCompanies", "Home", new { type = "EVENT" })',

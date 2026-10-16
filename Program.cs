@@ -33,6 +33,15 @@ builder.Host.UseSerilog((context, services, configuration) =>
 
 // Add configuration for connection string
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+// Add environment-specific configuration
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddUserSecrets<Program>(); // Add user secrets in development
+}
+
+
 //builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("ConnectionStrings"));
 // Bind ConnectionStrings section to DatabaseSettings
 builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("ConnectionStrings"));

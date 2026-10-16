@@ -346,6 +346,11 @@ namespace Training.Services
                 DbType.String);
 
             parameters.Add(
+                "@PlanDetailId",
+                request.PlanDetailId,
+                DbType.Int32);
+
+            parameters.Add(
                 "@Participants",
                 participantTable.AsTableValuedParameter(
                     "dbo.TrainingEventParticipantType"));
@@ -384,6 +389,33 @@ namespace Training.Services
 
                 throw;
             }
+        }
+
+        /// <inheritdoc />
+        public async Task<List<TrainingEventPlanOptionDto>> GetPlanOptionsAsync(
+            string coCode,
+            string abrv,
+            CancellationToken cancellationToken = default)
+        {
+            await using var connection =
+                new SqlConnection(_connectionString);
+
+            await connection.OpenAsync(cancellationToken);
+
+            var command = new CommandDefinition(
+                "dbo.usp_TrainingEvent_GetPlanOptions",
+                new
+                {
+                    CoCode = coCode,
+                    ABRV = abrv
+                },
+                commandType: CommandType.StoredProcedure,
+                cancellationToken: cancellationToken);
+
+            var rows =
+                await connection.QueryAsync<TrainingEventPlanOptionDto>(command);
+
+            return rows.ToList();
         }
 
         

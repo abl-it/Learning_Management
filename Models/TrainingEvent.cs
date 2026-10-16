@@ -64,6 +64,10 @@
 
         public decimal? DurationHours { get; set; }
 
+        public int? PlanDetailId { get; set; }
+
+        public string? PlanCode { get; set; }
+
 
         public byte[] RowVersion { get; set; } = [];
     }

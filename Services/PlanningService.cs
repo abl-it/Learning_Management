@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Text;
@@ -535,6 +535,21 @@ namespace Training.Services
                 
                 return plan;
             }
+        }
+
+        /// <summary>
+        /// Jumlah baris plan detail (aktif) yang masih New Course
+        /// (belum didaftarkan ke Master Course oleh TC).
+        /// </summary>
+        public async Task<int> CountPendingNewCoursesAsync(long planId)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            const string sql = @"SELECT COUNT(*)
+                                 FROM dbo.Training_YearlyPlansDetail
+                                 WHERE PlanId = @planId
+                                   AND IsNewCourse = 1
+                                   AND ISNULL(IsActive, 1) = 1";
+            return await connection.ExecuteScalarAsync<int>(sql, new { planId });
         }
 
         public async Task<ApiResponse> UpdateNewCourseAsync(UpdateNewCourseRequest request, string username)

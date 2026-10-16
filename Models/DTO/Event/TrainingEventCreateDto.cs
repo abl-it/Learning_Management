@@ -38,6 +38,9 @@
 
         public decimal? DurationHours { get; set; }
 
+        /// <summary>Baris training plan (Training_YearlyPlansDetail.PlanDetailId). NULL = unplanned.</summary>
+        public int? PlanDetailId { get; set; }
+
         public List<TrainingEventParticipantDto> Participants { get; set; } = [];
     
     }

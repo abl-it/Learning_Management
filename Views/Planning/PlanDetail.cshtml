@@ -82,6 +82,12 @@
         }
         /* TARGET      */
         #dTable th:nth-child(10), #dTable td:nth-child(10) {
+            width: 45px !important;
+            min-width: 45px !important;
+            max-width: 45px !important;
+        }
+        /* ID          */
+        #dTable th:nth-child(11), #dTable td:nth-child(11) {
             width: 35px !important;
             min-width: 35px !important;
             max-width: 35px !important;
@@ -102,7 +108,8 @@
         #dTable td:nth-child(6),
         #dTable td:nth-child(7),
         #dTable td:nth-child(8),
-        #dTable td:nth-child(10) {
+        #dTable td:nth-child(10),
+        #dTable td:nth-child(11) {
             white-space: nowrap;
             text-align: center;
         }
@@ -228,6 +235,7 @@
                             <th>DURATION</th>
                             <th>PROVIDER</th>
                             <th>TARGET</th>
+                            <th>ID</th>
                             <th></th>
                         
                         </tr>
@@ -689,6 +697,7 @@
                             { data: 'plannedDuration'},
                             { data: 'trainingProvider'},
                             { data: 'targetParticipant'},
+                            { data: 'planDetailId', defaultContent: '' },
                             {
                                 data: null,
                                 orderable: false,
@@ -735,19 +744,21 @@
                     { targets: 6, className: 'text-center' },  // DUR
                     { targets: 7, className: 'text-center' },  // PROV
                     { targets: 8, className: 'text-start' , orderable: false  },  // TARGET
-                    { targets: 9, className: 'text-center', orderable: false }, // ACTION
+                    { targets: 9, className: 'text-center text-muted', orderable: false }, // ID (PlanDetailId)
+                    { targets: 10, className: 'text-center', orderable: false }, // ACTION
 
                     // ✅ Responsive priority — angka BERBEDA agar urutan jelas
                     { targets: 0, responsivePriority: 1 },  // MONTH        - selalu tampil
                     { targets: 2, responsivePriority: 2 },  // COURSE       - selalu tampil
-                    { targets: 9, responsivePriority: 3 },  // ACTION       - selalu tampil
+                    { targets: 10, responsivePriority: 3 }, // ACTION       - selalu tampil
                     { targets: 1, responsivePriority: 4 },  // CODE         - disembunyikan ke-1
                     { targets: 3, responsivePriority: 5 },  // CAT          - disembunyikan ke-2
                     { targets: 4, responsivePriority: 6 },  // #SESS        - disembunyikan ke-3
                     { targets: 5, responsivePriority: 7 },  // #PART        - disembunyikan ke-4
                     { targets: 6, responsivePriority: 8 },  // DUR          - disembunyikan ke-5
                     { targets: 7, responsivePriority: 9 },  // PROV         - disembunyikan ke-6
-                    { targets: 8, responsivePriority: 10},  // TARGET       - disembunyikan terakhir
+                    { targets: 8, responsivePriority: 10},  // TARGET
+                    { targets: 9, responsivePriority: 11},  // ID           - disembunyikan paling awal di layar kecil (tetap terlihat di detail baris)
                 ],
                         lengthMenu: [10, 25, 50],
                         pageLength: 10,

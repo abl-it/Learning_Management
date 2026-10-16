@@ -23,6 +23,14 @@ namespace Training.Services.IServices
             string createdBy,
             CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Plan (tahun berjalan, approved, masih ada sisa session) yang bisa dipilih saat Create Event.
+        /// </summary>
+        Task<List<TrainingEventPlanOptionDto>> GetPlanOptionsAsync(
+            string coCode,
+            string abrv,
+            CancellationToken cancellationToken = default);
+
         Task<TrainingEventDetailDto?> GetDetailAsync(
             long trainingEventId,
             string username,

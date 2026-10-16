@@ -1,4 +1,4 @@
-﻿using Training.Models;
+using Training.Models;
 using Training.Models.DataTables;
 using Training.Models.DTO;
 using Training.Models.ViewModels;
@@ -36,5 +36,6 @@ namespace Training.Services.IServices
         Task<int> AddPlansDetail(PlanDetailDTO planDetail);
         Task<int> DeletePlansDetail(int id, string by);
         Task<ApiResponse> UpdateNewCourseAsync(UpdateNewCourseRequest request, string username);
+        Task<int> CountPendingNewCoursesAsync(long planId);
     }
 }

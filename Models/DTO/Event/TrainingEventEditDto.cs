@@ -8,6 +8,11 @@
 
         public int CourseId { get; set; }
 
+        /// <summary>Read-only: link ke Training Plan, tidak dapat diubah.</summary>
+        public int? PlanDetailId { get; set; }
+
+        public string? PlanCode { get; set; }
+
         public string? CourseCode { get; set; }
 
         public int TrainingCategoryId { get; set; }

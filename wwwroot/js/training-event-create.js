@@ -44,6 +44,8 @@
 
             initCourseTypeahead();
 
+            initPlanPicker();
+
             initTrainerTypeahead();
 
             initParticipant();
@@ -152,6 +154,8 @@
                             department.value
                         );
 
+                        $department.trigger('change'); // muat training plan
+
                         return;
                     }
 
@@ -177,6 +181,8 @@
                     });
 
                     $department.prop('disabled', false);
+
+                    $department.trigger('change'); // reset training plan
                 },
 
                 error: function (xhr, status, error) {
@@ -607,6 +613,208 @@
                 );
             }
         });
+    }
+
+    /*========================================================
+     * Training Plan picker (optional)
+     * - daftar plan = tahun berjalan, approved, department user
+     * - pilih plan -> course dikunci, Session#/Duration/Quota/Type
+     *   terisi tetapi masih bisa diubah
+     *========================================================*/
+    function initPlanPicker() {
+
+        const $plan = $('#PlanDetailId');
+
+        if (!$plan.length) {
+            return;
+        }
+
+        const monthNames = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        let options = [];
+        let requestSeq = 0;
+
+        function setHelp(text) {
+            $('#planHelp').text(text);
+        }
+
+        function unlockCourse() {
+            $('#courseSearch').prop('readonly', false);
+        }
+
+        function resetOptions(helpText) {
+
+            requestSeq++;
+
+            options = [];
+
+            $plan
+                .empty()
+                .append(
+                    $('<option>')
+                        .val('')
+                        .text('-- Unplanned (no training plan) --')
+                )
+                .val('');
+
+            $('#PlanCode').val('');
+
+            $('#SessionNo').removeAttr('max');
+
+            unlockCourse();
+
+            setHelp(
+                helpText ||
+                'Select Company and Department to load the training plan of the current year.'
+            );
+        }
+
+        function loadOptions() {
+
+            const coCode = $('#CoCode').val();
+            const abrv = $('#ABRV').val();
+            const url =
+                (window.trainingEventCreateUrls || {}).getPlanOptions;
+
+            resetOptions();
+
+            if (!coCode || !abrv || !url) {
+                return;
+            }
+
+            const seq = requestSeq;
+
+            setHelp('Loading training plan...');
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                cache: false,
+                data: {
+                    coCode: coCode,
+                    abrv: abrv
+                }
+            })
+            .done(function (rows) {
+
+                if (seq !== requestSeq) {
+                    return; // respon lama, department sudah berganti
+                }
+
+                options = Array.isArray(rows) ? rows : [];
+
+                if (!options.length) {
+                    setHelp(
+                        'No approved training plan with remaining sessions for this department in the current year. ' +
+                        'You can still create an unplanned event.'
+                    );
+                    return;
+                }
+
+                options.forEach(function (p) {
+
+                    const month =
+                        monthNames[(p.plannedMonth || 1) - 1] || '';
+
+                    $plan.append(
+                        $('<option>')
+                            .val(p.planDetailId)
+                            .text(
+                                '[' + p.planCode + '] ' +
+                                p.courseCode + ' - ' + p.courseName +
+                                ' | ' + month +
+                                ' | remaining ' + p.remainingSessions +
+                                '/' + p.totalSessions + ' session'
+                            )
+                    );
+                });
+
+                setHelp(
+                    options.length + ' training plan available. ' +
+                    'Leave empty for an unplanned event.'
+                );
+            })
+            .fail(function (xhr) {
+
+                if (seq !== requestSeq) {
+                    return;
+                }
+
+                console.error(
+                    '[CREATE] GetPlanOptions failed:',
+                    xhr.status,
+                    xhr.responseText
+                );
+
+                setHelp('Failed to load training plan. You can still create an unplanned event.');
+            });
+        }
+
+        function applyPlan() {
+
+            const id = $plan.val();
+
+            if (!id) {
+
+                $('#PlanCode').val('');
+                $('#SessionNo').removeAttr('max');
+                unlockCourse();
+                return;
+            }
+
+            const p = options.find(function (x) {
+                return String(x.planDetailId) === String(id);
+            });
+
+            if (!p) {
+                return;
+            }
+
+            $('#PlanCode').val(p.planCode);
+
+            // Course (dikunci mengikuti plan)
+            $('#CourseId').val(p.courseId);
+            $('#CategoryId').val(p.categoryId);
+            $('#CategoryName').val(p.categoryName || '');
+            $('#TrainingTitle').val(p.courseName);
+
+            $('#courseSearch')
+                .val(p.courseCode + ' - ' + p.courseName)
+                .prop('readonly', true);
+
+            // Prefill, masih bisa diubah
+            $('#SessionNo')
+                .val(p.remainingSessions)
+                .attr('max', p.remainingSessions);
+
+            $('#HoursPerSession').val(p.plannedDuration);
+
+            $('#Quota')
+                .val(p.totalParticipants)
+                .trigger('change');
+
+            const trainerType =
+                p.eventType === 'E' ? 'External' : 'Internal';
+
+            if ($('#TrainerType').val() !== trainerType) {
+
+                $('#TrainerType')
+                    .val(trainerType)
+                    .trigger('change');
+            }
+        }
+
+        $(document).on('change.planPicker', '#ABRV', loadOptions);
+
+        $(document).on('change.planPicker', '#CoCode', function () {
+            resetOptions();
+        });
+
+        $plan.on('change.planPicker', applyPlan);
     }
 
     function initTrainerTypeahead() {
@@ -1571,6 +1779,11 @@
         return {
             courseId: Number($('#CourseId').val()),
 
+            planDetailId:
+                $('#PlanDetailId').val()
+                    ? Number($('#PlanDetailId').val())
+                    : null,
+
             trainingCategoryId:
                 Number($('#CategoryId').val()),
 
@@ -1677,6 +1890,22 @@
         if (!$('#SessionNo').val()) {
             showWarning('Session count is required.','Session Number');
             return false;
+        }
+
+        {
+            const maxSession = Number($('#SessionNo').attr('max')) || 0;
+
+            if ($('#PlanDetailId').val() &&
+                maxSession > 0 &&
+                Number($('#SessionNo').val()) > maxSession) {
+
+                showWarning(
+                    'Session count exceeds the remaining sessions of the selected training plan (' +
+                    maxSession + ').',
+                    'Session Number');
+
+                return false;
+            }
         }
 
         if (!$('#Quota').val()) {

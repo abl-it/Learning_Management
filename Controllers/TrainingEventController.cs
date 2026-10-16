@@ -232,6 +232,72 @@ namespace Training.Controllers
                 }));
         }
 
+        /// <summary>
+        /// Plan yang bisa dipilih di Create Event: tahun berjalan, approved,
+        /// hanya department yang boleh diakses user.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetPlanOptions(
+            string? coCode,
+            string? abrv,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(coCode) ||
+                string.IsNullOrWhiteSpace(abrv))
+            {
+                return Json(Array.Empty<object>());
+            }
+
+            var employeeCode = _emp.CurrentEmployee?.EmployeeCode;
+
+            if (string.IsNullOrWhiteSpace(employeeCode))
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Current employee could not be determined."
+                });
+            }
+
+            // Hanya department yang boleh diakses user (sama dengan dropdown Department)
+            var allowedDepartments =
+                await _trainingService.GetDepartmentsByAccessAsync(
+                    "EVENT",
+                    employeeCode,
+                    coCode);
+
+            if (!allowedDepartments.Any(d => d.ABRV == abrv))
+            {
+                return Json(Array.Empty<object>());
+            }
+
+            var plans =
+                await _eventService.GetPlanOptionsAsync(
+                    coCode,
+                    abrv,
+                    cancellationToken);
+
+            return Json(plans.Select(p => new
+            {
+                planDetailId = p.PlanDetailId,
+                planId = p.PlanId,
+                planCode = p.PlanCode,
+                courseId = p.CourseId,
+                courseCode = p.CourseCode,
+                courseName = p.CourseName,
+                categoryId = p.CategoryId,
+                categoryName = p.CategoryName,
+                plannedMonth = p.PlannedMonth,
+                totalSessions = p.TotalSessions,
+                usedSessions = p.UsedSessions,
+                remainingSessions = p.RemainingSessions,
+                totalParticipants = p.TotalParticipants,
+                plannedDuration = p.PlannedDuration,
+                estimatedCost = p.EstimatedCost,
+                eventType = p.EventType
+            }));
+        }
+
         [HttpGet]
         public async Task<IActionResult> SearchInternalTrainers(
             string? term,
@@ -402,6 +468,8 @@ namespace Training.Controllers
 
                     CourseId = model.CourseId,
                     CourseCode = model.CourseCode,
+                    PlanDetailId = model.PlanDetailId,
+                    PlanCode = model.PlanCode,
                     
                     TrainingCategoryId = model.TrainingCategoryId,
                     TrainingCategory = model.TrainingCategory,

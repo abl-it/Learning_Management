@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Training.Filters;
 using Training.Models.ViewModels;
 using Training.Services.IServices;
@@ -11,8 +11,10 @@ namespace Training.Controllers
         private readonly IActionService _actionService;
         private readonly ITrainingService _trainingService;
         private readonly ICurrentUserService _emp;
-        public ActionController(IActionService actionService, ICurrentUserService emp, ITrainingService trainingService)
+        private readonly IPlanningService _planningService;
+        public ActionController(IActionService actionService, ICurrentUserService emp, ITrainingService trainingService, IPlanningService planningService)
         {
+            _planningService = planningService;
             _actionService = actionService;
             _trainingService = trainingService;
             _emp = emp;
@@ -36,6 +38,19 @@ namespace Training.Controllers
 
                 if (string.IsNullOrWhiteSpace(request.ActionName))
                     return Json(new { success = false, message = "Action name is required." });
+
+                // Plan yang masih punya New Course (belum ada di Master Course)
+                // tidak boleh di-Approve sebelum TC melakukan update course.
+                if (string.Equals(request.ActionName.Trim(), "Approve", StringComparison.OrdinalIgnoreCase))
+                {
+                    var pending = await _planningService.CountPendingNewCoursesAsync(request.Id);
+                    if (pending > 0)
+                        return Json(new
+                        {
+                            success = false,
+                            message = $"Plan tidak dapat di-approve: masih ada {pending} New Course yang belum terdaftar di Master Course. TC harus melakukan update course terlebih dahulu."
+                        });
+                }
 
                 var role = await _trainingService.GetRoleAsync(_emp.CurrentEmployee.Username);   
                 // ✅ Map request to ActionVM

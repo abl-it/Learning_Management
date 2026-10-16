@@ -60,6 +60,12 @@
    TRAINING
    ========================================================= */
 
+    #dTable th.plan-column,
+    #dTable td.plan-column {
+        width: 110px !important;
+        min-width: 110px !important;
+    }
+
     #dTable th.training-column,
     #dTable td.training-column {
         width: 220px !important;
@@ -346,6 +352,8 @@
 
     /* Hide desktop-only columns */
 
+    #dTable th.plan-column,
+    #dTable td.plan-column,
     #dTable th.department-column,
     #dTable td.department-column,
     #dTable th.trainer-column,

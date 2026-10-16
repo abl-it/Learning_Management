@@ -48,6 +48,10 @@
 
         public decimal? DurationHours { get; set; }
 
+        public int? PlanDetailId { get; set; }
+
+        public string? PlanCode { get; set; }
+
         public string? Workflow { get; set; }
 
         public string? Strategy { get; set; }

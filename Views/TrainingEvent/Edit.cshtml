@@ -93,7 +93,21 @@
                 <!-- Course / Title / Category -->
                 <div class="row g-2">
 
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+                            Training Plan
+                        </label>
+
+                        <input type="text"
+                               class="form-control form-control-sm readonly-field @(string.IsNullOrWhiteSpace(Model.PlanCode) ? "text-muted" : "fw-semibold")"
+                               value="@(string.IsNullOrWhiteSpace(Model.PlanCode) ? "Unplanned" : Model.PlanCode + (Model.PlanDetailId.HasValue ? " / #" + Model.PlanDetailId : ""))"
+                               title="Plan tidak dapat diubah setelah event dibuat"
+                               readonly />
+
+                    </div>
+
+                    <div class="col-md-2">
 
                         <label class="form-label">
                             Course Code
@@ -106,7 +120,7 @@
 
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-5">
 
                         <label asp-for="TrainingTitle"
                                class="form-label">

@@ -244,7 +244,7 @@ $(function () {
             .removeClass("is-invalid");
 
         const modalElement =
-            document.getElementById("rejectEventModal");
+            document.getElementById("rejectReasonModal");
 
         const modal =
             bootstrap.Modal.getOrCreateInstance(modalElement);
@@ -273,7 +273,7 @@ $(function () {
             .removeClass("is-invalid");
 
         const modalElement =
-            document.getElementById("rejectEventModal");
+            document.getElementById("rejectReasonModal");
 
         const modal =
             bootstrap.Modal.getOrCreateInstance(modalElement);
