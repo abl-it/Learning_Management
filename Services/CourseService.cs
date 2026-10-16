@@ -199,8 +199,8 @@ namespace Training.Services
             return columnIndex switch
             {
                 0 => "CourseId",
-                1 => "CourseName",
-                2 => "CourseCode",
+                1 => "CourseCode",
+                2 => "CourseName",
                 3 => "Description",
                 4 => "CategoryCode",
                 5 => "DurationHours",

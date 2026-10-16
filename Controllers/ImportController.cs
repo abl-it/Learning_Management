@@ -11,9 +11,9 @@ namespace Training.Controllers
     {
         /// <summary>
         /// Import Master Course page
-        /// Hanya authorized roles: tc, gm, director
+        /// Hanya authorized role: tc
         /// </summary>
-        [RoleAuthorize("tc", "gm", "director")]
+        [RoleAuthorize("tc")]
         public IActionResult ImportCourse()
         {
             return View();

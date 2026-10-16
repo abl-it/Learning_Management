@@ -124,6 +124,11 @@
 
                         <div class="form-text">
                             Type at least 2 characters.
+                            <a href="javascript:void(0);"
+                               data-bs-toggle="modal"
+                               data-bs-target="#courseViewerModal">
+                                <i class="fas fa-book me-1"></i>View Master Course
+                            </a>
                         </div>
 
                     </div>
@@ -750,7 +755,12 @@
 </div>
 
 
+<!-- Master Course (view only) -->
+<partial name="_CourseViewerModal" />
+
 @section Scripts {
+
+    <script src="~/js/course-viewer.js" asp-append-version="true"></script>
 
     <script>
 

@@ -207,6 +207,10 @@
                     data-bs-toggle="modal" data-bs-target="#modalAddCourse">
                 <i class="fas fa-book-medical me-1"></i>Add Course
             </button>
+            <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary ms-1"
+               data-bs-toggle="modal" data-bs-target="#courseViewerModal">
+                <i class="fas fa-book me-1"></i>View Master Course
+            </a>
         </div>
         <!-- Compact DataTable -->
         <div class="card card-compact">
@@ -591,6 +595,9 @@
             }
         ]
 </script>
+
+<!-- Master Course (view only) -->
+<partial name="_CourseViewerModal" />
 
     @section Scripts
     {
@@ -1612,4 +1619,5 @@
                     });
                 }
         </script>
+        <script src="~/js/course-viewer.js" asp-append-version="true"></script>
     }

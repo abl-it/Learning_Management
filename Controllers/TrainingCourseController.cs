@@ -42,7 +42,7 @@ namespace Training.Controllers
         /// </remarks>
         [HttpPost("import-courses")]
         [Consumes("multipart/form-data")]
-        [RoleAuthorizeApi("tc", "gm", "director")]
+        [RoleAuthorizeApi("tc")]
         public async Task<IActionResult> ImportCourses(IFormFile file)
         {
             try
