@@ -1,4 +1,5 @@
-﻿using QuestPDF.Fluent;
+using Microsoft.AspNetCore.Hosting;
+using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using Training.Models.DTO.Event;
@@ -8,9 +9,11 @@ namespace Training.Services
 {
     /// <summary>
     /// Renders the training attendance form ("Daftar Hadir") as a PDF document
-    /// using QuestPDF. The layout mirrors the reference attendance spreadsheet:
-    /// a header block with training/instructor/date information followed by a
-    /// bordered table of No, Nama, Departemen and Tanda Tangan (signature) columns.
+    /// using QuestPDF. The layout mirrors the controlled form
+    /// <c>F-L&amp;D-DA-01</c> (No Rev 00): company letterhead, document control
+    /// block (form number / revision / issue date), TOPIK - HARI/TANGGAL - JAM -
+    /// INSTRUKTUR block, a bordered table of NO, Nama, Departemen, Jabatan and a
+    /// two-column TANDATANGAN area, and a "Mengetahui (Instruktur)" box.
     /// </summary>
     /// <remarks>
     /// This service is intentionally free of any data-access or authorization
@@ -20,19 +23,65 @@ namespace Training.Services
     /// </remarks>
     public class AttendanceFormService : IAttendanceFormService
     {
+        // ---------------------------------------------------------------
+        // Controlled-document identity (No. Reg). Update here when the
+        // form is revised.
+        // ---------------------------------------------------------------
+        private const string FormNumber = "F-L&D-DA-01";
+        private const string FormRevision = "00";
+        private const string FormIssueDate = "25 / 2 / 2026";
+
+        private const string CompanyName = "PT. AGUNG BUMI LESTARI";
+        private const string CompanyAddress =
+            "Jl. Raya Pasir Putih Km 14 No. 8, Desa Baru, Kab. Kampar-Riau";
+
         /// <summary>
-        /// Number of participant rows sharing one signature "band". The reference
-        /// spreadsheet pairs two participants per band so their signature boxes
-        /// are tall enough to sign comfortably while keeping the sheet compact.
+        /// Letterhead image, relative to the web root (wwwroot).
+        /// If the file is missing a plain-text letterhead is printed instead,
+        /// so printing never fails because of a missing image.
+        /// </summary>
+        private const string LetterheadRelativePath = "images/abl-letterhead.png";
+
+        /// <summary>Printed width (points) of the letterhead image; keeps its aspect ratio.</summary>
+        private const float LetterheadWidth = 380;
+
+        /// <summary>Minimum height (points) of one participant row (27pt in the Excel form, printed at ~80%).</summary>
+        private const float RowMinHeight = 21.6f;
+
+        /// <summary>
+        /// Number of participant rows sharing one signature "band". The form
+        /// pairs two participants per band (signature boxes "1." and "2.").
         /// </summary>
         private const int ParticipantsPerBand = 2;
 
         /// <summary>
-        /// Fixed number of participant rows shown per page. Pages are always
-        /// filled to a full multiple of this value with blank rows - e.g. 20
-        /// participants still renders 36 rows (2 full pages of 18), not 20.
+        /// Fixed number of participant rows per page (the form has 22 rows).
+        /// Pages are always filled to a full multiple of this value with blank
+        /// rows - e.g. 25 participants render 44 rows (2 pages of 22).
         /// </summary>
-        private const int RowsPerPage = 18;
+        private const int RowsPerPage = 22;
+
+        private static readonly string[] DayNames =
+        {
+            "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"
+        };
+
+        private static readonly string[] MonthNames =
+        {
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        };
+
+        private static byte[]? _letterheadCache;
+        private static bool _letterheadLoaded;
+        private static readonly object LetterheadLock = new();
+
+        private readonly IWebHostEnvironment _env;
+
+        public AttendanceFormService(IWebHostEnvironment env)
+        {
+            _env = env;
+        }
 
         /// <inheritdoc />
         public byte[] GenerateAttendanceFormPdf(TrainingEventDetailDto trainingEvent)
@@ -40,6 +89,8 @@ namespace Training.Services
             ArgumentNullException.ThrowIfNull(trainingEvent);
 
             var participants = trainingEvent.Participants ?? [];
+            var letterhead = GetLetterhead();
+
             var pageCount = Math.Max(
                 1,
                 (int)Math.Ceiling(participants.Count / (double)RowsPerPage));
@@ -49,45 +100,32 @@ namespace Training.Services
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(30);
+                    page.MarginHorizontal(20);
+                    page.MarginVertical(18);
                     page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Arial"));
 
                     page.Content()
                         .Column(column =>
                         {
-                            column.Item().Element(c => ComposeHeader(c, trainingEvent));
-
                             for (var pageIndex = 0; pageIndex < pageCount; pageIndex++)
                             {
                                 if (pageIndex > 0)
                                 {
-                                    // Force a new page instead of relying on the table's
-                                    // natural overflow, so every page - including the
-                                    // header-less continuation pages - holds exactly
-                                    // RowsPerPage rows rather than however many
-                                    // physically happen to fit.
+                                    // Every page is a complete, individually signed form
+                                    // (letterhead, topic block, table and sign-off), so
+                                    // each page holds exactly RowsPerPage rows.
                                     column.Item().PageBreak();
                                 }
 
                                 var startIndex = pageIndex * RowsPerPage;
 
-                                column.Item()
-                                    .PaddingTop(8)
-                                    .Element(c => ComposeParticipantTable(
-                                        c,
-                                        participants,
-                                        startIndex,
-                                        RowsPerPage));
+                                column.Item().Element(c => ComposeFormPage(
+                                    c,
+                                    trainingEvent,
+                                    participants,
+                                    letterhead,
+                                    startIndex));
                             }
-                        });
-
-                    page.Footer()
-                        .PaddingTop(5)
-                        .AlignCenter()
-                        .Text(text =>
-                        {
-                            text.Span("Dicetak pada ").FontSize(7).FontColor(Colors.Grey.Darken1);
-                            text.Span($"{DateTime.Now:dd/MM/yyyy HH:mm}").FontSize(7).FontColor(Colors.Grey.Darken1);
                         });
                 });
             });
@@ -95,124 +133,142 @@ namespace Training.Services
             return document.GeneratePdf();
         }
 
+        #region Page composition
+
         /// <summary>
-        /// Composes the bordered title and event-information block at the top of the form.
+        /// Composes one complete form page: letterhead, document control,
+        /// title, topic block, participant table and the "Mengetahui" box.
         /// </summary>
-        private static void ComposeHeader(
+        private static void ComposeFormPage(
             IContainer container,
-            TrainingEventDetailDto trainingEvent)
+            TrainingEventDetailDto trainingEvent,
+            IReadOnlyList<TrainingEventParticipantDto> participants,
+            byte[]? letterhead,
+            int startIndex)
         {
-            container
-                .Border(1)
-                .BorderColor(Colors.Black)
-                .Column(column =>
-                {
-                    column.Item()
-                        .Padding(8)
-                        .AlignCenter()
-                        .Text("DAFTAR HADIR TRAINING")
-                        .Bold()
-                        .FontSize(14);
-
-                    column.Item().LineHorizontal(1).LineColor(Colors.Black);
-
-                    column.Item().Row(row =>
-                    {
-                        row.RelativeItem()
-                            .Padding(8)
-                            .Column(info =>
-                            {
-                                ComposeInfoField(info, "Judul Training", trainingEvent.TrainingTitle, 80);
-                                ComposeInfoField(info, "Instruktur", trainingEvent.TrainerName, 80);
-                                ComposeInfoField(info, "Tempat", trainingEvent.Venue, 80);
-                                ComposeInfoField(info, "Departemen", trainingEvent.DeptName, 80);
-                            });
-
-                        row.ConstantItem(150)
-                            .Padding(8)
-                            .Column(info =>
-                            {
-                                ComposeInfoField(
-                                    info,
-                                    "Tanggal",
-                                    trainingEvent.EventStartDate.ToString("dd/MM/yyyy"),
-                                    55,
-                                    alignValueRight: false);
-
-                                ComposeInfoField(
-                                    info,
-                                    "Jam",
-                                    $"{trainingEvent.EventStartDate:HH:mm} - {trainingEvent.EventEndDate:HH:mm}",
-                                    55,
-                                    alignValueRight: false);
-                            });
-                    });
-                });
-        }
-
-        /// <summary>
-        /// Renders a single "Label : Value" line inside an information box.
-        /// The label sits in a fixed-width, right-aligned column so the colon
-        /// lines up vertically with every other field in the same box,
-        /// regardless of how long each label's text is.
-        /// </summary>
-        /// <param name="column">Column the field is appended to.</param>
-        /// <param name="label">Field label, e.g. "Judul Training".</param>
-        /// <param name="value">Field value to display after the colon.</param>
-        /// <param name="labelWidth">
-        /// Fixed width, in points, reserved for the label so colons align.
-        /// Should be sized to fit the longest label used within the same box.
-        /// </param>
-        /// <param name="alignValueRight">
-        /// When <see langword="true"/>, the value is right-aligned within its
-        /// remaining space instead of hugging the label - used for the
-        /// Tanggal / Jam fields so they line up against the right edge.
-        /// </param>
-        private static void ComposeInfoField(
-            ColumnDescriptor column,
-            string label,
-            string? value,
-            float labelWidth,
-            bool alignValueRight = false)
-        {
-            column.Item().Row(row =>
+            container.Column(column =>
             {
-                row.ConstantItem(labelWidth)
+                column.Item().Element(c => ComposeLetterhead(c, letterhead));
+
+                column.Item().Element(ComposeDocumentControl);
+
+                column.Item()
+                    .PaddingTop(4)
+                    .AlignCenter()
+                    .Text("DAFTAR HADIR")
+                    .Bold()
+                    .FontSize(16);
+
+                column.Item()
+                    .PaddingTop(6)
+                    .PaddingBottom(5)
+                    .Element(c => ComposeTopicBlock(c, trainingEvent));
+
+                column.Item().Element(c => ComposeParticipantTable(
+                    c,
+                    participants,
+                    startIndex,
+                    RowsPerPage));
+
+                column.Item()
+                    .PaddingTop(10)
                     .AlignRight()
-                    .Text($"{label} :");
-
-                var valueContainer = row.RelativeItem().PaddingLeft(4);
-
-                if (alignValueRight)
-                {
-                    valueContainer = valueContainer.AlignRight();
-                }
-
-                valueContainer.Text(value ?? string.Empty);
+                    .Element(ComposeAcknowledgeBox);
             });
         }
 
         /// <summary>
-        /// Composes one page's bordered participant table: No, Nama, Departemen
-        /// and a two-column Tanda Tangan (signature) area, for exactly
-        /// <paramref name="rowCount"/> rows starting at <paramref name="startIndex"/>.
-        /// Row numbers are absolute (continuing across pages, e.g. 19-36 on the
-        /// second page) rather than restarting at 1. Participants are laid out
-        /// two per "band" so each pair shares a signature area tall enough to
-        /// sign in, matching the reference spreadsheet.
+        /// Company letterhead. Uses the letterhead image when available,
+        /// otherwise falls back to a text-only header.
         /// </summary>
-        /// <param name="container">Container this page's table is rendered into.</param>
-        /// <param name="participants">The full list of registered participants, in display order.</param>
-        /// <param name="startIndex">
-        /// Zero-based index into <paramref name="participants"/> of the first
-        /// row on this page.
-        /// </param>
-        /// <param name="rowCount">
-        /// Number of rows to render on this page (equal to <see cref="RowsPerPage"/>).
-        /// Rows whose index falls beyond <paramref name="participants"/>'s length
-        /// are left blank (number and signature box only), so every page -
-        /// including the last - is fully filled.
-        /// </param>
+        private static void ComposeLetterhead(IContainer container, byte[]? letterhead)
+        {
+            // Same as the Excel form: logo/address block centered, then a
+            // full-width rule underneath.
+            container
+                .BorderBottom(1.5f)
+                .BorderColor(Colors.Black)
+                .PaddingBottom(2)
+                .Column(column =>
+                {
+                    if (letterhead is { Length: > 0 })
+                    {
+                        column.Item()
+                            .AlignCenter()
+                            .Width(LetterheadWidth)
+                            .Image(letterhead)
+                            .FitWidth();
+                    }
+                    else
+                    {
+                        column.Item().AlignCenter().Text(CompanyName).Bold().FontSize(16);
+                        column.Item().AlignCenter().Text(CompanyAddress).FontSize(8);
+                    }
+                });
+        }
+
+        /// <summary>
+        /// Right-aligned document control block: form number, revision, issue date.
+        /// </summary>
+        private static void ComposeDocumentControl(IContainer container)
+        {
+            container
+                .PaddingTop(4)
+                .AlignRight()
+                .Column(column =>
+                {
+                    column.Spacing(1);
+
+                    column.Item().AlignRight().Text(FormNumber).Bold().FontSize(8);
+                    column.Item().AlignRight().Text($"No Rev : {FormRevision}").Bold().FontSize(8);
+                    column.Item().AlignRight().Text($"Tanggal Terbit : {FormIssueDate}").Bold().FontSize(8);
+                });
+        }
+
+        /// <summary>
+        /// TOPIK / HARI/ TANGGAL / JAM / INSTRUKTUR block.
+        /// </summary>
+        private static void ComposeTopicBlock(
+            IContainer container,
+            TrainingEventDetailDto trainingEvent)
+        {
+            container.Column(column =>
+            {
+                column.Spacing(1);
+
+                ComposeInfoField(column, "TOPIK", FormatTopic(trainingEvent));
+                ComposeInfoField(column, "HARI/ TANGGAL", FormatEventDate(trainingEvent));
+                ComposeInfoField(column, "JAM", FormatEventTime(trainingEvent));
+                ComposeInfoField(column, "INSTRUKTUR", trainingEvent.TrainerName);
+            });
+        }
+
+        /// <summary>
+        /// Renders a single bold "LABEL : Value" line. The label sits in a
+        /// fixed-width column so every colon lines up vertically.
+        /// </summary>
+        private static void ComposeInfoField(
+            ColumnDescriptor column,
+            string label,
+            string? value)
+        {
+            column.Item().Row(row =>
+            {
+                row.ConstantItem(105).Text(label).Bold().FontSize(10);
+                row.ConstantItem(14).Text(":").Bold().FontSize(10);
+                row.RelativeItem().Text(value ?? string.Empty).Bold().FontSize(10);
+            });
+        }
+
+        /// <summary>
+        /// Composes one page's bordered participant table: NO, Nama, Departemen,
+        /// Jabatan and a two-column TANDATANGAN area, for exactly
+        /// <paramref name="rowCount"/> rows starting at <paramref name="startIndex"/>.
+        /// Row numbers are absolute (continuing across pages, e.g. 23-44 on the
+        /// second page). Participants are laid out two per "band" so each pair
+        /// shares a signature area; box "1." is labelled top-left and box "2."
+        /// bottom-left, exactly as on the reference form.
+        /// </summary>
         private static void ComposeParticipantTable(
             IContainer container,
             IReadOnlyList<TrainingEventParticipantDto> participants,
@@ -223,19 +279,21 @@ namespace Training.Services
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(30);    // No.
-                    columns.RelativeColumn(3);     // Nama
-                    columns.RelativeColumn(2);     // Departemen
-                    columns.RelativeColumn(2);     // Tanda Tangan (kiri)
-                    columns.RelativeColumn(2);     // Tanda Tangan (kanan)
+                    columns.ConstantColumn(28);       // NO
+                    columns.RelativeColumn(32f);      // Nama
+                    columns.RelativeColumn(37.5f);    // Departemen (cukup lebar agar "INFORMATION & TECHNOLOGY" 1 baris)
+                    columns.RelativeColumn(23.4f);    // Jabatan
+                    columns.RelativeColumn(16.1f);    // Tanda tangan (kiri)
+                    columns.RelativeColumn(16.0f);    // Tanda tangan (kanan)
                 });
 
                 table.Header(header =>
                 {
-                    header.Cell().Element(HeaderCellStyle).Text("No.");
+                    header.Cell().Element(HeaderCellStyle).Text("NO");
                     header.Cell().Element(HeaderCellStyle).Text("Nama");
                     header.Cell().Element(HeaderCellStyle).Text("Departemen");
-                    header.Cell().ColumnSpan(2).Element(HeaderCellStyle).Text("Tanda Tangan");
+                    header.Cell().Element(HeaderCellStyle).Text("Jabatan");
+                    header.Cell().ColumnSpan(2).Element(HeaderCellStyle).Text("TANDATANGAN");
                 });
 
                 for (var bandStart = 0; bandStart < rowCount; bandStart += ParticipantsPerBand)
@@ -254,21 +312,17 @@ namespace Training.Services
                             ? participants[rowIndex]
                             : null;
 
-                        var participantNo = rowIndex + 1;
-
-                        table.Cell().Element(BodyCellStyle).AlignMiddle().Text(participantNo.ToString());
+                        table.Cell().Element(BodyCellStyle).AlignMiddle().AlignCenter().Text((rowIndex + 1).ToString());
                         table.Cell().Element(BodyCellStyle).AlignMiddle().Text(participant?.Name ?? string.Empty);
                         table.Cell().Element(BodyCellStyle).AlignMiddle().Text(participant?.DeptName ?? string.Empty);
+                        // Jabatan sengaja dicetak kosong (diisi tangan oleh peserta).
+                        table.Cell().Element(BodyCellStyle).AlignMiddle().Text(string.Empty);
 
                         /*
                          * Only the first row of the band adds the signature cells.
                          * They are given RowSpan = bandSize so they stretch across
                          * every row in this band; QuestPDF's table auto-flow then
-                         * skips these already-occupied slots for the remaining
-                         * row(s) in the band. A small row number is placed in the
-                         * top-left corner of each box, matching the reference
-                         * spreadsheet, whether or not that slot has a participant
-                         * assigned yet.
+                         * skips these already-occupied slots for the remaining row.
                          */
                         if (offset == 0)
                         {
@@ -278,27 +332,16 @@ namespace Training.Services
                             table.Cell()
                                 .RowSpan((uint)bandSize)
                                 .Element(SignatureCellStyle)
-                                .Column(sig =>
-                                    sig.Item()
-                                        .AlignLeft()
-                                        .Text(firstRowNo.ToString())
-                                        .FontSize(6)
-                                        .FontColor(Colors.Grey.Darken2));
+                                .AlignTop()
+                                .Text($"{firstRowNo}.")
+                                .FontSize(8);
 
                             table.Cell()
                                 .RowSpan((uint)bandSize)
                                 .Element(SignatureCellStyle)
-                                .Column(sig =>
-                                {
-                                    if (secondRowNo.HasValue)
-                                    {
-                                        sig.Item()
-                                            .AlignLeft()
-                                            .Text(secondRowNo.Value.ToString())
-                                            .FontSize(6)
-                                            .FontColor(Colors.Grey.Darken2);
-                                    }
-                                });
+                                .AlignBottom()
+                                .Text(secondRowNo.HasValue ? $"{secondRowNo.Value}." : string.Empty)
+                                .FontSize(8);
                         }
                     }
                 }
@@ -306,27 +349,131 @@ namespace Training.Services
 
             static IContainer HeaderCellStyle(IContainer cellContainer) =>
                 cellContainer
-                    .Background(Colors.Grey.Lighten2)
-                    .Border(1)
+                    .Border(0.75f)
                     .BorderColor(Colors.Black)
-                    .Padding(5)
+                    .PaddingVertical(3)
+                    .PaddingHorizontal(3)
                     .AlignMiddle()
                     .AlignCenter()
-                    .DefaultTextStyle(x => x.Bold());
+                    .DefaultTextStyle(x => x.Bold().FontSize(10));
 
             static IContainer BodyCellStyle(IContainer cellContainer) =>
                 cellContainer
-                    .Border(1)
+                    .MinHeight(RowMinHeight)
+                    .Border(0.75f)
                     .BorderColor(Colors.Black)
-                    .Padding(5)
-                    .MinHeight(22);
+                    .PaddingVertical(1)
+                    .PaddingHorizontal(4);
 
             static IContainer SignatureCellStyle(IContainer cellContainer) =>
                 cellContainer
-                    .Border(1)
+                    .Border(0.75f)
                     .BorderColor(Colors.Black)
-                    .Padding(5)
-                    .MinHeight(44);
+                    .Padding(2);
         }
+
+        /// <summary>
+        /// "Mengetahui ... (Instruktur)" sign-off box at the bottom-right of the form.
+        /// </summary>
+        private static void ComposeAcknowledgeBox(IContainer container)
+        {
+            container
+                .Width(150)
+                .Border(0.75f)
+                .BorderColor(Colors.Black)
+                .Padding(4)
+                .Column(column =>
+                {
+                    column.Item().AlignCenter().Text("Mengetahui").FontSize(9);
+
+                    column.Item().Height(42);
+
+                    column.Item()
+                        .PaddingHorizontal(6)
+                        .LineHorizontal(0.75f)
+                        .LineColor(Colors.Grey.Darken1);
+
+                    column.Item().AlignCenter().Text("(Instruktur)").FontSize(9);
+                });
+        }
+
+        #endregion
+
+        #region Formatting helpers
+
+        /// <summary>
+        /// "Selasa 29/September/2026". For multi-day events a range is shown:
+        /// "Selasa 29/September/2026 s/d Kamis 1/Oktober/2026".
+        /// </summary>
+        private static string FormatEventDate(TrainingEventDetailDto trainingEvent)
+        {
+            var start = trainingEvent.EventStartDate;
+            var end = trainingEvent.EventEndDate;
+
+            return end.Date > start.Date
+                ? $"{FormatIndonesianDate(start)} s/d {FormatIndonesianDate(end)}"
+                : FormatIndonesianDate(start);
+        }
+
+        private static string FormatIndonesianDate(DateTime date) =>
+            $"{DayNames[(int)date.DayOfWeek]} {date.Day:00}/{MonthNames[date.Month - 1]}/{date.Year}";
+
+        /// <summary>"SETTING MIKROTIK DASAR (TTS-00078)" - judul training diikuti kode course dalam kurung.</summary>
+        private static string FormatTopic(TrainingEventDetailDto trainingEvent)
+        {
+            var title = trainingEvent.TrainingTitle?.Trim() ?? string.Empty;
+            var code = trainingEvent.CourseCode?.Trim();
+
+            return string.IsNullOrWhiteSpace(code)
+                ? title
+                : $"{title} ({code})";
+        }
+
+        /// <summary>"13.00 - 16.00" (dot as the hour/minute separator, as on the form).</summary>
+        private static string FormatEventTime(TrainingEventDetailDto trainingEvent) =>
+            $"{trainingEvent.EventStartDate:HH\\.mm} - {trainingEvent.EventEndDate:HH\\.mm}";
+
+        /// <summary>
+        /// Reads the letterhead image once and caches it for the lifetime of the
+        /// process. Returns <see langword="null"/> when the file is not found.
+        /// </summary>
+        private byte[]? GetLetterhead()
+        {
+            if (_letterheadLoaded)
+            {
+                return _letterheadCache;
+            }
+
+            lock (LetterheadLock)
+            {
+                if (_letterheadLoaded)
+                {
+                    return _letterheadCache;
+                }
+
+                try
+                {
+                    var path = Path.Combine(
+                        _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot"),
+                        LetterheadRelativePath.Replace('/', Path.DirectorySeparatorChar));
+
+                    _letterheadCache = File.Exists(path)
+                        ? File.ReadAllBytes(path)
+                        : null;
+                }
+                catch
+                {
+                    _letterheadCache = null;
+                }
+
+                // Only cache a successful load; if the file is missing, retry
+                // on the next print so dropping the file in needs no restart.
+                _letterheadLoaded = _letterheadCache is not null;
+
+                return _letterheadCache;
+            }
+        }
+
+        #endregion
     }
 }

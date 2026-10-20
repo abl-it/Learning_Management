@@ -1,4 +1,4 @@
-﻿@model PlanDetailVM
+@model PlanDetailVM
 @{
     var canEdit = (Model.Plans.CanEdit == 1) ? "enabled" : "disabled";
     var canAction = (Model.Plans.CanAction == 1) ? "enabled" : "disabled";
@@ -1025,7 +1025,7 @@
                                 $.ajax({
                                     url:         '@Url.Action("DeletePlanDetail", "Planning")',
                                     type:        'POST',
-                                    data:        { detailId: detailId },
+                                    data:        { detailId: detailId, planId: $('#planId').val() },
                                     success: function (res) {
                                         if (res.success) {
                                             // ✅ Langsung reload page

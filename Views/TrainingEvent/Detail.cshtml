@@ -22,6 +22,15 @@
             : docStatus == 1
                 ? "bg-warning text-dark"
                 : "bg-success";
+
+    // Cetak Daftar Hadir: tersedia setelah event Approved (HRD) dan tetap ada
+    // selama proses realisasi. Aturan status sama dengan isRealizationEligible
+    // di TrainingEventController.
+    var canPrintAttendance =
+        string.Equals(Model.Status, "Approved", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Model.Status, "Realization Submitted", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Model.Status, "Realization Rejected", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(Model.Status, "Complete", StringComparison.OrdinalIgnoreCase);
 }
 
 <link href="~/css/detail.css" rel="stylesheet" />
@@ -546,11 +555,32 @@
             </span>
 
 
-            <span class="badge bg-primary">
+            <div class="d-flex align-items-center gap-2">
 
-                @(Model.Participants?.Count ?? 0)
+                @if (canPrintAttendance)
+                {
+                    <a asp-controller="TrainingEvent"
+                       asp-action="PrintAttendance"
+                       asp-route-id="@Model.TrainingEventId"
+                       target="_blank"
+                       rel="noopener"
+                       class="btn btn-sm btn-outline-secondary py-0"
+                       title="Cetak Daftar Hadir (PDF)">
 
-            </span>
+                        <i class="bi bi-printer"></i>
+
+                        Cetak Absensi
+
+                    </a>
+                }
+
+                <span class="badge bg-primary">
+
+                    @(Model.Participants?.Count ?? 0)
+
+                </span>
+
+            </div>
 
         </div>
 

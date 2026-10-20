@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using Training.Models;
@@ -31,10 +31,18 @@ namespace Training.Services
                     "USP_Approve",
                     parameters,
                     commandType: CommandType.StoredProcedure);
+                // [CHANGED - Step 4] USP_Approve: >0 sukses, -1/-2/-3 gagal
                 return new ApiResponse
                 {
-                    Success = true,
-                    Message = "Action successfully",
+                    Success = result > 0,
+                    Message = result switch
+                    {
+                        > 0 => "Action successfully",
+                        -1 => "Plan not found.",
+                        -2 => "Workflow transition is not configured.",
+                        -3 => "Document status is not configured.",
+                        _ => "Action was not executed."
+                    },
                     Data = new { Result = result }
                 };
             }

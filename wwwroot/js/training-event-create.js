@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
 
     'use strict';
 
@@ -1120,8 +1120,289 @@
 
                 validateQuotaChange();
 
-            });     
+            });
 
+        initParticipantUpload();
+
+    }
+
+    /*========================================================
+     * Upload participants from Excel (.xlsx, column EmployeeCode)
+     * - server parses + resolves employees; nothing is saved here
+     * - valid rows are appended to state.participants (same shape as
+     *   addParticipant) up to the remaining quota; duplicates are skipped
+     *========================================================*/
+    function initParticipantUpload() {
+
+        const $file = $('#participantExcelFile');
+
+        $('#btnUploadParticipant')
+            .off('click.trainingUpload')
+            .on('click.trainingUpload', function () {
+
+                const quota =
+                    Number($('#Quota').val()) || 0;
+
+                const participantCount =
+                    TrainingEventCreate.state.participants.length;
+
+                if (quota <= 0) {
+
+                    showWarning(
+                        'Please enter participant quota first.',
+                        'Participant Quota'
+                    );
+
+                    return;
+                }
+
+                if (participantCount >= quota) {
+
+                    showWarning(
+                        'Participant quota has been reached. ' +
+                        'Please increase the quota before uploading participants.',
+                        'Participant Quota'
+                    );
+
+                    return;
+                }
+
+                // reset so selecting the same file again still fires "change"
+                $file.val('').trigger('click');
+            });
+
+        $file
+            .off('change.trainingUpload')
+            .on('change.trainingUpload', function () {
+
+                const file =
+                    this.files && this.files[0];
+
+                if (file) {
+
+                    uploadParticipantExcel(file);
+                }
+            });
+    }
+
+    function escapeHtml(value) {
+
+        return $('<div>').text(value == null ? '' : String(value)).html();
+    }
+
+    async function uploadParticipantExcel(file) {
+
+        const url =
+            (window.trainingEventCreateUrls || {}).parseParticipants;
+
+        if (!url) {
+
+            console.error('[CREATE] parseParticipants URL tidak tersedia.');
+
+            return;
+        }
+
+        if (!/\.xlsx$/i.test(file.name)) {
+
+            showWarning(
+                'Only .xlsx files are supported.',
+                'Upload Participants'
+            );
+
+            return;
+        }
+
+        const token =
+            $('#trainingEventForm input[name="__RequestVerificationToken"]')
+                .val();
+
+        if (!token) {
+
+            showWarning('Anti-forgery token was not found.', 'Error');
+
+            return;
+        }
+
+        const participants =
+            TrainingEventCreate.state.participants;
+
+        const formData = new FormData();
+
+        formData.append('file', file);
+
+        // Sent as form field AND headers so it works with either antiforgery setup.
+        formData.append('__RequestVerificationToken', token);
+
+        participants.forEach(function (item) {
+
+            formData.append('existingCodes', item.employeeCode);
+        });
+
+        const $button = $('#btnUploadParticipant');
+
+        const originalHtml = $button.html();
+
+        $button
+            .prop('disabled', true)
+            .html(
+                '<span class="spinner-border spinner-border-sm me-1" ' +
+                'role="status" aria-hidden="true"></span>Uploading...'
+            );
+
+        try {
+
+            const response = await $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                headers: {
+                    'RequestVerificationToken': token,
+                    'X-CSRF-TOKEN': token
+                }
+            });
+
+            if (!response.success) {
+
+                throw new Error(
+                    response.message || 'Failed to read the Excel file.'
+                );
+            }
+
+            const data = response.data || {};
+
+            const parsed =
+                Array.isArray(data.participants) ? data.participants : [];
+
+            const errors =
+                Array.isArray(data.errors) ? data.errors.slice() : [];
+
+            const quota =
+                Number($('#Quota').val()) || 0;
+
+            let added = 0;
+
+            parsed.forEach(function (item) {
+
+                const code = (item.employeeCode || '').trim();
+
+                // state may have changed while the request was running
+                const exists = participants.some(function (p) {
+
+                    return (p.employeeCode || '').toLowerCase() ===
+                        code.toLowerCase();
+                });
+
+                if (exists) {
+
+                    errors.push({
+                        row: null,
+                        employeeCode: code,
+                        message: 'Already in the participant list.'
+                    });
+
+                    return;
+                }
+
+                if (participants.length >= quota) {
+
+                    errors.push({
+                        row: null,
+                        employeeCode: code,
+                        message: 'Not added: participant quota reached.'
+                    });
+
+                    return;
+                }
+
+                participants.push({
+                    employeeCode: code,
+                    fullName: item.fullName,
+                    departmentCode: item.departmentCode,
+                    departmentName: item.departmentName
+                });
+
+                added++;
+            });
+
+            renderParticipants();
+
+            updateAddParticipantButton();
+
+            showParticipantUploadSummary(added, errors);
+
+        } catch (error) {
+
+            console.error('[CREATE] Participant upload error:', error);
+
+            let message = 'Failed to upload the Excel file.';
+
+            if (error.responseJSON?.message) {
+                message = error.responseJSON.message;
+            }
+            else if (error.message) {
+                message = error.message;
+            }
+
+            showWarning(message, 'Upload Participants');
+
+        } finally {
+
+            $button
+                .prop('disabled', false)
+                .html(originalHtml);
+
+            $('#participantExcelFile').val('');
+        }
+    }
+
+    function showParticipantUploadSummary(added, errors) {
+
+        const maxShown = 20;
+
+        let html =
+            '<div class="text-start">' +
+            '<p class="mb-2"><strong>' + added + '</strong> participant(s) added.</p>';
+
+        if (errors.length > 0) {
+
+            html +=
+                '<p class="mb-1"><strong>' + errors.length +
+                '</strong> row(s) skipped:</p>' +
+                '<ul class="small mb-0" style="max-height:220px;overflow:auto;">';
+
+            errors.slice(0, maxShown).forEach(function (e) {
+
+                const where =
+                    e.row ? 'Row ' + e.row : 'Row -';
+
+                const code =
+                    e.employeeCode ? ' (' + escapeHtml(e.employeeCode) + ')' : '';
+
+                html +=
+                    '<li>' + where + code + ': ' +
+                    escapeHtml(e.message) + '</li>';
+            });
+
+            if (errors.length > maxShown) {
+
+                html +=
+                    '<li>... and ' + (errors.length - maxShown) + ' more.</li>';
+            }
+
+            html += '</ul>';
+        }
+
+        html += '</div>';
+
+        Swal.fire({
+            icon: errors.length > 0 ? 'warning' : 'success',
+            title: 'Upload Participants',
+            html: html,
+            confirmButtonText: 'OK'
+        });
     }
 
     function initParticipantTypeahead() {

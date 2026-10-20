@@ -52,6 +52,11 @@ namespace Training.Controllers
                         });
                 }
 
+                // [NEW - Step 4] Guard server-side: aturan sama dengan tombol Action di UI (fc_GetDocPermission.CanAction)
+                var perm = await _planningService.GetPlansPermission((int)request.Id, _emp.CurrentEmployee.Username);
+                if (perm == null || perm.CanAction != 1)
+                    return Json(new { success = false, message = "You are not authorized to perform this action on this plan." });
+
                 var role = await _trainingService.GetRoleAsync(_emp.CurrentEmployee.Username);   
                 // ✅ Map request to ActionVM
                 var act = new ActionVM

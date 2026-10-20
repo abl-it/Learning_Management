@@ -1,4 +1,4 @@
-﻿using AspNetCoreGeneratedDocument;
+using AspNetCoreGeneratedDocument;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.RegularExpressions;
@@ -511,6 +511,25 @@ namespace Training.Controllers
         }
 
 
+        /// <summary>
+        /// Server-side guard: memastikan user saat ini boleh mengedit plan
+        /// (CanEdit = 1 dari fc_GetDocPermission). UI tidak boleh menjadi
+        /// satu-satunya proteksi.
+        /// </summary>
+        /// <param name="planId">Plan identifier.</param>
+        /// <returns>True jika user boleh mengedit plan tersebut.</returns>
+        private async Task<bool> CanEditPlanAsync(int planId)
+        {
+            var username = _emp.CurrentEmployee?.Username;
+
+            if (planId <= 0 || string.IsNullOrWhiteSpace(username))
+                return false;
+
+            var perm = await _planningService.GetPlansPermission(planId, username);
+
+            return perm != null && perm.CanEdit == 1;
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddPlanDetail([FromBody] AddCourseRequest request)
         {
@@ -528,7 +547,11 @@ namespace Training.Controllers
                 var _plan = await _planningService.GetPlansByIdAsync(request.PlanId);
                 if (_plan == null)
                     return Json(new { success = false, message = "Plan Id is invalid." });
-                
+
+                // Guard: hanya user dengan CanEdit pada plan ini yang boleh menambah course
+                if (!await CanEditPlanAsync(request.PlanId))
+                    return Json(new { success = false, message = "You are not authorized to modify this plan." });
+
                 // ✅ Cek IsNewCourse dengan int
                 //if (request.IsNewCourse == 1)
                 //{
@@ -584,10 +607,20 @@ namespace Training.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeletePlanDetail(int detailId)
+        public async Task<IActionResult> DeletePlanDetail(int detailId, int planId)
         {
             try
             {
+                // Guard 1: hanya user dengan CanEdit pada plan ini yang boleh menghapus
+                if (!await CanEditPlanAsync(planId))
+                    return Json(new { success = false, message = "You are not authorized to modify this plan." });
+
+                // Guard 2: detail harus benar-benar milik plan tersebut
+                // (mencegah planId milik sendiri dipakai untuk menghapus detail plan lain)
+                var planDetails = await _planningService.GetPlansDetailAsync(planId);
+                if (!planDetails.Any(d => d.PlanDetailId == detailId))
+                    return Json(new { success = false, message = "Plan detail not found in this plan." });
+
                 var planDetail = await _planningService.DeletePlansDetail(detailId, _emp.CurrentEmployee.EmployeeCode ?? "System");
                 if (planDetail > 0)
                 {
