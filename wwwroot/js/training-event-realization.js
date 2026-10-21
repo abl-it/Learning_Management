@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
     'use strict';
 
     function escapeHtml(value) {
@@ -100,7 +100,195 @@
             this.renderAttachments();
             this.bindEvents();
             this.initParticipantTypeahead();
+            this.initWalkInUpload();
             this.initHistoryCollapseToggle();
+        },
+
+        /*
+         * Upload walk-in participants from Excel (.xlsx, column EmployeeCode).
+         * The server (TrainingEvent/ParseParticipants) only parses and resolves
+         * active employees - nothing is saved here. Valid rows are added to the
+         * attendance list exactly like the manual "Add Participant" walk-in
+         * (PRESENT, isWalkIn = true, plannedParticipantId = null) and are persisted
+         * by Save Draft / Post to HRD as usual. Codes already in the list
+         * (planned or walk-in) are skipped and reported.
+         */
+        initWalkInUpload: function () {
+
+            const self = this;
+            const $file = $('#walkInExcelFile');
+
+            $('#btnUploadWalkIn').on('click', function () {
+                // reset so choosing the same file again still fires "change"
+                $file.val('').trigger('click');
+            });
+
+            $file.on('change', function () {
+
+                const file = this.files && this.files[0];
+
+                if (file) {
+                    self.uploadWalkIns(file);
+                }
+            });
+        },
+
+        uploadWalkIns: function (file) {
+
+            const self = this;
+            const url = window.trainingEventRealizationUrls.parseParticipants;
+
+            if (!url) {
+                console.error('[Realization] parseParticipants URL is not available.');
+                return;
+            }
+
+            if (!/\.xlsx$/i.test(file.name)) {
+                showNotification('Only .xlsx files are supported.', 'warning');
+                return;
+            }
+
+            const token = getAntiForgeryToken();
+
+            if (!token) {
+                showNotification('Anti-forgery token was not found.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+
+            formData.append('file', file);
+
+            // Sent as form field AND header so it works with either antiforgery setup.
+            formData.append('__RequestVerificationToken', token);
+
+            this.state.participants.forEach(function (p) {
+                formData.append('existingCodes', p.employeeCode);
+            });
+
+            const $btn = $('#btnUploadWalkIn');
+            const originalHtml = $btn.html();
+
+            $btn.prop('disabled', true).html(
+                '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                headers: {
+                    'X-CSRF-TOKEN': token
+                }
+            })
+                .done(function (response) {
+
+                    if (!response || !response.success) {
+
+                        showNotification(
+                            (response && response.message) || 'Failed to read the Excel file.',
+                            'error');
+
+                        return;
+                    }
+
+                    const data = response.data || {};
+                    const parsed = Array.isArray(data.participants) ? data.participants : [];
+                    const errors = Array.isArray(data.errors) ? data.errors.slice() : [];
+
+                    let added = 0;
+
+                    parsed.forEach(function (item) {
+
+                        const code = (item.employeeCode || '').trim();
+
+                        // the list may have changed while the request was running
+                        const exists = self.state.participants.some(function (p) {
+                            return (p.employeeCode || '').toLowerCase() === code.toLowerCase();
+                        });
+
+                        if (exists) {
+
+                            errors.push({
+                                row: null,
+                                employeeCode: code,
+                                message: 'Already in the participant list.'
+                            });
+
+                            return;
+                        }
+
+                        self.state.participants.push({
+                            plannedParticipantId: null,
+                            employeeCode: code,
+                            name: item.fullName,
+                            abrv: item.departmentCode || '',
+                            deptName: item.departmentName || '',
+                            attendanceStatus: 'PRESENT',
+                            score: null,
+                            remarks: '',
+                            isWalkIn: true
+                        });
+
+                        added++;
+                    });
+
+                    self.renderParticipants();
+                    self.showWalkInUploadSummary(added, errors);
+                })
+                .fail(function (xhr) {
+
+                    const message =
+                        (xhr.responseJSON && xhr.responseJSON.message) ||
+                        'Failed to upload the Excel file.';
+
+                    showNotification(message, 'error');
+                })
+                .always(function () {
+                    $btn.prop('disabled', false).html(originalHtml);
+                    $('#walkInExcelFile').val('');
+                });
+        },
+
+        showWalkInUploadSummary: function (added, errors) {
+
+            const maxShown = 20;
+
+            let html =
+                '<div class="text-start">' +
+                '<p class="mb-2"><strong>' + added + '</strong> walk-in participant(s) added.</p>';
+
+            if (errors.length > 0) {
+
+                html +=
+                    '<p class="mb-1"><strong>' + errors.length + '</strong> row(s) skipped:</p>' +
+                    '<ul class="small mb-0" style="max-height:220px;overflow:auto;">';
+
+                errors.slice(0, maxShown).forEach(function (e) {
+
+                    const where = e.row ? 'Row ' + e.row : 'Row -';
+                    const code = e.employeeCode ? ' (' + escapeHtml(e.employeeCode) + ')' : '';
+
+                    html += '<li>' + where + code + ': ' + escapeHtml(e.message) + '</li>';
+                });
+
+                if (errors.length > maxShown) {
+                    html += '<li>... and ' + (errors.length - maxShown) + ' more.</li>';
+                }
+
+                html += '</ul>';
+            }
+
+            html += '</div>';
+
+            Swal.fire({
+                icon: errors.length > 0 ? 'warning' : 'success',
+                title: 'Upload Walk-in Participants',
+                html: html,
+                confirmButtonText: 'OK'
+            });
         },
 
         initHistoryCollapseToggle: function () {
@@ -132,7 +320,7 @@
 
             if (this.state.participants.length === 0) {
                 $body.append(
-                    '<tr><td colspan="' + (isPosted ? 6 : 7) +
+                    '<tr><td colspan="' + (isPosted ? 7 : 8) +
                     '" class="text-center text-muted py-3">No participants yet.</td></tr>'
                 );
 
@@ -164,6 +352,7 @@
                 const rowHtml =
                     '<tr data-index="' + index + '">' +
                     '<td>' + (index + 1) + '</td>' +
+                    '<td>' + escapeHtml(p.employeeCode) + '</td>' +
                     '<td>' + escapeHtml(p.name) + walkInBadge + '</td>' +
                     '<td>' + escapeHtml(p.deptName || '-') + '</td>' +
                     '<td class="text-center"><input type="checkbox" class="form-check-input participant-present-checkbox" data-index="' + index + '" ' + checked + ' ' + disabledAttr + ' /></td>' +

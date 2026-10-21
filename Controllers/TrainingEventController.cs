@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Training.Filters;
@@ -214,6 +214,116 @@ namespace Training.Controllers
             }
         }
         
+        /// <summary>
+        /// Parses an uploaded Excel file (.xlsx, column "EmployeeCode") for the Create Event
+        /// page and returns the resolved participants. Nothing is saved - the participants
+        /// are added to the form and saved together with the event by <c>Create</c>.
+        /// </summary>
+        /// <param name="file">The uploaded .xlsx file.</param>
+        /// <param name="existingCodes">Employee codes already in the participant list.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5_000_000)]
+        public async Task<IActionResult> ParseParticipants(
+            IFormFile? file,
+            [FromForm] List<string>? existingCodes,
+            CancellationToken cancellationToken)
+        {
+            if (file is null || file.Length == 0)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Please select an Excel file (.xlsx)."
+                });
+            }
+
+            if (!string.Equals(
+                    Path.GetExtension(file.FileName),
+                    ".xlsx",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Only .xlsx files are supported."
+                });
+            }
+
+            try
+            {
+                await using var stream = file.OpenReadStream();
+
+                var result = await _eventService.ParseParticipantsAsync(
+                    stream,
+                    existingCodes,
+                    cancellationToken);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        totalRows = result.TotalRows,
+
+                        // Same shape as the participant objects kept by training-event-create.js
+                        participants = result.Participants.Select(p => new
+                        {
+                            employeeCode = p.EmployeeCode,
+                            fullName = p.Name,
+                            departmentCode = p.ABRV,
+                            departmentName = p.DeptName
+                        }),
+
+                        errors = result.Errors.Select(e => new
+                        {
+                            row = e.RowNumber,
+                            employeeCode = e.EmployeeCode,
+                            message = e.Message
+                        })
+                    }
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "Invalid participant upload file {FileName}.",
+                    file.FileName);
+
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+            catch (OperationCanceledException)
+                when (cancellationToken.IsCancellationRequested)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "The request was cancelled."
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Unexpected error while parsing participant upload {FileName}.",
+                    file.FileName);
+
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        success = false,
+                        message = "An unexpected error occurred while reading the file."
+                    });
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetCourses()
         {

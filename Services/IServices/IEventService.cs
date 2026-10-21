@@ -1,4 +1,4 @@
-﻿using Training.DTOs.Training;
+using Training.DTOs.Training;
 using Training.Models;
 using Training.Models.DTO;
 using Training.Models.DTO.Common;
@@ -29,6 +29,21 @@ namespace Training.Services.IServices
         Task<List<TrainingEventPlanOptionDto>> GetPlanOptionsAsync(
             string coCode,
             string abrv,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Parses an uploaded participant Excel file (.xlsx, column "EmployeeCode") for the
+        /// Create Event page. Employees are resolved from the employee master (active only);
+        /// nothing is saved.
+        /// </summary>
+        /// <param name="excelStream">Stream of the uploaded .xlsx file.</param>
+        /// <param name="existingEmployeeCodes">Employee codes already in the participant list; these rows are skipped.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>Valid participants and the rows that were skipped.</returns>
+        /// <exception cref="ArgumentException">The file is not a usable participant workbook.</exception>
+        Task<ParticipantUploadResultDto> ParseParticipantsAsync(
+            Stream excelStream,
+            IEnumerable<string>? existingEmployeeCodes,
             CancellationToken cancellationToken = default);
 
         Task<TrainingEventDetailDto?> GetDetailAsync(

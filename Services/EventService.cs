@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.Data.SqlClient;
 using System.Data;
@@ -464,6 +464,148 @@ namespace Training.Services
             }
 
             return table;
+        }
+
+        /// <inheritdoc />
+        public async Task<ParticipantUploadResultDto> ParseParticipantsAsync(
+            Stream excelStream,
+            IEnumerable<string>? existingEmployeeCodes,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(excelStream);
+
+            var result = new ParticipantUploadResultDto();
+
+            // ---- 1. Read the Excel file (OpenXml needs a seekable stream) -------------
+            List<ParticipantExcelRow> rows;
+
+            try
+            {
+                using var buffer = new MemoryStream();
+                await excelStream.CopyToAsync(buffer, cancellationToken);
+                buffer.Position = 0;
+
+                rows = ParticipantExcelReader.ReadEmployeeCodes(buffer);
+            }
+            catch (Exception ex)
+                when (ex is DocumentFormat.OpenXml.Packaging.OpenXmlPackageException
+                      or InvalidDataException
+                      or FormatException // System.IO.Packaging.FileFormatException
+                      or System.Xml.XmlException)
+            {
+                _logger.LogWarning(ex, "Participant upload: file is not a valid .xlsx workbook.");
+
+                throw new ArgumentException("The file is not a valid .xlsx workbook.", ex);
+            }
+
+            result.TotalRows = rows.Count;
+
+            if (rows.Count == 0)
+            {
+                throw new ArgumentException("No employee code was found in the file.");
+            }
+
+            // ---- 2. Row-level validation (no DB) ---------------------------------------
+            var existing = new HashSet<string>(
+                (existingEmployeeCodes ?? Enumerable.Empty<string>())
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Select(c => c.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+
+            var firstRowByCode = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var candidates = new List<ParticipantExcelRow>();
+
+            foreach (var row in rows)
+            {
+                if (string.IsNullOrWhiteSpace(row.EmployeeCode))
+                {
+                    result.Errors.Add(new ParticipantUploadErrorDto
+                    {
+                        RowNumber = row.RowNumber,
+                        EmployeeCode = null,
+                        Message = "Employee code is empty."
+                    });
+
+                    continue;
+                }
+
+                if (firstRowByCode.TryGetValue(row.EmployeeCode, out var firstRow))
+                {
+                    result.Errors.Add(new ParticipantUploadErrorDto
+                    {
+                        RowNumber = row.RowNumber,
+                        EmployeeCode = row.EmployeeCode,
+                        Message = $"Duplicate in file (first seen at row {firstRow})."
+                    });
+
+                    continue;
+                }
+
+                firstRowByCode[row.EmployeeCode] = row.RowNumber;
+
+                if (existing.Contains(row.EmployeeCode))
+                {
+                    result.Errors.Add(new ParticipantUploadErrorDto
+                    {
+                        RowNumber = row.RowNumber,
+                        EmployeeCode = row.EmployeeCode,
+                        Message = "Already in the participant list."
+                    });
+
+                    continue;
+                }
+
+                candidates.Add(row);
+            }
+
+            // ---- 3. Resolve employees in ONE query (active employees only) -------------
+            if (candidates.Count > 0)
+            {
+                const string sql = """
+                    SELECT
+                        e.EmployeeCode,
+                        e.FullName AS Name,
+                        d.ABRV,
+                        d.DeptName
+                    FROM home.dbo.APP_Employees e
+                    LEFT JOIN home.dbo.APP_Departments d ON e.DepartmentID = d.DepartmentID
+                    WHERE e.EmployeeCode IN @Codes
+                      AND e.ResignDate IS NULL
+                    """;
+
+                await using var connection = new SqlConnection(_connectionString);
+
+                var command = new CommandDefinition(
+                    sql,
+                    new { Codes = candidates.Select(c => c.EmployeeCode).ToList() },
+                    cancellationToken: cancellationToken);
+
+                var employees =
+                    (await connection.QueryAsync<ParticipantUploadRowDto>(command))
+                    .GroupBy(e => e.EmployeeCode.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+                foreach (var candidate in candidates)
+                {
+                    if (employees.TryGetValue(candidate.EmployeeCode, out var employee))
+                    {
+                        result.Participants.Add(employee);
+                    }
+                    else
+                    {
+                        result.Errors.Add(new ParticipantUploadErrorDto
+                        {
+                            RowNumber = candidate.RowNumber,
+                            EmployeeCode = candidate.EmployeeCode,
+                            Message = "Employee code was not found or the employee has resigned."
+                        });
+                    }
+                }
+            }
+
+            result.Errors = result.Errors.OrderBy(e => e.RowNumber).ToList();
+
+            return result;
         }
 
         public async Task<TrainingEventDetailDto?> GetDetailAsync(
