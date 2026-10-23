@@ -22,6 +22,9 @@ namespace Training.Models.DTO.TrainingMatrix
         /// <summary>Karyawan yang Department-nya belum punya matrix Approved.</summary>
         public int NoMatrixEmployees { get; set; }
 
+        /// <summary>Karyawan yang perusahaannya tidak bisa ditentukan (Sub Department kosong/tidak dikenal); tidak ikut filter ABL/NKM.</summary>
+        public int NoCompanyEmployees { get; set; }
+
         /// <summary>Total course Mandatory yang wajib dipenuhi.</summary>
         public int MandatoryRequired { get; set; }
 
@@ -49,6 +52,9 @@ namespace Training.Models.DTO.TrainingMatrix
     {
         /// <summary>Kunci Department (ABRV).</summary>
         public string DepartmentAbrv { get; set; } = string.Empty;
+
+        /// <summary>Nama Department (DeptName); bila satu ABRV menggabungkan beberapa Department, dipisah " / ".</summary>
+        public string DepartmentName { get; set; } = string.Empty;
 
         /// <summary>Status matrix: Approved, Draft, Pending for HRGA Head, Rejected, atau No matrix.</summary>
         public string MatrixStatus { get; set; } = string.Empty;

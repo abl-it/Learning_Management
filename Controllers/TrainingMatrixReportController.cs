@@ -29,11 +29,13 @@ namespace Training.Controllers
         [HttpGet]
         public IActionResult Index() => View();
 
-        /// <summary>Ringkasan Compliance (seluruh perusahaan + per Department + alasan Unmapped).</summary>
+        /// <summary>Ringkasan Compliance untuk satu perusahaan (ABL/NKM): KPI, per Department, alasan Unmapped.</summary>
         [HttpGet]
-        public Task<IActionResult> GetSummary(CancellationToken cancellationToken) =>
+        public Task<IActionResult> GetSummary(
+            string company,
+            CancellationToken cancellationToken) =>
             RunAsync(
-                async () => await _reportService.GetSummaryAsync(cancellationToken),
+                async () => await _reportService.GetSummaryAsync(company, cancellationToken),
                 "load compliance summary",
                 cancellationToken);
 
@@ -49,9 +51,11 @@ namespace Training.Controllers
 
         /// <summary>Karyawan Unmapped (Data Quality).</summary>
         [HttpGet]
-        public Task<IActionResult> GetUnmapped(CancellationToken cancellationToken) =>
+        public Task<IActionResult> GetUnmapped(
+            string company,
+            CancellationToken cancellationToken) =>
             RunAsync(
-                async () => await _reportService.GetUnmappedAsync(cancellationToken),
+                async () => await _reportService.GetUnmappedAsync(company, cancellationToken),
                 "load unmapped employees",
                 cancellationToken);
 

@@ -471,6 +471,11 @@
                                     <i class="fa-solid fa-layer-group me-2"></i>Course Group
                                 </a>
                             </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="EmployeeMatrix" asp-action="Index" id="employeeMatrixLink">
+                                    <i class="fa-solid fa-user-graduate me-2"></i>Employee Matrix
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" asp-controller="TrainingMatrixReport" asp-action="Index" id="matrixReportLink">
@@ -638,6 +643,10 @@
                 else if (currentController === 'CourseGroup') {
                     $('#matrixDropdown').addClass('active');
                     $('#courseGroupLink').addClass('active');
+                }
+                else if (currentController === 'EmployeeMatrix') {
+                    $('#matrixDropdown').addClass('active');
+                    $('#employeeMatrixLink').addClass('active');
                 }
                 else if (currentController === 'TrainingMatrixReport') {
                     $('#matrixDropdown').addClass('active');

@@ -19,6 +19,8 @@ namespace Training.Services
         private const string StatusUnmapped = "Unmapped";
         private const string StatusNoMatrix = "No Matrix";
 
+        private static readonly string[] Companies = { "ABL", "NKM" };
+
         private const string ReasonNoSubDept = "Sub Department belum diisi";
         private const string ReasonUnknownSubDept = "Sub Department tidak dikenal";
         private const string ReasonNoPosition = "PositionID belum diisi";
@@ -50,19 +52,27 @@ namespace Training.Services
 
         /// <inheritdoc />
         public async Task<ComplianceReportDto> GetSummaryAsync(
+            string company,
             CancellationToken cancellationToken = default)
         {
+            company = NormalizeCompany(company);
+
             var model = await BuildAsync(cancellationToken);
 
-            var included = model.Employees.Where(e => e.Status == StatusIncluded).ToList();
+            var scoped = model.Employees
+                .Where(e => string.Equals(e.Company, company, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var included = scoped.Where(e => e.Status == StatusIncluded).ToList();
 
             var report = new ComplianceReportDto
             {
                 GeneratedAt = DateTime.Now,
-                TotalEmployees = model.Employees.Count,
+                TotalEmployees = scoped.Count,
                 IncludedEmployees = included.Count,
-                UnmappedEmployees = model.Employees.Count(e => e.Status == StatusUnmapped),
-                NoMatrixEmployees = model.Employees.Count(e => e.Status == StatusNoMatrix),
+                UnmappedEmployees = scoped.Count(e => e.Status == StatusUnmapped),
+                NoMatrixEmployees = scoped.Count(e => e.Status == StatusNoMatrix),
+                NoCompanyEmployees = model.Employees.Count(e => e.Company is null),
                 MandatoryRequired = included.Sum(e => e.MandatoryRequired),
                 MandatoryFulfilled = included.Sum(e => e.MandatoryFulfilled),
                 EmployeesWithGap = included.Count(e => e.MandatoryFulfilled < e.MandatoryRequired)
@@ -71,18 +81,21 @@ namespace Training.Services
             report.CompliancePercent = Pct(report.MandatoryFulfilled, report.MandatoryRequired);
             report.UnmappedPercent = Pct(report.UnmappedEmployees, report.TotalEmployees);
 
-            report.UnmappedReasons = model.Employees
+            report.UnmappedReasons = scoped
                 .Where(e => e.Status == StatusUnmapped)
                 .GroupBy(e => e.Reason ?? string.Empty)
                 .Select(g => new UnmappedReasonDto { Reason = g.Key, Count = g.Count() })
                 .OrderByDescending(r => r.Count)
                 .ToList();
 
-            report.Departments = model.DepartmentAbrvs
-                .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
-                .Select(abrv =>
+            report.Departments = model.Departments
+                .Where(d => string.Equals(d.Company, company, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(d => d.DeptName, StringComparer.OrdinalIgnoreCase)
+                .Select(info =>
                 {
-                    var inDept = model.Employees
+                    var abrv = info.Abrv;
+
+                    var inDept = scoped
                         .Where(e => string.Equals(e.Abrv, abrv, StringComparison.OrdinalIgnoreCase))
                         .ToList();
 
@@ -94,6 +107,7 @@ namespace Training.Services
                     var dto = new DepartmentComplianceDto
                     {
                         DepartmentAbrv = abrv,
+                        DepartmentName = info.DeptName,
                         MatrixStatus = status ?? "No matrix",
                         MatrixId = matrixId == 0 ? null : matrixId,
                         EmployeeCount = inDept.Count,
@@ -155,12 +169,16 @@ namespace Training.Services
 
         /// <inheritdoc />
         public async Task<List<UnmappedEmployeeDto>> GetUnmappedAsync(
+            string company,
             CancellationToken cancellationToken = default)
         {
+            company = NormalizeCompany(company);
+
             var model = await BuildAsync(cancellationToken);
 
             return model.Employees
-                .Where(e => e.Status == StatusUnmapped)
+                .Where(e => e.Status == StatusUnmapped
+                         && string.Equals(e.Company, company, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(e => e.Reason, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(e => e.Abrv, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(e => e.Code, StringComparer.OrdinalIgnoreCase)
@@ -177,6 +195,402 @@ namespace Training.Services
                     Reason = e.Reason ?? string.Empty
                 })
                 .ToList();
+        }
+
+        /// <inheritdoc />
+        public async Task<MatrixFilterDto> GetFiltersAsync(
+            CancellationToken cancellationToken = default)
+        {
+            var model = await BuildAsync(cancellationToken);
+
+            var departments = model.Departments
+                .Where(d => Companies.Contains(d.Company, StringComparer.OrdinalIgnoreCase))
+                .OrderBy(d => d.DeptName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var abrvs = departments.Select(d => d.Abrv).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            return new MatrixFilterDto
+            {
+                Companies = Companies.ToList(),
+                Departments = departments
+                    .Select(d => new FilterDepartmentDto
+                    {
+                        Abrv = d.Abrv,
+                        Name = d.DeptName,
+                        Company = d.Company.ToUpperInvariant()
+                    })
+                    .ToList(),
+                SubDepartments = model.SubDepartments
+                    .Where(s => abrvs.Contains(s.Abrv))
+                    .OrderBy(s => s.SubDepartmentCode, StringComparer.OrdinalIgnoreCase)
+                    .Select(s => new FilterSubDepartmentDto
+                    {
+                        Id = s.SubDepartmentID,
+                        Code = s.SubDepartmentCode,
+                        Name = s.SubDepartmentName,
+                        Abrv = s.Abrv
+                    })
+                    .ToList()
+            };
+        }
+
+        /// <inheritdoc />
+        public async Task<List<EmployeeMatrixRowDto>> GetEmployeesAsync(
+            string company,
+            string? departmentAbrv,
+            int? subDepartmentId,
+            CancellationToken cancellationToken = default)
+        {
+            company = NormalizeCompany(company);
+
+            var abrv = string.IsNullOrWhiteSpace(departmentAbrv) ? null : departmentAbrv.Trim();
+
+            var model = await BuildAsync(cancellationToken);
+
+            var deptNames = model.Departments.ToDictionary(
+                d => d.Abrv, d => d.DeptName, StringComparer.OrdinalIgnoreCase);
+
+            return model.Employees
+                .Where(e => string.Equals(e.Company, company, StringComparison.OrdinalIgnoreCase))
+                .Where(e => abrv is null
+                            || string.Equals(e.Abrv, abrv, StringComparison.OrdinalIgnoreCase))
+                .Where(e => subDepartmentId is null || e.SubDepartmentId == subDepartmentId)
+                .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(e => new EmployeeMatrixRowDto
+                {
+                    EmployeeCode = e.Code,
+                    Name = e.Name,
+                    DepartmentAbrv = e.Abrv,
+                    DepartmentName = e.Abrv is not null && deptNames.TryGetValue(e.Abrv, out var dn) ? dn : null,
+                    SubDepartmentId = e.SubDepartmentId,
+                    SubDepartmentCode = e.SubDepartmentCode,
+                    SubDepartmentName = e.SubDepartmentName,
+                    Layer = e.Layer,
+                    Status = e.Status,
+                    Reason = e.Reason,
+                    MandatoryRequired = e.MandatoryRequired,
+                    MandatoryFulfilled = e.MandatoryFulfilled,
+                    RecommendedRequired = e.RecommendedRequired,
+                    RecommendedFulfilled = e.RecommendedFulfilled
+                })
+                .ToList();
+        }
+
+        /// <inheritdoc />
+        public async Task<MatrixExportFileDto> ExportMatrixAsync(
+            string company,
+            string? departmentAbrv,
+            int? subDepartmentId,
+            CancellationToken cancellationToken = default)
+        {
+            company = NormalizeCompany(company);
+
+            var abrv = string.IsNullOrWhiteSpace(departmentAbrv) ? null : departmentAbrv.Trim();
+
+            var model = await BuildAsync(cancellationToken);
+
+            var departments = model.Departments
+                .Where(d => string.Equals(d.Company, company, StringComparison.OrdinalIgnoreCase))
+                .Where(d => abrv is null || string.Equals(d.Abrv, abrv, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(d => d.DeptName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (departments.Count == 0)
+            {
+                throw new ArgumentException("Department tidak ditemukan pada company ini.");
+            }
+
+            // Aktual training: semua kehadiran pada course yang ada di matrix (dikelompokkan per karyawan + course)
+            var scopeAbrvs = departments
+                .Where(d => model.ApprovedAbrvs.Contains(d.Abrv))
+                .Select(d => d.Abrv)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var courseIds = model.Details
+                .Where(d => scopeAbrvs.Contains(d.DepartmentAbrv.Trim()))
+                .Select(d => d.CourseId)
+                .Distinct()
+                .ToList();
+
+            var attendance = new Dictionary<string, List<AttendRow>>(StringComparer.OrdinalIgnoreCase);
+
+            if (courseIds.Count > 0)
+            {
+                await using var attendConnection = new SqlConnection(_connectionString);
+
+                var attendRows = await attendConnection.QueryAsync<AttendRow>(
+                    new CommandDefinition(
+                        """
+                        SELECT LTRIM(RTRIM(a.EmployeeCode)) AS EmployeeCode, e.CourseId, e.EventCode,
+                               e.EventStartDate, e.Status AS EventStatus, a.AttendanceStatus
+                        FROM dbo.TrainingEventActualParticipant a
+                        INNER JOIN dbo.TrainingEvent e ON e.TrainingEventId = a.TrainingEventId
+                        WHERE e.CourseId IN @CourseIds;
+                        """,
+                        new { CourseIds = courseIds },
+                        cancellationToken: cancellationToken));
+
+                foreach (var g in attendRows.GroupBy(r => DoneKey(r.EmployeeCode, r.CourseId)))
+                {
+                    attendance[g.Key] = g.OrderByDescending(r => r.EventStartDate).ToList();
+                }
+            }
+
+            var export = new MatrixExportDto
+            {
+                GeneratedAt = DateTime.Now,
+                Title = BuildExportTitle(company, departments, abrv, subDepartmentId, model)
+            };
+
+            foreach (var dept in departments)
+            {
+                model.MatrixStatus.TryGetValue(dept.Abrv, out var status);
+
+                var deptDto = new MatrixExportDepartmentDto
+                {
+                    Abrv = dept.Abrv,
+                    Name = dept.DeptName,
+                    MatrixStatus = status ?? "No matrix",
+                    IsApproved = model.ApprovedAbrvs.Contains(dept.Abrv)
+                };
+
+                var subs = model.SubDepartments
+                    .Where(s => string.Equals(s.Abrv, dept.Abrv, StringComparison.OrdinalIgnoreCase))
+                    .Where(s => subDepartmentId is null || s.SubDepartmentID == subDepartmentId)
+                    .OrderBy(s => s.SubDepartmentCode, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                foreach (var sub in subs)
+                {
+                    var people = model.Employees.Where(e => e.SubDepartmentId == sub.SubDepartmentID).ToList();
+
+                    var subDto = new MatrixExportSubDepartmentDto
+                    {
+                        Code = sub.SubDepartmentCode,
+                        Name = sub.SubDepartmentName,
+                        Layer1Employees = people.Count(e => e.Layer == 1),
+                        Layer2Employees = people.Count(e => e.Layer == 2),
+                        Layer3Employees = people.Count(e => e.Layer == 3),
+                        UnmappedEmployees = people.Count(e => e.Status == StatusUnmapped)
+                    };
+
+                    subDto.Unmapped = people
+                        .Where(e => e.Status == StatusUnmapped)
+                        .OrderBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+                        .Select(e => new MatrixExportUnmappedDto
+                        {
+                            EmployeeCode = e.Code,
+                            Name = e.Name,
+                            Reason = e.Reason ?? string.Empty
+                        })
+                        .ToList();
+
+                    var included = people
+                        .Where(e => e.Status == StatusIncluded && e.Layer is not null)
+                        .OrderBy(e => e.Layer)
+                        .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    subDto.People = included
+                        .Select(e => new MatrixExportPersonDto
+                        {
+                            EmployeeCode = e.Code,
+                            Name = e.Name,
+                            Layer = e.Layer!.Value
+                        })
+                        .ToList();
+
+                    if (deptDto.IsApproved)
+                    {
+                        var rows = model.Details
+                            .Where(d => d.SubDepartmentID == sub.SubDepartmentID
+                                     && string.Equals(d.DepartmentAbrv.Trim(), dept.Abrv, StringComparison.OrdinalIgnoreCase))
+                            .GroupBy(d => d.CourseId);
+
+                        foreach (var g in rows)
+                        {
+                            model.Courses.TryGetValue(g.Key, out var course);
+
+                            var courseDto = new MatrixExportCourseDto
+                            {
+                                CourseCode = course?.CourseCode ?? g.Key.ToString(),
+                                CourseName = course?.CourseName ?? string.Empty,
+                                Layer1 = g.FirstOrDefault(x => x.Layer == 1)?.Requirement,
+                                Layer2 = g.FirstOrDefault(x => x.Layer == 2)?.Requirement,
+                                Layer3 = g.FirstOrDefault(x => x.Layer == 3)?.Requirement
+                            };
+
+                            foreach (var person in included)
+                            {
+                                var requirement = person.Layer switch
+                                {
+                                    1 => courseDto.Layer1,
+                                    2 => courseDto.Layer2,
+                                    3 => courseDto.Layer3,
+                                    _ => null
+                                };
+
+                                if (string.IsNullOrEmpty(requirement))
+                                {
+                                    continue;
+                                }
+
+                                attendance.TryGetValue(DoneKey(person.Code, g.Key), out var records);
+
+                                // Utamakan event yang memenuhi (PRESENT + Complete); bila tidak ada, event terbaru
+                                var pick = records?.FirstOrDefault(IsFulfilling) ?? records?.FirstOrDefault();
+
+                                courseDto.Employees.Add(new MatrixExportEmployeeDto
+                                {
+                                    EmployeeCode = person.Code,
+                                    Name = person.Name,
+                                    Layer = person.Layer!.Value,
+                                    Requirement = requirement,
+                                    Fulfilled = records?.Any(IsFulfilling) == true,
+                                    EventCode = pick?.EventCode,
+                                    EventDate = pick?.EventStartDate,
+                                    EventStatus = pick?.EventStatus,
+                                    Attendance = pick?.AttendanceStatus
+                                });
+                            }
+
+                            subDto.Courses.Add(courseDto);
+                        }
+
+                        subDto.Courses = subDto.Courses
+                            .OrderBy(c => c.CourseCode, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                    }
+
+                    deptDto.SubDepartments.Add(subDto);
+                }
+
+                export.Departments.Add(deptDto);
+            }
+
+            var scope = abrv is null ? company : $"{company}_{SafeFileName(abrv)}";
+
+            return new MatrixExportFileDto
+            {
+                FileName = $"TrainingMatrix_{scope}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
+                Content = MatrixExcelWriter.Build(export)
+            };
+        }
+
+        /// <inheritdoc />
+        public async Task<EmployeeMatrixDetailDto> GetEmployeeDetailAsync(
+            string employeeCode,
+            CancellationToken cancellationToken = default)
+        {
+            var code = employeeCode?.Trim();
+
+            if (string.IsNullOrEmpty(code))
+            {
+                throw new ArgumentException("Employee code is required.");
+            }
+
+            var model = await BuildAsync(cancellationToken);
+
+            var emp = model.Employees.FirstOrDefault(
+                e => string.Equals(e.Code, code, StringComparison.OrdinalIgnoreCase));
+
+            if (emp is null)
+            {
+                throw new ArgumentException("Karyawan tidak ditemukan atau sudah tidak aktif.");
+            }
+
+            const string sql = """
+                SELECT e.TrainingEventId, e.EventCode, e.CourseId, c.CourseCode, e.TrainingTitle,
+                       e.EventStartDate, e.EventEndDate, e.Status AS EventStatus,
+                       a.AttendanceStatus, e.TrainerName, e.Venue, r.RealizationDate
+                FROM dbo.TrainingEventActualParticipant a
+                INNER JOIN dbo.TrainingEvent e ON e.TrainingEventId = a.TrainingEventId
+                LEFT JOIN dbo.Master_Courses c ON c.CourseId = e.CourseId
+                LEFT JOIN dbo.TrainingEventRealization r ON r.TrainingEventId = e.TrainingEventId
+                WHERE LTRIM(RTRIM(a.EmployeeCode)) = @Code
+                ORDER BY e.EventStartDate DESC, e.TrainingEventId DESC;
+                """;
+
+            await using var connection = new SqlConnection(_connectionString);
+
+            var rows = (await connection.QueryAsync<HistoryRow>(
+                new CommandDefinition(sql, new { Code = code }, cancellationToken: cancellationToken)))
+                .ToList();
+
+            var history = rows
+                .Select(h => new TrainingHistoryDto
+                {
+                    TrainingEventId = h.TrainingEventId,
+                    EventCode = h.EventCode,
+                    CourseCode = h.CourseCode,
+                    TrainingTitle = h.TrainingTitle,
+                    EventStartDate = h.EventStartDate,
+                    EventEndDate = h.EventEndDate,
+                    RealizationDate = h.RealizationDate,
+                    EventStatus = h.EventStatus,
+                    AttendanceStatus = h.AttendanceStatus,
+                    TrainerName = h.TrainerName,
+                    Venue = h.Venue,
+                    CountsForCompliance = IsFulfilling(h)
+                })
+                .ToList();
+
+            // Course menurut matrix: tambahkan event yang memenuhi (terbaru)
+            var required = emp.Required
+                .Select(r =>
+                {
+                    var hit = rows.FirstOrDefault(h => h.CourseId == r.CourseId && IsFulfilling(h));
+
+                    return new RequiredCourseDto
+                    {
+                        CourseId = r.CourseId,
+                        CourseCode = r.CourseCode,
+                        CourseName = r.CourseName,
+                        Requirement = r.Requirement,
+                        Fulfilled = r.Fulfilled,
+                        FulfilledEventCode = hit?.EventCode,
+                        FulfilledDate = hit?.EventStartDate
+                    };
+                })
+                .OrderBy(r => r.Requirement == "Mandatory" ? 0 : 1)
+                .ThenBy(r => r.Fulfilled ? 1 : 0)
+                .ThenBy(r => r.CourseCode, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var deptName = model.Departments
+                .FirstOrDefault(d => string.Equals(d.Abrv, emp.Abrv, StringComparison.OrdinalIgnoreCase))
+                ?.DeptName;
+
+            string? matrixStatus = null;
+            int? matrixId = null;
+
+            if (emp.Abrv is not null)
+            {
+                if (model.MatrixStatus.TryGetValue(emp.Abrv, out var ms)) matrixStatus = ms;
+                if (model.MatrixIds.TryGetValue(emp.Abrv, out var mid) && mid != 0) matrixId = mid;
+            }
+
+            return new EmployeeMatrixDetailDto
+            {
+                EmployeeCode = emp.Code,
+                Name = emp.Name,
+                DepartmentAbrv = emp.Abrv,
+                DepartmentName = deptName,
+                SubDepartmentCode = emp.SubDepartmentCode,
+                SubDepartmentName = emp.SubDepartmentName,
+                Layer = emp.Layer,
+                Status = emp.Status,
+                Reason = emp.Reason,
+                MatrixStatus = matrixStatus,
+                MatrixId = matrixId,
+                MandatoryRequired = emp.MandatoryRequired,
+                MandatoryFulfilled = emp.MandatoryFulfilled,
+                RecommendedRequired = emp.RecommendedRequired,
+                RecommendedFulfilled = emp.RecommendedFulfilled,
+                Required = required,
+                History = history
+            };
         }
 
         // =====================================================================
@@ -222,7 +636,7 @@ namespace Training.Services
                 INNER JOIN home.dbo.APP_Departments d ON d.DepartmentID = s.DepartmentID
                 WHERE d.Disabled = 0 AND s.Disabled = 0 AND d.ABRV IS NOT NULL;
 
-                SELECT DISTINCT LTRIM(RTRIM(ABRV)) AS Abrv
+                SELECT LTRIM(RTRIM(ABRV)) AS Abrv, LTRIM(RTRIM(CoCode)) AS Company, DeptName
                 FROM home.dbo.APP_Departments
                 WHERE Disabled = 0 AND ABRV IS NOT NULL AND LTRIM(RTRIM(ABRV)) <> '';
 
@@ -258,7 +672,27 @@ namespace Training.Services
                 .GroupBy(s => s.SubDepartmentID)
                 .ToDictionary(g => g.Key, g => g.First());
 
-            var abrvs = (await multi.ReadAsync<string>()).ToList();
+            var deptInfos = (await multi.ReadAsync<DeptRow>())
+                .GroupBy(d => d.Abrv, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new DepartmentInfo
+                {
+                    Abrv = g.Key,
+                    Company = g.Select(x => x.Company).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)) ?? string.Empty,
+                    DeptName = string.Join(" / ", g
+                        .Select(x => (x.DeptName ?? string.Empty).Trim())
+                        .Where(n => n.Length > 0)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+                })
+                .ToList();
+
+            foreach (var d in deptInfos.Where(d => d.DeptName.Length == 0))
+            {
+                d.DeptName = d.Abrv;
+            }
+
+            var companyByAbrv = deptInfos.ToDictionary(
+                d => d.Abrv, d => d.Company, StringComparer.OrdinalIgnoreCase);
 
             var names = (await multi.ReadAsync<NameRow>())
                 .GroupBy(n => n.EmployeeCode.Trim(), StringComparer.OrdinalIgnoreCase)
@@ -325,6 +759,7 @@ namespace Training.Services
                 }
 
                 emp.Abrv = sub.Abrv;
+                emp.Company = companyByAbrv.TryGetValue(sub.Abrv, out var co) ? co : null;
                 emp.SubDepartmentCode = sub.SubDepartmentCode;
                 emp.SubDepartmentName = sub.SubDepartmentName;
                 emp.DeptName = sub.DeptName;
@@ -391,10 +826,19 @@ namespace Training.Services
                             if (fulfilled) emp.RecommendedFulfilled++;
                         }
 
+                        courses.TryGetValue(r.CourseId, out var course);
+
+                        emp.Required.Add(new RequiredCourseDto
+                        {
+                            CourseId = r.CourseId,
+                            CourseCode = course?.CourseCode ?? r.CourseId.ToString(),
+                            CourseName = course?.CourseName ?? string.Empty,
+                            Requirement = isMandatory ? "Mandatory" : "Recommended",
+                            Fulfilled = fulfilled
+                        });
+
                         if (!fulfilled)
                         {
-                            courses.TryGetValue(r.CourseId, out var course);
-
                             emp.Gaps.Add(new GapCourseDto
                             {
                                 CourseId = r.CourseId,
@@ -417,7 +861,11 @@ namespace Training.Services
             return new ReportModel
             {
                 Employees = employees,
-                DepartmentAbrvs = abrvs,
+                Departments = deptInfos,
+                SubDepartments = subDepts.Values.ToList(),
+                Details = details,
+                Courses = courses,
+                ApprovedAbrvs = approvedAbrvs,
                 MatrixStatus = matrixStatus,
                 MatrixIds = matrixIds
             };
@@ -426,6 +874,58 @@ namespace Training.Services
         // =====================================================================
         // HELPERS
         // =====================================================================
+
+        private static string BuildExportTitle(
+            string company,
+            List<DepartmentInfo> departments,
+            string? abrv,
+            int? subDepartmentId,
+            ReportModel model)
+        {
+            var title = $"Training Matrix - {company}";
+
+            if (abrv is not null)
+            {
+                title += $" - {departments[0].DeptName}";
+            }
+
+            if (subDepartmentId is not null)
+            {
+                var sub = model.SubDepartments.FirstOrDefault(s => s.SubDepartmentID == subDepartmentId);
+
+                if (sub is not null)
+                {
+                    title += $" - {sub.SubDepartmentName}";
+                }
+            }
+
+            return title;
+        }
+
+        private static string SafeFileName(string value) =>
+            System.Text.RegularExpressions.Regex.Replace(value, "[^A-Za-z0-9_-]+", "_").Trim('_');
+
+        private static bool IsFulfilling(HistoryRow h) =>
+            IsFulfilling(h.AttendanceStatus, h.EventStatus);
+
+        private static bool IsFulfilling(AttendRow r) =>
+            IsFulfilling(r.AttendanceStatus, r.EventStatus);
+
+        private static bool IsFulfilling(string? attendanceStatus, string? eventStatus) =>
+            string.Equals(attendanceStatus, "PRESENT", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(eventStatus, "Complete", StringComparison.OrdinalIgnoreCase);
+
+        private static string NormalizeCompany(string? company)
+        {
+            var value = company?.Trim().ToUpperInvariant();
+
+            if (value is null || !Companies.Contains(value))
+            {
+                throw new ArgumentException("Company harus ABL atau NKM.");
+            }
+
+            return value;
+        }
 
         private static double? Pct(int part, int whole) =>
             whole == 0 ? null : Math.Round(part * 100.0 / whole, 1);
@@ -441,9 +941,53 @@ namespace Training.Services
         private sealed class ReportModel
         {
             public List<EmployeeResult> Employees { get; set; } = new();
-            public List<string> DepartmentAbrvs { get; set; } = new();
+            public List<DepartmentInfo> Departments { get; set; } = new();
+            public List<SubDeptRow> SubDepartments { get; set; } = new();
+            public List<DetailRow> Details { get; set; } = new();
+            public HashSet<string> ApprovedAbrvs { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+            public Dictionary<int, CourseRow> Courses { get; set; } = new();
             public Dictionary<string, string> MatrixStatus { get; set; } = new();
             public Dictionary<string, int> MatrixIds { get; set; } = new();
+        }
+
+        private sealed class AttendRow
+        {
+            public string EmployeeCode { get; set; } = string.Empty;
+            public int CourseId { get; set; }
+            public string EventCode { get; set; } = string.Empty;
+            public DateTime? EventStartDate { get; set; }
+            public string? EventStatus { get; set; }
+            public string? AttendanceStatus { get; set; }
+        }
+
+        private sealed class HistoryRow
+        {
+            public long TrainingEventId { get; set; }
+            public string EventCode { get; set; } = string.Empty;
+            public int CourseId { get; set; }
+            public string? CourseCode { get; set; }
+            public string? TrainingTitle { get; set; }
+            public DateTime? EventStartDate { get; set; }
+            public DateTime? EventEndDate { get; set; }
+            public string? EventStatus { get; set; }
+            public string? AttendanceStatus { get; set; }
+            public string? TrainerName { get; set; }
+            public string? Venue { get; set; }
+            public DateTime? RealizationDate { get; set; }
+        }
+
+        private sealed class DepartmentInfo
+        {
+            public string Abrv { get; set; } = string.Empty;
+            public string Company { get; set; } = string.Empty;
+            public string DeptName { get; set; } = string.Empty;
+        }
+
+        private sealed class DeptRow
+        {
+            public string Abrv { get; set; } = string.Empty;
+            public string? Company { get; set; }
+            public string? DeptName { get; set; }
         }
 
         private sealed class EmployeeResult
@@ -451,6 +995,7 @@ namespace Training.Services
             public string Code { get; set; } = string.Empty;
             public string Name { get; set; } = string.Empty;
             public string? Abrv { get; set; }
+            public string? Company { get; set; }
             public int? SubDepartmentId { get; set; }
             public string? SubDepartmentCode { get; set; }
             public string? SubDepartmentName { get; set; }
@@ -465,6 +1010,7 @@ namespace Training.Services
             public int RecommendedRequired { get; set; }
             public int RecommendedFulfilled { get; set; }
             public List<GapCourseDto> Gaps { get; set; } = new();
+            public List<RequiredCourseDto> Required { get; set; } = new();
         }
 
         // ---- baris pemetaan Dapper ----

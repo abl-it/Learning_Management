@@ -18,6 +18,10 @@ using Training.Services.IServices;
  */
 QuestPDF.Settings.License = LicenseType.Community;
 
+// EPPlus 8: lisensi wajib diatur sekali saat startup (pilih salah satu sesuai lisensi perusahaan)
+OfficeOpenXml.ExcelPackage.License.SetNonCommercialOrganization("ABL");
+// atau, bila perusahaan punya lisensi komersial:
+// OfficeOpenXml.ExcelPackage.License.SetCommercial("<license key>");
 
 var builder = WebApplication.CreateBuilder(args);
 

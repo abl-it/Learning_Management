@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "Employee Matrix";
+}
+
+<style>
+    /* Tidak memakai .table-compact: _Layout memaksa lebar kolom (nth-child) pada class itu */
+    .tm-rp { font-size: .8125rem; margin-bottom: 0; }
+    .tm-rp th, .tm-rp td { padding: .375rem .5rem; vertical-align: middle; }
+    .tm-rp thead th { font-size: .75rem; font-weight: 600; background-color: #495057 !important; color: #fff !important;
+                      border-bottom: 2px solid #343a40 !important; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+    #emTable { table-layout: fixed; min-width: 1000px; }
+    #emTable td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #emTable tbody tr { cursor: pointer; }
+    .em-fixed td, .em-fixed th { overflow: hidden; text-overflow: ellipsis; }
+</style>
+
+<div class="container-fluid">
+
+    <div class="mb-3">
+        <h4 class="mb-0 fw-medium">
+            <i class="fa-solid fa-user-graduate me-2"></i>Employee Matrix
+        </h4>
+        <div class="text-muted small">
+            Course yang harus dilakukan karyawan menurut Training Matrix (Approved) dan training aktual yang sudah diikuti.
+        </div>
+    </div>
+
+    <div class="card card-compact mb-3">
+        <div class="card-header">
+            <h6 class="mb-0 fw-medium"><i class="fas fa-filter me-2"></i>Filters</h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-xl-2 col-lg-3 col-md-4 col-6">
+                    <label for="emCompany" class="form-label text-xs fw-medium mb-1">Company</label>
+                    <select id="emCompany" class="form-select form-select-xs">
+                        <option value="ABL" selected>ABL</option>
+                        <option value="NKM">NKM</option>
+                    </select>
+                </div>
+                <div class="col-xl-3 col-lg-4 col-md-4 col-6">
+                    <label for="emDept" class="form-label text-xs fw-medium mb-1">Department</label>
+                    <select id="emDept" class="form-select form-select-xs">
+                        <option value="">All Department</option>
+                    </select>
+                </div>
+                <div class="col-xl-3 col-lg-4 col-md-4 col-12">
+                    <label for="emSub" class="form-label text-xs fw-medium mb-1">Sub Department</label>
+                    <select id="emSub" class="form-select form-select-xs" disabled>
+                        <option value="">All Sub Department</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-sm btn-outline-success" id="emExport"
+                            title="Export Training Matrix per Sub Department sesuai filter Company / Department / Sub Department">
+                        <i class="fas fa-file-excel me-1"></i>Export Excel
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <span class="small text-muted" id="emCount"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card card-compact">
+        <div class="card-body p-2">
+            <div class="table-responsive">
+                <table id="emTable" class="table table-striped tm-rp w-100"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail karyawan -->
+<div class="modal fade" id="emModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title mb-0" id="emTitle"></h5>
+                    <div class="small text-muted" id="emSubtitle"></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="emNotice"></div>
+                <div class="d-flex flex-wrap gap-3 mb-3" id="emSummary"></div>
+
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#emTabMatrix" type="button" role="tab">
+                            Matrix (yang harus dilakukan) <span class="badge bg-secondary ms-1" id="emMatrixCount">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#emTabActual" type="button" role="tab">
+                            Training Aktual <span class="badge bg-secondary ms-1" id="emActualCount">0</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="emTabMatrix" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped em-fixed mb-0" id="emMatrixTable" style="min-width:640px"></table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="emTabActual" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped mb-0" id="emActualTable" style="min-width:900px"></table>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Dihitung untuk compliance bila kehadiran PRESENT pada event berstatus Complete.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+
+        window.emCfg = {
+
+            urls: {
+
+                filters: '@Url.Action("GetFilters", "EmployeeMatrix")',
+
+                employees: '@Url.Action("GetEmployees", "EmployeeMatrix")',
+
+                detail: '@Url.Action("GetDetail", "EmployeeMatrix")',
+
+                exportMatrix: '@Url.Action("ExportMatrix", "EmployeeMatrix")'
+
+            }
+
+        };
+
+    </script>
+
+    <script src="~/js/employee-matrix.js" asp-append-version="true"></script>
+
+}

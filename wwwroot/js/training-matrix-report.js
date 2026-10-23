@@ -15,6 +15,9 @@
     let empTable = null;
     let empModal = null;
     let unmappedLoaded = false;
+    let deptNames = {};   // ABRV -> DeptName (untuk judul modal)
+
+    function company() { return $('#rpCompany').val() || 'ABL'; }
 
     /* ---------- helpers ---------- */
 
@@ -63,7 +66,7 @@
     /* ---------- summary ---------- */
 
     function loadSummary() {
-        $.getJSON(urls.summary)
+        $.getJSON(urls.summary, { company: company() })
             .done(function (res) {
                 if (!res.success) {
                     toast('error', res.message || 'Gagal memuat laporan.');
@@ -73,6 +76,15 @@
                 const d = res.data;
 
                 $('#rpGenerated').text(`Dihitung ${fmtDate(d.generatedAt)}`);
+
+                deptNames = {};
+                d.departments.forEach(x => { deptNames[x.departmentAbrv] = x.departmentName; });
+
+                $('#rpNoCompany')
+                    .text(d.noCompanyEmployees > 0
+                        ? `${d.noCompanyEmployees} karyawan dengan Sub Department kosong/tidak dikenal tidak dapat ditentukan perusahaannya, sehingga tidak muncul pada filter ini.`
+                        : '')
+                    .toggle(d.noCompanyEmployees > 0);
 
                 $('#kpiCompliance').text(pct(d.compliancePercent));
                 $('#kpiComplianceSub').text(`${d.mandatoryFulfilled} dari ${d.mandatoryRequired} course Mandatory · ${d.includedEmployees} karyawan`);
@@ -90,7 +102,7 @@
     }
 
     function loadUnmapped() {
-        $.getJSON(urls.unmapped)
+        $.getJSON(urls.unmapped, { company: company() })
             .done(function (res) {
                 if (!res.success) { toast('error', res.message || 'Gagal memuat data.'); return; }
                 unmappedTable.clear().rows.add(res.data).draw();
@@ -103,7 +115,7 @@
     /* ---------- drill-down ---------- */
 
     function openEmployees(abrv) {
-        $('#rpEmpTitle').text(abrv);
+        $('#rpEmpTitle').text(deptNames[abrv] || abrv);
         empTable.clear().draw();
 
         $.getJSON(urls.employees, { abrv: abrv })
@@ -144,16 +156,16 @@
             pageLength: 50,
             order: [[0, 'asc']],
             columns: [
-                { title: 'Department', data: 'departmentAbrv', width: '16%', className: 'text-nowrap', render: d => `<span class="fw-medium">${esc(d)}</span>` },
-                { title: 'Matrix', data: 'matrixStatus', width: '15%', className: 'text-center text-nowrap', render: d => matrixBadge(d) },
-                { title: 'Karyawan', data: 'employeeCount', width: '8%', className: 'text-center' },
-                { title: 'Dihitung', data: 'includedCount', width: '8%', className: 'text-center' },
+                { title: 'Department', data: 'departmentName', width: '24%', className: 'text-nowrap', render: d => `<span class="fw-medium" title="${esc(d)}">${esc(d)}</span>` },
+                { title: 'Matrix', data: 'matrixStatus', width: '14%', className: 'text-center text-nowrap', render: d => matrixBadge(d) },
+                { title: 'Karyawan', data: 'employeeCount', width: '7%', className: 'text-center' },
+                { title: 'Dihitung', data: 'includedCount', width: '7%', className: 'text-center' },
                 { title: 'Unmapped', data: 'unmappedCount', width: '8%', className: 'text-center' },
-                { title: 'Mandatory %', data: 'compliancePercent', width: '17%', render: (d, t) => t === 'display' ? progress(d) : (d ?? -1) },
+                { title: 'Mandatory %', data: 'compliancePercent', width: '14%', render: (d, t) => t === 'display' ? progress(d) : (d ?? -1) },
                 { title: 'Gap', data: 'employeesWithGap', width: '6%', className: 'text-center' },
-                { title: 'Recomm. %', data: 'recommendedPercent', width: '10%', className: 'text-center', render: (d, t) => t === 'display' ? pct(d) : (d ?? -1) },
+                { title: 'Recomm. %', data: 'recommendedPercent', width: '9%', className: 'text-center', render: (d, t) => t === 'display' ? pct(d) : (d ?? -1) },
                 {
-                    title: 'Action', data: null, width: '12%', orderable: false, className: 'text-center text-nowrap',
+                    title: 'Action', data: null, width: '11%', orderable: false, className: 'text-center text-nowrap',
                     render: function (r) {
                         let h = `<button type="button" class="btn btn-sm btn-outline-primary me-1 rp-emp" data-abrv="${esc(r.departmentAbrv)}" title="Karyawan"><i class="fas fa-users"></i></button>`;
                         if (r.matrixId) {
@@ -245,6 +257,18 @@
         $('#tabQualityBtn').on('shown.bs.tab', function () {
             if (!unmappedLoaded) loadUnmapped();
         });
+
+        $('#rpCompany').on('change', function () {
+            try { localStorage.setItem('tmReportCompany', company()); } catch (e) { /* abaikan */ }
+            unmappedLoaded = false;
+            loadSummary();
+            if ($('#tabQuality').hasClass('active')) loadUnmapped();
+        });
+
+        try {
+            const saved = localStorage.getItem('tmReportCompany');
+            if (saved === 'ABL' || saved === 'NKM') $('#rpCompany').val(saved);
+        } catch (e) { /* abaikan */ }
 
         $('#rpRefresh').on('click', function () {
             unmappedLoaded = false;
