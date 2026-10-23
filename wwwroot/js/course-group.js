@@ -87,6 +87,8 @@
                     title: 'Action', data: null, orderable: false, className: 'text-center text-nowrap',
                     render: function (r) {
                         let html = `<button type="button" class="btn btn-sm btn-outline-secondary me-1 cg-view" data-id="${r.courseGroupId}" title="View"><i class="fas fa-eye"></i></button>`;
+                        html += `<button type="button" class="btn btn-sm btn-outline-warning me-1 cg-impact" data-id="${r.courseGroupId}" data-name="${esc(r.groupName)}" title="Group Impact"><i class="fas fa-diagram-project"></i></button>`;
+
                         if (canEdit) {
                             html += `<button type="button" class="btn btn-sm btn-outline-primary me-1 cg-edit" data-id="${r.courseGroupId}" title="Edit"><i class="fas fa-pen"></i></button>`;
                             html += `<button type="button" class="btn btn-sm btn-outline-danger cg-del" data-id="${r.courseGroupId}" data-name="${esc(r.groupName)}" title="Delete"><i class="fas fa-trash"></i></button>`;
@@ -256,6 +258,9 @@
             modal.hide();
             toast('success', res.message);
             loadTable();
+            const savedId = Number($('#cgId').val() || 0);
+            if (savedId > 0 && window.groupImpact) { window.groupImpact.openIfNeeded(savedId, name); }
+
         }).fail(ajaxError)
           .always(() => $btn.prop('disabled', false));
     }

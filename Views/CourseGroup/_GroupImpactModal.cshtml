@@ -1,0 +1,66 @@
+<!-- ===== Modal: Group Impact (Phase 1D) ===== -->
+<style>
+    /* Kolom Action Course Group memuat 4 tombol; .table-compact di _Layout mengunci lebar kolom via nth-child. */
+    #cgTable th:last-child, #cgTable td:last-child { width: 150px !important; }
+    #giTable { table-layout: fixed; min-width: 720px; }
+    #giTable th, #giTable td { vertical-align: middle; }
+    #giTable .gi-courses { font-size: .8rem; }
+</style>
+
+<div class="modal fade" id="giModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-diagram-project me-2"></i>Group Impact - <span id="giName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-secondary py-2 small" id="giSummary"></div>
+
+                <div class="small text-muted mb-2">
+                    Course di group yang belum ada pada sel Sub Department × Layer yang dulu diisi dari group ini.
+                    Hanya penambahan; penghapusan course tidak ikut diterapkan. Matrix Approved diubah lewat
+                    Change Request dan tetap membutuhkan approval HRGA Head.
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-3" id="giTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 36px;" class="text-center">
+                                    <input type="checkbox" class="form-check-input" id="giChkAll" />
+                                </th>
+                                <th style="width: 15%;">Department</th>
+                                <th style="width: 14%;" class="text-center">Status</th>
+                                <th style="width: 8%;" class="text-center">Sel</th>
+                                <th style="width: 9%;" class="text-center">Baris baru</th>
+                                <th>Course yang kurang</th>
+                                <th style="width: 22%;">Penerapan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="giBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="giReasonWrap" class="d-none">
+                    <label for="giReason" class="form-label fw-medium">
+                        Alasan Change Request <span class="text-danger">*</span>
+                    </label>
+                    <textarea id="giReason" class="form-control" rows="2" maxlength="300"
+                              placeholder="Mis. Penambahan course K3 baru ke Layer 1"></textarea>
+                    <div class="form-text">Dipakai untuk Change Request baru; diawali otomatis dengan nama group.</div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary d-none" id="giApply" disabled>
+                    <i class="fas fa-check me-1"></i>Terapkan ke terpilih <span class="badge bg-light text-dark ms-1" id="giSelCount">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

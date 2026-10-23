@@ -93,6 +93,8 @@ builder.Services.AddScoped<ICourseGroupService, CourseGroupService>();
 builder.Services.AddScoped<ITrainingMatrixService, TrainingMatrixService>();
 builder.Services.AddScoped<IMatrixChangeRequestService, MatrixChangeRequestService>();
 builder.Services.AddScoped<ITrainingMatrixReportService, TrainingMatrixReportService>();
+builder.Services.AddScoped<IGroupImpactService, GroupImpactService>();
+builder.Services.AddScoped<IMatrixAccessService, MatrixAccessService>();
 
 // Configure anti-forgery
 builder.Services.AddAntiforgery(options =>

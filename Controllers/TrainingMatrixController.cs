@@ -19,6 +19,7 @@ namespace Training.Controllers
         private readonly ICurrentUserService _emp;
         private readonly ITrainingService _trainingService;
         private readonly ITrainingMatrixService _matrixService;
+        private readonly IMatrixAccessService _access;
         private readonly ILogger<TrainingMatrixController> _logger;
 
         /// <summary>
@@ -28,11 +29,13 @@ namespace Training.Controllers
             ICurrentUserService emp,
             ITrainingService trainingService,
             ITrainingMatrixService matrixService,
+            IMatrixAccessService access,
             ILogger<TrainingMatrixController> logger)
         {
             _emp = emp;
             _trainingService = trainingService;
             _matrixService = matrixService;
+            _access = access;
             _logger = logger;
         }
 
@@ -66,7 +69,16 @@ namespace Training.Controllers
         [HttpGet]
         public Task<IActionResult> GetList(CancellationToken cancellationToken) =>
             RunAsync(
-                async () => await _matrixService.GetListAsync(cancellationToken),
+                async () =>
+                {
+                    var list = await _matrixService.GetListAsync(cancellationToken);
+                    var allowed = await _access.GetAllowedAbrvsAsync(cancellationToken);
+
+                    // null = tc / hrhead (semua Department); selain itu hanya Department yang boleh dilihat.
+                    return allowed is null
+                        ? list
+                        : list.Where(x => allowed.Contains(x.DepartmentAbrv?.Trim() ?? string.Empty)).ToList();
+                },
                 "load training matrix list",
                 cancellationToken);
 
@@ -76,6 +88,8 @@ namespace Training.Controllers
             RunAsync(
                 async () =>
                 {
+                    await _access.EnsureMatrixAsync(id, cancellationToken);
+
                     var roles = await GetRolesAsync(cancellationToken);
                     var detail = await _matrixService.GetDetailAsync(id, roles, cancellationToken);
 

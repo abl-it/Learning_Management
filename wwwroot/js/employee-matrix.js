@@ -77,13 +77,30 @@
 
     function company() { return $('#emCompany').val() || 'ABL'; }
 
-    function fillDepartments() {
-        const $d = $('#emDept').empty().append('<option value="">All Department</option>');
+    /** Company hanya yang punya Department yang boleh dilihat pengguna. */
+    function fillCompanies() {
+        const list = filters.companies || [];
+        if (list.length === 0) return;
 
-        filters.departments
+        const current = $('#emCompany').val();
+        const $c = $('#emCompany').empty();
+        list.forEach(c => $c.append(`<option value="${esc(c)}">${esc(c)}</option>`));
+        $c.val(list.includes(current) ? current : list[0]);
+    }
+
+    function fillDepartments() {
+        const $d = $('#emDept').empty();
+
+        const depts = filters.departments
             .filter(d => d.company === company())
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .forEach(d => $d.append(`<option value="${esc(d.abrv)}">${esc(d.name)}</option>`));
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        // "All Department" hanya bila ada lebih dari satu Department yang boleh dipilih.
+        if (depts.length !== 1) {
+            $d.append('<option value="">All Department</option>');
+        }
+
+        depts.forEach(d => $d.append(`<option value="${esc(d.abrv)}">${esc(d.name)}</option>`));
 
         fillSubDepartments();
     }
@@ -289,6 +306,7 @@
                 if (!res.success) { toast('error', res.message || 'Gagal memuat filter.'); return; }
 
                 filters = res.data;
+                fillCompanies();
                 fillDepartments();
                 loadEmployees();
             })

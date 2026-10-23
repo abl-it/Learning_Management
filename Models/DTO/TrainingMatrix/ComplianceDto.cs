@@ -25,6 +25,9 @@ namespace Training.Models.DTO.TrainingMatrix
         /// <summary>Karyawan yang perusahaannya tidak bisa ditentukan (Sub Department kosong/tidak dikenal); tidak ikut filter ABL/NKM.</summary>
         public int NoCompanyEmployees { get; set; }
 
+        /// <summary>Perusahaan (ABL/NKM) yang punya Department yang boleh dilihat pengguna; dipakai mengisi filter Company.</summary>
+        public List<string> AvailableCompanies { get; set; } = new();
+
         /// <summary>Total course Mandatory yang wajib dipenuhi.</summary>
         public int MandatoryRequired { get; set; }
 

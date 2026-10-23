@@ -22,8 +22,10 @@
     @Html.AntiForgeryToken()
 
     <div class="card card-compact">
-        <div class="card-body p-2 overflow-hidden">
-            <table id="tmTable" class="table table-striped table-compact w-100"></table>
+        <div class="card-body p-2">
+            <div class="table-responsive" style="overflow-y:hidden">
+                <table id="tmTable" class="table table-striped table-compact w-100" style="min-width:760px"></table>
+            </div>
         </div>
     </div>
 </div>

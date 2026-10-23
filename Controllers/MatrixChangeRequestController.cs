@@ -17,6 +17,7 @@ namespace Training.Controllers
         private readonly ICurrentUserService _emp;
         private readonly ITrainingMatrixService _matrixService;
         private readonly IMatrixChangeRequestService _changeService;
+        private readonly IMatrixAccessService _access;
         private readonly ILogger<MatrixChangeRequestController> _logger;
 
         /// <summary>
@@ -26,11 +27,13 @@ namespace Training.Controllers
             ICurrentUserService emp,
             ITrainingMatrixService matrixService,
             IMatrixChangeRequestService changeService,
+            IMatrixAccessService access,
             ILogger<MatrixChangeRequestController> logger)
         {
             _emp = emp;
             _matrixService = matrixService;
             _changeService = changeService;
+            _access = access;
             _logger = logger;
         }
 
@@ -53,6 +56,8 @@ namespace Training.Controllers
             RunAsync(
                 async () =>
                 {
+                    await _access.EnsureChangeRequestAsync(id, cancellationToken);
+
                     var roles = await GetRolesAsync(cancellationToken);
                     var detail = await _changeService.GetDetailAsync(id, roles, cancellationToken);
 

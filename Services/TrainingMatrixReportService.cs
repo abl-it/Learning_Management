@@ -29,6 +29,7 @@ namespace Training.Services
 
         private readonly string _connectionString;
         private readonly string? _hrmsConnectionString;
+        private readonly IMatrixAccessService _access;
         private readonly ILogger<TrainingMatrixReportService> _logger;
 
         /// <summary>
@@ -36,6 +37,7 @@ namespace Training.Services
         /// </summary>
         public TrainingMatrixReportService(
             IConfiguration configuration,
+            IMatrixAccessService access,
             ILogger<TrainingMatrixReportService> logger)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
@@ -43,6 +45,7 @@ namespace Training.Services
                     "Connection string 'DefaultConnection' was not found.");
 
             _hrmsConnectionString = configuration.GetConnectionString("HRMS");
+            _access = access;
             _logger = logger;
         }
 
@@ -73,6 +76,9 @@ namespace Training.Services
                 UnmappedEmployees = scoped.Count(e => e.Status == StatusUnmapped),
                 NoMatrixEmployees = scoped.Count(e => e.Status == StatusNoMatrix),
                 NoCompanyEmployees = model.Employees.Count(e => e.Company is null),
+                AvailableCompanies = Companies
+                    .Where(c => model.Departments.Any(d => string.Equals(d.Company, c, StringComparison.OrdinalIgnoreCase)))
+                    .ToList(),
                 MandatoryRequired = included.Sum(e => e.MandatoryRequired),
                 MandatoryFulfilled = included.Sum(e => e.MandatoryFulfilled),
                 EmployeesWithGap = included.Count(e => e.MandatoryFulfilled < e.MandatoryRequired)
@@ -212,7 +218,10 @@ namespace Training.Services
 
             return new MatrixFilterDto
             {
-                Companies = Companies.ToList(),
+                // Hanya perusahaan yang punya Department yang boleh dilihat pengguna.
+                Companies = Companies
+                    .Where(c => departments.Any(d => string.Equals(d.Company, c, StringComparison.OrdinalIgnoreCase)))
+                    .ToList(),
                 Departments = departments
                     .Select(d => new FilterDepartmentDto
                     {
@@ -858,11 +867,31 @@ namespace Training.Services
                 employees.Add(emp);
             }
 
+            // ---- 3. Pembatasan akses per Department (tc / hrhead = semua) --------------
+            // Dipasang di satu titik ini sehingga KPI, daftar, detail karyawan, dan export ikut terbatas.
+            var allowed = await _access.GetAllowedAbrvsAsync(cancellationToken);
+            var subDeptList = subDepts.Values.ToList();
+
+            if (allowed is not null)
+            {
+                employees = employees
+                    .Where(e => e.Abrv is not null && allowed.Contains(e.Abrv))
+                    .ToList();
+
+                deptInfos = deptInfos
+                    .Where(d => allowed.Contains(d.Abrv))
+                    .ToList();
+
+                subDeptList = subDeptList
+                    .Where(s => allowed.Contains(s.Abrv))
+                    .ToList();
+            }
+
             return new ReportModel
             {
                 Employees = employees,
                 Departments = deptInfos,
-                SubDepartments = subDepts.Values.ToList(),
+                SubDepartments = subDeptList,
                 Details = details,
                 Courses = courses,
                 ApprovedAbrvs = approvedAbrvs,

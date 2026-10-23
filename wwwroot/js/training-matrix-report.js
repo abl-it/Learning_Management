@@ -65,6 +65,32 @@
 
     /* ---------- summary ---------- */
 
+    /**
+     * Mengisi filter Company hanya dengan perusahaan yang boleh dilihat pengguna.
+     * Mengembalikan true bila Company terpilih tidak valid dan laporan dimuat ulang.
+     */
+    function syncCompanies(list) {
+        if (!list || list.length === 0) return false;
+
+        const $c = $('#rpCompany');
+        const current = $c.val();
+        const have = $c.find('option').map(function () { return this.value; }).get();
+
+        if (have.join() !== list.join()) {
+            $c.empty();
+            list.forEach(c => $c.append(`<option value="${esc(c)}">${esc(c)}</option>`));
+            $c.val(list.includes(current) ? current : list[0]);
+        }
+
+        if (!list.includes(current)) {
+            unmappedLoaded = false;
+            loadSummary();
+            return true;
+        }
+
+        return false;
+    }
+
     function loadSummary() {
         $.getJSON(urls.summary, { company: company() })
             .done(function (res) {
@@ -74,6 +100,8 @@
                 }
 
                 const d = res.data;
+
+                if (syncCompanies(d.availableCompanies)) return;
 
                 $('#rpGenerated').text(`Dihitung ${fmtDate(d.generatedAt)}`);
 

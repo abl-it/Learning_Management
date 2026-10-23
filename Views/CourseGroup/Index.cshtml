@@ -92,6 +92,7 @@
         </div>
     </div>
 </div>
+<partial name="_GroupImpactModal" />
 
 @section Scripts {
 
@@ -118,7 +119,16 @@
         };
 
     </script>
-
+    <script>
+            window.groupImpactCfg = {
+                canEdit: @(canEdit ? "true" : "false"),
+                urls: {
+                    getImpact: '@Url.Action("GetImpact", "GroupImpact")',
+                    apply: '@Url.Action("Apply", "GroupImpact")',
+                    crDetail: '@Url.Action("Detail", "MatrixChangeRequest")'
+                }
+            };
+        </script>
     <script src="~/js/course-group.js" asp-append-version="true"></script>
-
+    <script src="~/js/group-impact.js" asp-append-version="true"></script>
 }

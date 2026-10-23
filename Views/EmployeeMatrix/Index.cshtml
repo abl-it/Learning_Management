@@ -12,6 +12,8 @@
     #emTable td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #emTable tbody tr { cursor: pointer; }
     .em-fixed td, .em-fixed th { overflow: hidden; text-overflow: ellipsis; }
+    /* DataTables wrapper berada di dalam .table-responsive (overflow-x:auto => overflow-y ikut auto): cegah scrollbar vertikal */
+    .table-responsive { overflow-y: hidden; }
 </style>
 
 <div class="container-fluid">
