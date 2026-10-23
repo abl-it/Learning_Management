@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -454,6 +454,31 @@
                             
                         </ul>
                     </li>
+                    <!-- Training Matrix -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="matrixDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-table-cells me-1"></i>Training Matrix
+                        </a>
+                        <ul class="dropdown-menu text-sm" aria-labelledby="matrixDropdown">
+                            <li>
+                                <a class="dropdown-item" asp-controller="TrainingMatrix" asp-action="Index" id="matrixLink">
+                                    <i class="fa-solid fa-table-cells me-2"></i>Training Matrix
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="CourseGroup" asp-action="Index" id="courseGroupLink">
+                                    <i class="fa-solid fa-layer-group me-2"></i>Course Group
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" asp-controller="TrainingMatrixReport" asp-action="Index" id="matrixReportLink">
+                                    <i class="fa-solid fa-chart-column me-2"></i>Matrix Compliance
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                     <!-- Transaction -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="transactionDropdown" role="button"
@@ -504,6 +529,26 @@
                             <li>
                                 <a class="dropdown-item" asp-controller="Import" asp-action="ImportEvent" id="importEventLink">
                                     <i class="bi bi-calendar-check me-2"></i>Training Event &amp; Participant
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Help -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="helpDropdown" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-question-circle me-1"></i>Help
+                        </a>
+                        <ul class="dropdown-menu text-sm" aria-labelledby="helpDropdown">
+                            <li>
+                                <a class="dropdown-item" href="@Url.Content("~/help/manual-training-plan.html")" target="_blank" rel="noopener" id="helpPlanLink">
+                                    <i class="bi bi-journal-text me-2"></i>Manual Training Plan
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="@Url.Content("~/help/manual-training-event.html")" target="_blank" rel="noopener" id="helpEventLink">
+                                    <i class="bi bi-journal-text me-2"></i>Manual Training Event
                                 </a>
                             </li>
                         </ul>
@@ -584,6 +629,19 @@
                     } else if (currentAction === 'Realization') {
                         $('#realizationLink').addClass('active');
                     }
+                }
+                // Handle Training Matrix controllers
+                else if (currentController === 'TrainingMatrix' || currentController === 'MatrixChangeRequest') {
+                    $('#matrixDropdown').addClass('active');
+                    $('#matrixLink').addClass('active');
+                }
+                else if (currentController === 'CourseGroup') {
+                    $('#matrixDropdown').addClass('active');
+                    $('#courseGroupLink').addClass('active');
+                }
+                else if (currentController === 'TrainingMatrixReport') {
+                    $('#matrixDropdown').addClass('active');
+                    $('#matrixReportLink').addClass('active');
                 }
                 // Handle Master controller with different actions
                 if (currentController === 'Master') {

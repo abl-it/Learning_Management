@@ -1,0 +1,30 @@
+/* Help / Manual Book - Training Management System */
+:root { --help-accent:#0d6efd; --help-border:#dee2e6; }
+body { background:#f8f9fa; font-size:.95rem; }
+.help-topbar { background:#212529; color:#fff; }
+.help-topbar a { color:#fff; text-decoration:none; }
+.help-topbar a:hover { text-decoration:underline; }
+.help-toc { position:sticky; top:1rem; max-height:calc(100vh - 2rem); overflow:auto; }
+.help-toc .nav-link { padding:.25rem .5rem; color:#495057; font-size:.875rem; border-left:3px solid transparent; }
+.help-toc .nav-link:hover { color:var(--help-accent); }
+.help-toc .nav-link.active { color:var(--help-accent); border-left-color:var(--help-accent); font-weight:600; }
+.help-content { background:#fff; border:1px solid var(--help-border); border-radius:.5rem; padding:1.5rem 2rem; }
+.help-content h1 { font-size:1.6rem; }
+.help-content h2 { font-size:1.25rem; margin-top:2rem; padding-bottom:.4rem; border-bottom:2px solid var(--help-border); scroll-margin-top:1rem; }
+.help-content h3 { font-size:1.05rem; margin-top:1.4rem; scroll-margin-top:1rem; }
+.help-content figure { margin:1rem 0 1.25rem; }
+.help-content figure img { max-width:100%; height:auto; border:1px solid var(--help-border); border-radius:.4rem; box-shadow:0 1px 4px rgba(0,0,0,.12); cursor:zoom-in; }
+.help-content figcaption { font-size:.8rem; color:#6c757d; margin-top:.35rem; }
+.help-content table { font-size:.875rem; }
+.help-content table th { background:#f1f3f5; white-space:nowrap; }
+.help-note { border-left:4px solid var(--help-accent); background:#eef4ff; padding:.6rem .9rem; border-radius:.25rem; margin:1rem 0; }
+.help-note.warn { border-left-color:#fd7e14; background:#fff4e8; }
+kbd.btn-ui, .btn-ui { display:inline-block; padding:0 .4rem; border:1px solid #adb5bd; border-radius:.25rem; background:#f8f9fa; font-size:.85em; font-weight:600; font-family:inherit; color:#212529; }
+.help-meta { font-size:.8rem; color:#6c757d; }
+@media print {
+  .help-topbar, .help-toc, .no-print { display:none !important; }
+  body { background:#fff; }
+  .help-content { border:0; padding:0; }
+  .help-content figure { break-inside:avoid; }
+  .help-content h2 { break-after:avoid; }
+}

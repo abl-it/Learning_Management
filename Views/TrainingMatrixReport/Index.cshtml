@@ -1,0 +1,159 @@
+@{
+    ViewData["Title"] = "Training Matrix Compliance";
+}
+
+<style>
+    /* Layout tetap: lebar kolom ditentukan di JS (persen), tabel boleh di-scroll bila layar sempit */
+    /* Tidak memakai .table-compact: _Layout memaksa lebar kolom (nth-child) yang merusak tabel ini */
+    .tm-rp { font-size: .8125rem; margin-bottom: 0; }
+    .tm-rp th, .tm-rp td { padding: .375rem .5rem; vertical-align: middle; }
+    .tm-rp thead th { font-size: .75rem; font-weight: 600; background-color: #495057 !important; color: #fff !important;
+                      border-bottom: 2px solid #343a40 !important; text-transform: uppercase; letter-spacing: .5px; }
+    #rpDept { table-layout: fixed; min-width: 900px; }
+    #rpDept th, #rpDept td { padding: .35rem .5rem; overflow: hidden; text-overflow: ellipsis; }
+    #rpDept thead th { white-space: nowrap; }
+    #rpDept td { white-space: nowrap; }
+</style>
+
+<div class="container-fluid">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h4 class="mb-0 fw-medium">
+                <i class="fa-solid fa-chart-column me-2"></i>Training Matrix Compliance
+            </h4>
+            <div class="text-muted small">
+                Course dianggap terpenuhi bila karyawan PRESENT pada event berstatus Complete.
+                Hanya matrix Approved yang dihitung; Unmapped dan Department tanpa matrix tidak masuk penyebut.
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="small text-muted" id="rpGenerated"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="rpRefresh">
+                <i class="fas fa-rotate me-1"></i>Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="row g-3 mb-3" id="rpCards">
+        <div class="col-6 col-lg-3">
+            <div class="card card-compact h-100"><div class="card-body">
+                <div class="text-muted small">% Compliance Mandatory</div>
+                <div class="fs-3 fw-semibold" id="kpiCompliance">–</div>
+                <div class="text-muted small" id="kpiComplianceSub"></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card card-compact h-100"><div class="card-body">
+                <div class="text-muted small">Karyawan dengan gap Mandatory</div>
+                <div class="fs-3 fw-semibold" id="kpiGap">–</div>
+                <div class="text-muted small" id="kpiGapSub"></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card card-compact h-100"><div class="card-body">
+                <div class="text-muted small">% Unmapped</div>
+                <div class="fs-3 fw-semibold" id="kpiUnmapped">–</div>
+                <div class="text-muted small" id="kpiUnmappedSub"></div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card card-compact h-100"><div class="card-body">
+                <div class="text-muted small">Tanpa matrix Approved</div>
+                <div class="fs-3 fw-semibold" id="kpiNoMatrix">–</div>
+                <div class="text-muted small">karyawan (Department belum Approved)</div>
+            </div></div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabDept" type="button" role="tab">Per Department</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabQuality" type="button" role="tab" id="tabQualityBtn">Data Quality (Unmapped)</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div class="tab-pane fade show active" id="tabDept" role="tabpanel">
+            <div class="card card-compact">
+                <div class="card-body p-2">
+                    <div class="table-responsive">
+                        <table id="rpDept" class="table table-striped tm-rp w-100"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tabQuality" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-xl-3 col-lg-4">
+                    <div class="card card-compact">
+                        <div class="card-header"><h6 class="mb-0 fw-medium">Alasan Unmapped</h6></div>
+                        <div class="card-body p-2">
+                            <table id="rpReasons" class="table table-sm mb-0 w-100"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-9 col-lg-8">
+                    <div class="card card-compact">
+                        <div class="card-header"><h6 class="mb-0 fw-medium">Karyawan Unmapped</h6></div>
+                        <div class="card-body p-2">
+                            <div class="table-responsive">
+                                <table id="rpUnmapped" class="table table-striped tm-rp w-100"></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal karyawan per Department -->
+<div class="modal fade" id="rpEmpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Karyawan - <span id="rpEmpTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="small text-muted mb-2">Klik baris untuk melihat course yang belum terpenuhi.</div>
+                <div class="table-responsive">
+                    <table id="rpEmp" class="table table-striped tm-rp w-100"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+
+        window.tmReportCfg = {
+
+            urls: {
+
+                summary: '@Url.Action("GetSummary", "TrainingMatrixReport")',
+
+                employees: '@Url.Action("GetDepartmentEmployees", "TrainingMatrixReport")',
+
+                unmapped: '@Url.Action("GetUnmapped", "TrainingMatrixReport")',
+
+                matrixDetail: '@Url.Action("Detail", "TrainingMatrix")'
+
+            }
+
+        };
+
+    </script>
+
+    <script src="~/js/training-matrix-report.js" asp-append-version="true"></script>
+
+}

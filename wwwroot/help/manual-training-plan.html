@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual Book — Training Plan - Training Management System</title>
+<link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="../vendor/bootstrap-icons/css/bootstrap-icons.min.css">
+<link rel="stylesheet" href="help.css">
+</head>
+<body>
+<div class="help-topbar py-2 mb-3">
+  <div class="container-xl d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <span><i class="bi bi-question-circle me-1"></i><strong>Help</strong> &middot; Training Management System</span>
+    <span class="d-flex gap-3">
+      <a href="manual-training-plan.html"><i class="bi bi-journal-text me-1"></i>Manual Training Plan</a>
+      <a href="manual-training-event.html"><i class="bi bi-journal-text me-1"></i>Manual Training Event</a>
+      <a href="../"><i class="bi bi-box-arrow-up-left me-1"></i>Kembali ke aplikasi</a>
+    </span>
+  </div>
+</div>
+<div class="container-xl pb-5">
+  <div class="row g-3">
+    <aside class="col-lg-3 no-print">
+      <nav class="help-toc" id="toc">
+        <div class="fw-semibold mb-2">Daftar isi</div>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a class="nav-link" href="#alur">1. Alur kerja</a></li>
+          <li class="nav-item"><a class="nav-link" href="#daftar">2. Daftar Yearly Training Plans</a></li>
+          <li class="nav-item"><a class="nav-link" href="#detail">3. Detail plan dan mengelola course</a></li>
+          <li class="nav-item"><a class="nav-link" href="#approval">4. Pengajuan dan approval plan</a></li>
+          <li class="nav-item"><a class="nav-link" href="#masalah">5. Pemecahan masalah</a></li>
+        </ul>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-3" onclick="window.print()"><i class="bi bi-printer me-1"></i>Cetak / simpan PDF</button>
+      </nav>
+    </aside>
+    <main class="col-lg-9">
+      <article class="help-content">
+        <h1>Manual Book — Training Plan</h1>
+        <p class="help-meta">Diperbarui 21 Oktober 2026</p>
+        <p>Manual ini menjelaskan cara menyusun dan mengajukan rencana training tahunan per departemen (Yearly Training Plan) di Training Management System ABL/NKM.</p>
+<h2 id="alur">1. Alur kerja</h2>
+
+<p>Plan dibuat per departemen untuk satu tahun dan dinomori <b>PL-xxxxxx</b>. Menu ada di <b>Training Planning &rarr; Plans</b>.</p>
+<ol>
+<li>Buka plan departemen Anda pada tahun yang dipilih. Plan baru berstatus <b>Draft</b>.</li>
+<li><b>Tambah course</b> ke plan: bulan, kategori, course, jumlah sesi, peserta, durasi, provider, estimasi biaya, dan target peserta.</li>
+<li>Ajukan dengan <b>Action &rarr; Request for Approve</b>, isi Remarks, lalu Submit.</li>
+<li>Approver memilih <b>Approve</b> atau <b>Reject</b> (Remarks wajib). Riwayatnya tercatat di bagian <b>History</b>.</li>
+</ol>
+<p>Status plan pada filter: <b>Draft, Pending, Approved, Canceled, Rejected</b>.</p>
+<div class="help-note">Tombol yang aktif bergantung pada hak akses Anda. Akun dengan role <b>TC</b> dapat melihat plan semua departemen, tetapi tombol <b>Add Course</b> dan <b>Action</b> non-aktif; plan diisi oleh user departemen yang bersangkutan (contoh di manual ini: Paper Production).</div>
+
+<h2 id="daftar">2. Daftar Yearly Training Plans</h2>
+
+<p>Buka <b>Training Planning &rarr; Plans</b>. Daftar yang tampil mengikuti hak akses akun Anda.</p>
+<ol>
+<li>Pilih filter <b>Company</b>, <b>Year</b>, <b>Department</b>, dan <b>Status</b>; <b>Clear</b> mengembalikan filter.</li>
+<li>Gunakan kotak <b>Search</b> dan <b>Show entries</b> untuk mencari dan mengatur jumlah baris.</li>
+<li>Baca kolom <b>Plan ID, Department, Status, #Course</b> (jumlah course di plan itu).</li>
+<li>Klik tombol biru bergambar mata pada kolom <b>Actions</b> untuk membuka detail plan.</li>
+</ol>
+<figure><img src="img/plan-01-daftar-plan.jpg" alt="Daftar Yearly Training Plans tahun 2027" loading="lazy"><figcaption>Daftar Yearly Training Plans tahun 2027</figcaption></figure>
+<h2 id="detail">3. Detail plan dan mengelola course</h2>
+
+<p>Halaman <b>Department Yearly Training Plans</b> menampilkan Company, Year, Department, dan Status plan, lalu daftar course yang sudah direncanakan: Month, Code, Course, Cat, #Sess, #Participant, Duration, Provider, Target, dan ID. Bagian <b>History</b> di bawah tabel mencatat riwayat approval. Pada plan yang boleh Anda edit, tombol <b>Add Course</b>, <b>Action</b>, dan ikon hapus merah di baris course aktif.</p>
+<figure><img src="img/plan-02-detail-plan.jpg" alt="Detail plan PL-270012 (Paper Production, 2027, Draft) dibuka oleh user departemen" loading="lazy"><figcaption>Detail plan PL-270012 (Paper Production, 2027, Draft) dibuka oleh user departemen</figcaption></figure>
+<h3>Menambah course</h3>
+<ol>
+<li>Klik <b>Add Course</b>.</li>
+<li>Isi form berikut. Tanda * wajib diisi.</li>
+</ol>
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Field</th><th>Keterangan</th></tr></thead>
+<tbody>
+<tr><td>Month *</td><td>Bulan pelaksanaan rencana</td></tr>
+<tr><td>Category *</td><td>Kategori training</td></tr>
+<tr><td>Course Name *</td><td>Ketik untuk mencari course master, atau ketik nama baru bila course belum ada</td></tr>
+<tr><td># Session</td><td>Jumlah sesi</td></tr>
+<tr><td># Participant</td><td>Perkiraan jumlah peserta</td></tr>
+<tr><td>Plan Duration (Hours)</td><td>Durasi rencana dalam jam, mis. 2</td></tr>
+<tr><td>Provider</td><td>Penyelenggara (Internal / nama vendor)</td></tr>
+<tr><td>Est. Cost</td><td>Estimasi biaya (Rp)</td></tr>
+<tr><td>Target Participant</td><td>Klik <b>+ Operator, + SPV, + Planner, + Manager</b>, atau <b>+ All</b>; pilihan tampil di daftar bawahnya</td></tr>
+</tbody></table></div>
+<ol start="3"><li>Klik <b>Save Course</b>. Course muncul di tabel plan dan kolom #Course di daftar plan bertambah. <b>Cancel</b> menutup dialog tanpa menyimpan.</li></ol>
+<figure><img src="img/plan-03-add-course.jpg" alt="Dialog Add Course" loading="lazy"><figcaption>Dialog Add Course</figcaption></figure>
+<h3>Menghapus course</h3>
+<p>Klik ikon tempat sampah merah di kolom paling kanan baris course. Bila kolom itu hanya berisi tanda &mdash;, plan sedang tidak dapat Anda ubah. Tombol <b>View Master Course</b> membuka daftar course master sebagai referensi.</p>
+
+<h2 id="approval">4. Pengajuan dan approval plan</h2>
+
+<p>Semua aksi workflow dilakukan dari tombol <b>Action</b> (kanan atas halaman detail plan).</p>
+<ol>
+<li>Klik <b>Action</b>. Pada plan <b>Draft</b>, pengaju melihat aksi <b>Request for Approve</b>. Approver melihat <b>Approve</b> / <b>Reject</b>. Aksi yang abu-abu tidak tersedia untuk Anda pada status plan saat ini.</li>
+</ol>
+<figure><img src="img/plan-04-menu-action.jpg" alt="Menu Action pada plan Draft" loading="lazy"><figcaption>Menu Action pada plan Draft</figcaption></figure>
+<ol start="2">
+<li>Dialog <b>Remarks</b> terbuka. Isi kolom <b>Remarks</b> (wajib, tanda *). Remarks yang kosong ditolak.</li>
+<li>Klik <b>Submit</b>. Tombol berubah menjadi <i>Submitting...</i> lalu muncul notifikasi hasil; <b>Cancel</b> menutup dialog tanpa mengirim.</li>
+<li>Periksa status plan di bagian atas halaman dan riwayat pada bagian <b>History</b>.</li>
+</ol>
+<figure><img src="img/plan-05-remarks.jpg" alt="Dialog Remarks untuk Request for Approve" loading="lazy"><figcaption>Dialog Remarks untuk Request for Approve</figcaption></figure>
+<p>Tombol <b>Action</b> tidak ditampilkan pada plan yang sudah berstatus final. Bila plan ditolak (<b>Rejected</b>), baca alasan penolakan pada <b>History</b>, perbaiki isi plan, lalu ajukan ulang.</p>
+
+<h2 id="masalah">5. Pemecahan masalah</h2>
+
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Gejala</th><th>Penyebab</th><th>Tindakan</th></tr></thead>
+<tbody>
+<tr><td><b>Add Course</b> atau <b>Action</b> abu-abu</td><td>Akun tidak punya hak edit/aksi pada plan itu (mis. role TC, atau plan departemen lain), atau status plan tidak mengizinkan</td><td>Login dengan akun departemen yang bersangkutan; hubungi TC/HRD bila seharusnya berwenang</td></tr>
+<tr><td>Pesan <i>You are not authorized to modify this plan.</i></td><td>Server menolak perubahan karena hak akses</td><td>Sama seperti di atas</td></tr>
+<tr><td>Course tidak muncul saat mencari</td><td>Course belum ada di Master Course</td><td>Cek menu <b>Master &rarr; Course</b>, atau ketik nama baru pada Course Name</td></tr>
+<tr><td>Tabel kosong setelah memfilter</td><td>Filter Company/Year/Status tidak cocok</td><td>Klik <b>Clear</b> lalu pilih ulang</td></tr>
+</tbody></table></div>
+
+      </article>
+    </main>
+  </div>
+</div>
+<script src="../lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  // Klik gambar -> buka ukuran penuh di tab baru
+  document.querySelectorAll('.help-content figure img').forEach(function (img) {
+    img.addEventListener('click', function () { window.open(img.src, '_blank'); });
+  });
+  // Tandai bagian aktif pada daftar isi
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a.nav-link'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').substring(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && map[e.target.id]) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          map[e.target.id].classList.add('active');
+        }
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    document.querySelectorAll('.help-content h2[id]').forEach(function (h) { io.observe(h); });
+  }
+})();
+</script>
+</body>
+</html>

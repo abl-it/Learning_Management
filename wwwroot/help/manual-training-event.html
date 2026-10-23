@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual Book — Training Event - Training Management System</title>
+<link rel="stylesheet" href="../lib/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="../vendor/bootstrap-icons/css/bootstrap-icons.min.css">
+<link rel="stylesheet" href="help.css">
+</head>
+<body>
+<div class="help-topbar py-2 mb-3">
+  <div class="container-xl d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <span><i class="bi bi-question-circle me-1"></i><strong>Help</strong> &middot; Training Management System</span>
+    <span class="d-flex gap-3">
+      <a href="manual-training-plan.html"><i class="bi bi-journal-text me-1"></i>Manual Training Plan</a>
+      <a href="manual-training-event.html"><i class="bi bi-journal-text me-1"></i>Manual Training Event</a>
+      <a href="../"><i class="bi bi-box-arrow-up-left me-1"></i>Kembali ke aplikasi</a>
+    </span>
+  </div>
+</div>
+<div class="container-xl pb-5">
+  <div class="row g-3">
+    <aside class="col-lg-3 no-print">
+      <nav class="help-toc" id="toc">
+        <div class="fw-semibold mb-2">Daftar isi</div>
+        <ul class="nav flex-column">
+          <li class="nav-item"><a class="nav-link" href="#alur">1. Alur kerja</a></li>
+          <li class="nav-item"><a class="nav-link" href="#daftar">2. Daftar Training Event</a></li>
+          <li class="nav-item"><a class="nav-link" href="#create">3. Membuat event baru</a></li>
+          <li class="nav-item"><a class="nav-link" href="#excel">4. Upload peserta dari Excel</a></li>
+          <li class="nav-item"><a class="nav-link" href="#detail">5. Detail event, Post, dan approval</a></li>
+          <li class="nav-item"><a class="nav-link" href="#edit">6. Mengubah event</a></li>
+          <li class="nav-item"><a class="nav-link" href="#realization">7. Realization (pelaksanaan training)</a></li>
+          <li class="nav-item"><a class="nav-link" href="#masalah">8. Pemecahan masalah</a></li>
+        </ul>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-3" onclick="window.print()"><i class="bi bi-printer me-1"></i>Cetak / simpan PDF</button>
+      </nav>
+    </aside>
+    <main class="col-lg-9">
+      <article class="help-content">
+        <h1>Manual Book — Training Event</h1>
+        <p class="help-meta">Diperbarui 21 Oktober 2026</p>
+        <p>Manual ini menjelaskan cara membuat Training Event, mengelola peserta, memprosesnya sampai disetujui, lalu mencatat realisasi pelaksanaan (kehadiran, nilai, lampiran) di Training Management System ABL/NKM.</p>
+<h2 id="alur">1. Alur kerja</h2>
+
+<p>Sebuah event melewati dua tahap: <b>persetujuan rencana event</b>, lalu <b>realisasi pelaksanaan</b>. Menu ada di <b>Training Event</b> pada bar atas, dengan dua pilihan: <b>Training Event</b> dan <b>Event Realization</b>.</p>
+<ol>
+<li><b>Buat event</b> (<i>Training Event &rarr; Training Event &rarr; Add Event</i>) dan simpan dengan <b>Save Event</b>. Event baru berstatus <b>Draft</b>.</li>
+<li><b>Post</b> event dari halaman Detail. Riwayat mencatatnya sebagai <i>Request for Approve</i> dan status menjadi <b>Pending for DeptHead</b>.</li>
+<li><b>Approve</b> oleh Dept Head, lalu <b>Approve</b> oleh HRD. Setelah itu status menjadi <b>Approved</b> dan tombol <b>Cetak Absensi</b> (PDF daftar hadir) tersedia.</li>
+<li>Setelah training berlangsung, buka <b>Training Event &rarr; Event Realization</b>, isi kehadiran, nilai, dan lampiran, lalu klik <b>Post to HRD</b>.</li>
+<li>HRD memeriksa realisasi dan memilih <b>Mark as Complete</b>, atau <b>Reject</b> dengan alasan agar pembuat memperbaikinya.</li>
+</ol>
+<p>Bila approver menolak (<b>Reject</b>), event berstatus Rejected; alasannya terlihat di <b>Workflow History</b>.</p>
+<p>Status event pada filter daftar: <b>Draft, Pending, Approved, Canceled, Rejected, Submitted, Complete</b>.</p>
+<div class="help-note">Tombol Edit, Delete, Post, Approve, Reject, dan Mark as Complete hanya tampil bila akun Anda berwenang pada status event saat itu.</div>
+
+<h2 id="daftar">2. Daftar Training Event</h2>
+
+<p>Buka <b>Training Event &rarr; Training Event</b>. Halaman <b>Training Event Management</b> menampilkan seluruh event yang boleh Anda lihat.</p>
+<ol>
+<li>Pilih <b>Company</b>, <b>Department</b>, dan <b>Status</b> pada panel Filters; <b>Clear</b> mengembalikan filter.</li>
+<li>Cari dengan kotak <b>Search</b>; atur jumlah baris dengan <b>Show entries</b>.</li>
+<li>Klik <b>Add Event</b> (biru, kanan atas) untuk membuat event baru.</li>
+</ol>
+<figure><img src="img/evt-01-daftar-kiri.jpg" alt="Daftar Training Event (kolom kiri)" loading="lazy"><figcaption>Daftar Training Event (kolom kiri)</figcaption></figure>
+<p>Kolom daftar: Event Code, Plan (<i>Unplanned</i> bila event tidak berasal dari plan), Training, Department, Trainer, Type (Int/Ext), Category, Date, #Part (jumlah peserta), Sess, Duration, Status, dan Action. Geser tabel ke kanan bila kolom Status dan Action belum terlihat.</p>
+<figure><img src="img/evt-02-daftar-kanan.jpg" alt="Kolom Status dan Action" loading="lazy"><figcaption>Kolom Status dan Action</figcaption></figure>
+<p>Tombol <b>Action</b>: ikon mata membuka <b>Detail</b>; ikon clipboard (<i>Entry Realization</i>) muncul pada event yang sudah <b>Approved</b>.</p>
+
+<h2 id="create">3. Membuat event baru</h2>
+
+<p>Klik <b>Add Event</b> pada daftar event. Isi bagian <b>Event Information</b>, <b>Training Information</b>, lalu tambahkan peserta.</p>
+<figure><img src="img/evt-03-create-atas.jpg" alt="Form Add Training Event" loading="lazy"><figcaption>Form Add Training Event</figcaption></figure>
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Field</th><th>Cara pengisian</th></tr></thead>
+<tbody>
+<tr><td>Training Plan (optional)</td><td>Pilih plan bila event berasal dari rencana tahunan. Pilih Company dan Department lebih dulu agar daftar plan tahun berjalan termuat. Biarkan <i>Unplanned</i> bila tidak ada plan.</td></tr>
+<tr><td>Course *</td><td>Ketik minimal 2 karakter nama atau kode course, lalu pilih. Training Title dan Training Category terisi otomatis (tidak bisa diubah). Tautan <i>View Master Course</i> membuka daftar course.</td></tr>
+<tr><td>Company * / Department *</td><td>Pilih perusahaan dan departemen penyelenggara</td></tr>
+<tr><td>Trainer Type</td><td><b>Internal</b>: cari karyawan pada kolom Trainer. <b>External</b>: isi nama trainer luar</td></tr>
+<tr><td>Session# *, Duration (Hours)</td><td>Jumlah sesi dan durasi dalam jam</td></tr>
+<tr><td>Quota *</td><td>Batas jumlah peserta; harus lebih dari 0</td></tr>
+<tr><td>Start Date * / End Date *</td><td>Tanggal dan jam mulai dan selesai</td></tr>
+<tr><td>Venue, Budget</td><td>Lokasi dan anggaran (opsional)</td></tr>
+<tr><td>Training Description / Objective</td><td>Uraian dan tujuan training</td></tr>
+</tbody></table></div>
+<h3>Peserta (Planned Participants)</h3>
+<p>Gulir ke bagian <b>Planned Participants</b>. Klik <b>Add Participant</b>, cari karyawan, lalu pilih; ulangi untuk setiap peserta. Gunakan ikon hapus pada kolom Action untuk membuang peserta. Setelah semua terisi, klik <b>Save Event</b> (hijau); <b>Cancel</b> membatalkan input.</p>
+<figure><img src="img/evt-04-create-peserta.jpg" alt="Bagian Planned Participants, tombol Template, Upload Excel, dan Save Event" loading="lazy"><figcaption>Bagian Planned Participants, tombol Template, Upload Excel, dan Save Event</figcaption></figure>
+<p><b>Aturan quota</b> yang diperiksa form:</p>
+<ul>
+<li>Quota harus diisi dan lebih dari 0 sebelum peserta ditambahkan (<i>Please enter participant quota first.</i>).</li>
+<li>Peserta tidak bisa ditambah bila quota sudah tercapai (<i>Participant quota has been reached.</i>). Naikkan quota lebih dulu.</li>
+<li>Quota tidak bisa diturunkan di bawah jumlah peserta yang sudah ada.</li>
+<li>Event tidak dapat disimpan bila jumlah peserta melebihi quota.</li>
+</ul>
+
+<h2 id="excel">4. Upload peserta dari Excel</h2>
+
+<p>Untuk peserta dalam jumlah banyak, gunakan <b>Upload Excel</b> pada kartu <b>Planned Participants</b> (halaman Add Event). Fitur yang sama tersedia di halaman Realization untuk peserta walk-in (bagian 7).</p>
+<ol>
+<li>Klik <b>Template</b> untuk mengunduh <i>Template_Participants.xlsx</i>.</li>
+<li>Isi sheet <b>Participants</b>: kolom A <b>EmployeeCode</b>, satu karyawan per baris mulai baris 2. Jangan mengubah atau memindahkan header di baris 1. Nama, ABRV, dan Department terisi otomatis dari data karyawan.</li>
+<li>Pastikan Quota sudah diisi, lalu klik <b>Upload Excel</b> dan pilih file <i>.xlsx</i>.</li>
+<li>Ringkasan hasil tampil: jumlah peserta yang ditambahkan dan daftar baris yang dilewati beserta alasannya.</li>
+<li>Periksa daftar peserta, lalu klik <b>Save Event</b>.</li>
+</ol>
+<p><b>Aturan upload</b></p>
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Aturan</th><th>Keterangan</th></tr></thead>
+<tbody>
+<tr><td>Format dan ukuran</td><td>Hanya .xlsx, maksimal 500 baris dan 5 MB</td></tr>
+<tr><td>Karyawan</td><td>Hanya karyawan aktif; kode tidak ditemukan atau karyawan resign dilewati</td></tr>
+<tr><td>Duplikat</td><td>Duplikat di dalam file, atau yang sudah ada di daftar peserta, dilewati</td></tr>
+<tr><td>Mode</td><td>Menambah ke daftar yang ada, tidak menimpa</td></tr>
+<tr><td>Quota (Add Event)</td><td>Peserta ditambahkan sampai quota penuh; sisanya dilaporkan <i>Not added: participant quota reached.</i></td></tr>
+</tbody></table></div>
+<p>Upload hanya mengisi daftar di layar. Data baru tersimpan setelah Anda menekan <b>Save Event</b> (atau <b>Save Draft</b> di Realization).</p>
+
+<h2 id="detail">5. Detail event, Post, dan approval</h2>
+
+<p>Klik ikon mata pada daftar event untuk membuka halaman <b>Training Event</b> (Detail). Judul memuat kode event, dan lencana status (mis. <b>Approved</b>) tampil di kanan.</p>
+<figure><img src="img/evt-05-detail.jpg" alt="Detail event EVT-010001: Event Information, Training Information, dan Participants" loading="lazy"><figcaption>Detail event EVT-010001: Event Information, Training Information, dan Participants</figcaption></figure>
+<p>Halaman ini berisi:</p>
+<ul>
+<li><b>Event Information</b> dan <b>Training Information</b> (hanya baca).</li>
+<li><b>Participants</b>: daftar peserta, dengan tombol <b>Cetak Absensi</b> untuk mengunduh PDF daftar hadir. Tombol ini tersedia setelah event <b>Approved</b>.</li>
+<li><b>Workflow History</b>: siapa melakukan apa dan kapan, dari status mana ke status mana, beserta Remarks.</li>
+</ul>
+<figure><img src="img/evt-06-workflow.jpg" alt="Workflow History: Request for Approve → Approve → Approve" loading="lazy"><figcaption>Workflow History: Request for Approve → Approve → Approve</figcaption></figure>
+<h3>Tombol aksi di kanan atas</h3>
+<p>Tombol yang tampil bergantung pada hak akses Anda dan status event.</p>
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Tombol</th><th>Siapa dan kapan</th><th>Langkah</th></tr></thead>
+<tbody>
+<tr><td><b>Edit</b> / <b>Delete</b></td><td>Pembuat, saat event masih boleh diubah</td><td>Edit: lihat bagian 6. Delete: konfirmasi <i>Delete Training Event?</i> lalu <b>Yes, Delete</b>; event dan pesertanya dihapus</td></tr>
+<tr><td><b>Post</b></td><td>Pembuat, untuk mengajukan event</td><td>Konfirmasi <b>Yes, Post</b>. Status menjadi Pending for DeptHead</td></tr>
+<tr><td><b>Approve</b></td><td>Dept Head, lalu HRD</td><td>Konfirmasi <b>Yes, Approve</b></td></tr>
+<tr><td><b>Reject</b></td><td>Dept Head atau HRD</td><td>Isi alasan penolakan pada dialog (<b>wajib</b>), lalu konfirmasi</td></tr>
+</tbody></table></div>
+<p>Setelah aksi berhasil, halaman menampilkan status baru dan menambah satu baris pada Workflow History.</p>
+
+<h2 id="edit">6. Mengubah event</h2>
+
+<p>Tombol <b>Edit</b> pada halaman Detail hanya muncul bila akun Anda boleh mengubah event pada statusnya saat itu (mis. event yang ditolak perlu diperbaiki). Tanpa hak tersebut, halaman Edit ditolak oleh server.</p>
+<figure><img src="img/evt-07-edit-atas.jpg" alt="Halaman Edit Training Event" loading="lazy"><figcaption>Halaman Edit Training Event</figcaption></figure>
+<ol>
+<li>Field yang abu-abu (Training Plan, Course Code, Training Title, Category, Company, Department) tidak dapat diubah.</li>
+<li>Ubah field yang boleh diedit: Trainer, Quota *, Start Date *, End Date *, Venue, Budget, Description, dan Objective.</li>
+<li>Kelola peserta di kartu <b>Planned Participants</b>: <b>Add Participant</b> untuk menambah, ikon tempat sampah merah untuk menghapus.</li>
+<li>Klik <b>Save Changes</b>; <b>Cancel</b> membatalkan.</li>
+</ol>
+<figure><img src="img/evt-08-edit-peserta.jpg" alt="Daftar peserta dan tombol Save Changes" loading="lazy"><figcaption>Daftar peserta dan tombol Save Changes</figcaption></figure>
+<p>Aturan quota sama dengan saat membuat event: quota tidak boleh lebih kecil dari jumlah peserta. Upload Excel hanya tersedia di halaman Add Event dan Realization.</p>
+
+<h2 id="realization">7. Realization (pelaksanaan training)</h2>
+
+<p>Realization mencatat apa yang benar-benar terjadi: waktu pelaksanaan, siapa yang hadir, nilai, dan bukti lampiran.</p>
+<h3>7.1 Memilih event</h3>
+<p>Buka <b>Training Event &rarr; Event Realization</b>. Daftar menampilkan event yang menunggu entri realisasi atau review HRD. Cari dengan kode atau judul, filter <b>Company</b>, <b>Department</b>, dan <b>Status</b>, lalu klik <b>Open</b> pada event yang dituju.</p>
+<figure><img src="img/evt-09-realization-list.jpg" alt="Daftar Event Realization" loading="lazy"><figcaption>Daftar Event Realization</figcaption></figure>
+<h3>7.2 Mengisi realisasi</h3>
+<figure><img src="img/evt-10-realization-atas.jpg" alt="Entry Realization, bagian atas" loading="lazy"><figcaption>Entry Realization, bagian atas</figcaption></figure>
+<ol>
+<li><b>Event Information</b> (hanya baca): judul, trainer, departemen, venue, tanggal rencana, dan Participant Quota.</li>
+<li><b>Realization Date &amp; Time</b>: isi <b>Realization Date</b>, <b>Start Time</b>, <b>End Time</b> (wajib), dan <b>Notes</b> bila perlu.</li>
+<li><b>Attendance</b>: centang <b>Present</b> untuk peserta yang hadir, isi <b>Score</b> (0&ndash;100) dan <b>Remarks</b> bila ada. Kolom Employee Code dan Name membantu memastikan orang yang benar.</li>
+</ol>
+<h3>7.3 Peserta walk-in (tidak ada di rencana)</h3>
+<ul>
+<li><b>Add Participant</b>: cari karyawan, lalu pilih. Baris baru bertanda <i>Walk-in</i> dan bisa dihapus dengan tombol Remove.</li>
+<li><b>Upload Walk-in (Excel)</b>: untuk banyak peserta sekaligus. Klik <b>Template</b> untuk contoh file; kolom A <b>EmployeeCode</b>, mulai baris 2. Karyawan hasil upload masuk sebagai walk-in dengan status <b>Present</b>. Peserta yang sudah ada di daftar (terencana maupun walk-in), duplikat di file, kode yang tidak ditemukan, dan karyawan resign dilewati dan dilaporkan pada ringkasan hasil upload. Batas file sama seperti bagian 4 (.xlsx, 500 baris, 5 MB); Realization tidak membatasi jumlah walk-in dengan quota.</li>
+</ul>
+<h3>7.4 Lampiran</h3>
+<p>Di kartu <b>Attachments</b>, pilih <b>Document Type</b> (mis. <i>Scanned Attendance Sheet</i>), klik <b>Choose Files</b>, lalu <b>Upload</b>. Format yang diterima: PDF, JPG, PNG, DOC(X), XLS(X), maksimal 20 MB per file. Lampiran yang sudah diunggah tampil pada tabel (nama file, tipe, ukuran, pengunggah).</p>
+<figure><img src="img/evt-11-realization-bawah.jpg" alt="Attendance, Attachments, dan tombol Save Draft / Post to HRD" loading="lazy"><figcaption>Attendance, Attachments, dan tombol Save Draft / Post to HRD</figcaption></figure>
+<h3>7.5 Simpan dan kirim ke HRD</h3>
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Tombol</th><th>Fungsi</th></tr></thead>
+<tbody>
+<tr><td><b>Save Draft</b></td><td>Menyimpan isian tanpa mengirim; bisa dilanjutkan nanti. Status tetap <b>Draft</b></td></tr>
+<tr><td><b>Post to HRD</b></td><td>Mengirim realisasi ke HRD untuk direview. Setelah dikirim, isian tidak dapat diubah</td></tr>
+<tr><td><b>Mark as Complete</b></td><td>Tombol HRD/TC: menyatakan realisasi benar dan menyelesaikan event</td></tr>
+<tr><td><b>Reject</b></td><td>Tombol HRD/TC: mengembalikan ke pembuat dengan alasan (wajib)</td></tr>
+</tbody></table></div>
+<p>Bila realisasi ditolak, halaman menampilkan <i>Rejected by HRD &ndash; Please Revise</i>. Baca alasan penolakan pada Workflow History, perbaiki isian, lalu <b>Post to HRD</b> lagi. Seluruh riwayat (Post, Complete, Reject) tampil di <b>Workflow History</b> di bagian atas halaman.</p>
+
+<h2 id="masalah">8. Pemecahan masalah</h2>
+
+<div class="table-responsive"><table class="table table-bordered table-sm">
+<thead><tr><th>Gejala</th><th>Penyebab</th><th>Tindakan</th></tr></thead>
+<tbody>
+<tr><td>Tombol Edit, Post, Approve, atau Mark as Complete tidak muncul</td><td>Akun tidak berwenang pada status event saat itu</td><td>Cek status di Detail dan Workflow History; hubungi pihak yang sedang memegang giliran (Dept Head / HRD)</td></tr>
+<tr><td>Pesan <i>Please enter participant quota first.</i></td><td>Quota belum diisi saat menambah peserta</td><td>Isi Quota (lebih dari 0) lebih dulu</td></tr>
+<tr><td>Pesan <i>Participant quota has been reached.</i></td><td>Jumlah peserta sudah sama dengan quota</td><td>Naikkan Quota, atau hapus peserta yang tidak perlu</td></tr>
+<tr><td>Pesan <i>Number of participants cannot exceed the participant quota.</i></td><td>Peserta lebih banyak dari quota saat Save</td><td>Naikkan Quota atau kurangi peserta</td></tr>
+<tr><td>Pesan <i>Participant quota cannot be less than N</i></td><td>Quota diturunkan di bawah jumlah peserta</td><td>Hapus peserta terlebih dulu</td></tr>
+<tr><td>Upload Excel menolak file</td><td>Bukan .xlsx, header <b>EmployeeCode</b> hilang, atau lebih dari 500 baris</td><td>Gunakan Template dan jangan ubah header di baris 1</td></tr>
+<tr><td>Kode karyawan dilewati saat upload</td><td>Kode tidak ditemukan, karyawan resign, atau duplikat</td><td>Perbaiki kode sesuai ringkasan hasil upload, lalu upload ulang baris yang dilewati</td></tr>
+<tr><td>Daftar event kosong dan kolom Company belum terisi</td><td>Halaman masih memuat data</td><td>Tunggu beberapa detik, atau muat ulang halaman</td></tr>
+<tr><td>Event yang sudah Approved tidak ada di daftar Realization</td><td>Filter Company/Department/Status tidak cocok</td><td>Klik filter ke <i>All</i> atau cari dengan kode event</td></tr>
+</tbody></table></div>
+
+      </article>
+    </main>
+  </div>
+</div>
+<script src="../lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  // Klik gambar -> buka ukuran penuh di tab baru
+  document.querySelectorAll('.help-content figure img').forEach(function (img) {
+    img.addEventListener('click', function () { window.open(img.src, '_blank'); });
+  });
+  // Tandai bagian aktif pada daftar isi
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a.nav-link'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').substring(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && map[e.target.id]) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          map[e.target.id].classList.add('active');
+        }
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    document.querySelectorAll('.help-content h2[id]').forEach(function (h) { io.observe(h); });
+  }
+})();
+</script>
+</body>
+</html>
